@@ -144,36 +144,34 @@ app.get('/', (c) => {
         <div class="flex">
             <!-- Sidebar (hidden by default, shown when logged in) -->
             <div id="sidebar" class="hidden w-64 bg-white border-r border-gray-200 min-h-screen">
-                <div class="flex flex-col h-full">
-                    <!-- Main Navigation -->
-                    <div class="flex-1 py-8">
-                        <nav>
-                            <a href="#" class="sidebar-item active" data-section="dashboard">
-                                <i class="fas fa-chart-pie"></i>
-                                <span>Dashboard</span>
-                            </a>
-                            <a href="#" class="sidebar-item" data-section="tests">
-                                <i class="fas fa-tasks"></i>
-                                <span>My Tests</span>
-                            </a>
-                            <a href="#" class="sidebar-item" data-section="history">
-                                <i class="fas fa-history"></i>
-                                <span>Test History</span>
-                            </a>
-                            <a href="#" class="sidebar-item" data-section="analytics">
-                                <i class="fas fa-chart-line"></i>
-                                <span>Analytics</span>
-                            </a>
-                            <a href="#" class="sidebar-item" data-section="profile">
-                                <i class="fas fa-user"></i>
-                                <span>Profile</span>
-                            </a>
-                            <a href="#" class="sidebar-item" data-section="settings">
-                                <i class="fas fa-cog"></i>
-                                <span>Settings</span>
-                            </a>
-                        </nav>
-                    </div>
+                <div class="flex flex-col h-full py-6">
+                    <!-- Main Navigation - Single Column -->
+                    <nav class="flex-1">
+                        <a href="#" class="sidebar-item active" data-section="dashboard">
+                            <i class="fas fa-chart-pie"></i>
+                            <span>Dashboard</span>
+                        </a>
+                        <a href="#" class="sidebar-item" data-section="tests">
+                            <i class="fas fa-tasks"></i>
+                            <span>My Tests</span>
+                        </a>
+                        <a href="#" class="sidebar-item" data-section="history">
+                            <i class="fas fa-history"></i>
+                            <span>Test History</span>
+                        </a>
+                        <a href="#" class="sidebar-item" data-section="analytics">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Analytics</span>
+                        </a>
+                        <a href="#" class="sidebar-item" data-section="profile">
+                            <i class="fas fa-user"></i>
+                            <span>Profile</span>
+                        </a>
+                        <a href="#" class="sidebar-item" data-section="settings">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                    </nav>
                     
                     <!-- Bottom Section -->
                     <div class="bottom-section">
