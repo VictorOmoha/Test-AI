@@ -670,14 +670,12 @@ class TestApp {
 
         container.innerHTML = improvementAreas.map(area => `
             <div class="improvement-item">
-                <div class="improvement-label">${area.subject}</div>
-                <div class="improvement-progress">
-                    <div class="progress-bar-improvement">
-                        <div class="progress-fill-improvement ${area.level}" style="width: ${area.percentage}%"></div>
+                <div class="improvement-subject">${area.subject}</div>
+                <div class="improvement-progress-container">
+                    <div class="improvement-progress-bar">
+                        <div class="improvement-progress-fill ${area.level}" style="width: ${area.percentage}%"></div>
                     </div>
-                </div>
-                <div class="improvement-percentage ${area.level === 'critical' ? 'text-red-600' : area.level === 'needs-work' ? 'text-orange-600' : area.level === 'good' ? 'text-yellow-600' : 'text-green-600'}">
-                    ${area.percentage}%
+                    <div class="improvement-percentage ${area.level}">${area.percentage}%</div>
                 </div>
             </div>
         `).join('');

@@ -69,36 +69,52 @@
     @apply flex-1 text-sm font-medium text-gray-700 mr-4;
 }
 
-.improvement-progress {
-    @apply flex-1 mr-4;
+.improvement-progress-container {
+    @apply flex items-center mt-2;
+}
+
+.improvement-progress-bar {
+    @apply flex-1 bg-gray-200 rounded-full h-3 mr-3 overflow-hidden;
+}
+
+.improvement-progress-fill {
+    @apply h-full rounded-full transition-all duration-700 min-w-1;
+}
+
+.improvement-progress-fill.critical {
+    @apply bg-red-500;
+}
+
+.improvement-progress-fill.needs-work {
+    @apply bg-orange-400;
+}
+
+.improvement-progress-fill.good {
+    @apply bg-blue-500;
+}
+
+.improvement-progress-fill.excellent {
+    @apply bg-green-500;
 }
 
 .improvement-percentage {
     @apply text-sm font-semibold min-w-12 text-right;
 }
 
-.progress-bar-improvement {
-    @apply w-full bg-gray-200 rounded-full h-2;
+.improvement-percentage.critical {
+    @apply text-red-600;
 }
 
-.progress-fill-improvement {
-    @apply h-full rounded-full transition-all duration-500;
+.improvement-percentage.needs-work {
+    @apply text-orange-600;
 }
 
-.progress-fill-improvement.critical {
-    @apply bg-red-500;
+.improvement-percentage.good {
+    @apply text-blue-600;
 }
 
-.progress-fill-improvement.needs-work {
-    @apply bg-orange-500;
-}
-
-.progress-fill-improvement.good {
-    @apply bg-yellow-500;
-}
-
-.progress-fill-improvement.excellent {
-    @apply bg-green-500;
+.improvement-percentage.excellent {
+    @apply text-green-600;
 }
 
 /* AI Recommendations Styles */
@@ -264,11 +280,11 @@
 }
 
 .test-progress-bar {
-    @apply w-full bg-white rounded-full h-2 mb-1;
+    @apply w-full bg-gray-200 rounded-full h-3 mb-1 overflow-hidden;
 }
 
 .test-progress-fill {
-    @apply bg-blue-500 h-full rounded-full transition-all duration-300;
+    @apply bg-blue-500 h-full rounded-full transition-all duration-300 min-w-1;
 }
 
 .test-progress-text {
