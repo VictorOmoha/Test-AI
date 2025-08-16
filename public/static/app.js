@@ -3,6 +3,9 @@ class TestApp {
     constructor() {
         this.user = null;
         this.token = null;
+        this.testInterface = null;
+        this.resultsDashboard = null;
+        this.socialFeatures = null;
         this.init();
     }
 
@@ -10,6 +13,22 @@ class TestApp {
         this.setupEventListeners();
         this.checkAuthState();
         this.setupAxiosInterceptors();
+        this.initializeModules();
+    }
+
+    initializeModules() {
+        // Initialize modules after DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof TestInterface !== 'undefined') {
+                this.testInterface = new TestInterface(this);
+            }
+            if (typeof ResultsDashboard !== 'undefined') {
+                this.resultsDashboard = new ResultsDashboard(this);
+            }
+            if (typeof SocialFeatures !== 'undefined') {
+                this.socialFeatures = new SocialFeatures(this);
+            }
+        });
     }
 
     setupAxiosInterceptors() {
@@ -64,6 +83,8 @@ class TestApp {
         document.getElementById('newTestCard')?.addEventListener('click', () => this.showTestCreation());
         document.getElementById('historyCard')?.addEventListener('click', () => this.showTestHistory());
         document.getElementById('profileCard')?.addEventListener('click', () => this.showProfile());
+        document.getElementById('socialHubCard')?.addEventListener('click', () => this.showSocialHub());
+        document.getElementById('analyticsCard')?.addEventListener('click', () => this.showAnalytics());
 
         // Close modals on outside click
         document.addEventListener('click', (e) => {
@@ -246,18 +267,42 @@ class TestApp {
 
     // Dashboard Features
     showTestCreation() {
-        // TODO: Implement test creation interface
-        this.showInfo('Test creation feature coming soon!');
+        if (this.testInterface) {
+            this.testInterface.showTestConfigModal();
+        } else {
+            this.showError('Test interface not loaded. Please refresh the page.');
+        }
     }
 
     showTestHistory() {
-        // TODO: Implement test history interface
+        this.showInfo('Loading your test history...');
+        // TODO: Implement comprehensive test history interface
         this.showInfo('Test history feature coming soon!');
     }
 
     showProfile() {
         // TODO: Implement profile management interface
         this.showInfo('Profile management feature coming soon!');
+    }
+
+    showSocialHub() {
+        if (this.socialFeatures) {
+            this.socialFeatures.showSocialModal();
+        } else {
+            this.showError('Social features not loaded. Please refresh the page.');
+        }
+    }
+
+    showAnalytics() {
+        this.showInfo('Analytics dashboard feature coming soon!');
+    }
+
+    showResultsModal(resultsData) {
+        if (this.resultsDashboard) {
+            this.resultsDashboard.showResults(resultsData);
+        } else {
+            this.showError('Results dashboard not loaded. Please refresh the page.');
+        }
     }
 
     // Notification Methods
@@ -313,4 +358,15 @@ class TestApp {
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     window.testApp = new TestApp();
+    
+    // Initialize modules if they exist
+    if (window.testApp.testInterface === null && typeof TestInterface !== 'undefined') {
+        window.testApp.testInterface = new TestInterface(window.testApp);
+    }
+    if (window.testApp.resultsDashboard === null && typeof ResultsDashboard !== 'undefined') {
+        window.testApp.resultsDashboard = new ResultsDashboard(window.testApp);
+    }
+    if (window.testApp.socialFeatures === null && typeof SocialFeatures !== 'undefined') {
+        window.testApp.socialFeatures = new SocialFeatures(window.testApp);
+    }
 });

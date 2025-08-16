@@ -5,6 +5,7 @@ import { serveStatic } from 'hono/cloudflare-workers'
 import { Env } from './types/database'
 import { auth } from './routes/auth'
 import { tests } from './routes/tests'
+import { social } from './routes/social'
 import { DatabaseService } from './utils/database'
 
 const app = new Hono<{ Bindings: Env }>()
@@ -24,6 +25,7 @@ app.use('/static/*', serveStatic({ root: './public' }))
 // API Routes
 app.route('/api/auth', auth)
 app.route('/api/tests', tests)
+app.route('/api/social', social)
 
 // Health check endpoint
 app.get('/api/health', async (c) => {
@@ -148,6 +150,16 @@ app.get('/', (c) => {
                         <h3 class="font-semibold text-lg mb-2">Profile</h3>
                         <p class="text-gray-600">Manage your account settings</p>
                     </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border cursor-pointer hover:shadow-md transition-shadow" id="socialHubCard">
+                        <i class="fas fa-trophy text-primary text-3xl mb-4"></i>
+                        <h3 class="font-semibold text-lg mb-2">Social Hub</h3>
+                        <p class="text-gray-600">Leaderboards and achievements</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border cursor-pointer hover:shadow-md transition-shadow" id="analyticsCard">
+                        <i class="fas fa-chart-line text-primary text-3xl mb-4"></i>
+                        <h3 class="font-semibold text-lg mb-2">Analytics</h3>
+                        <p class="text-gray-600">Detailed performance insights</p>
+                    </div>
                 </div>
 
                 <!-- Statistics Overview -->
@@ -241,6 +253,9 @@ app.get('/', (c) => {
 
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
         <script src="/static/app.js"></script>
+        <script src="/static/test-interface.js"></script>
+        <script src="/static/results-dashboard.js"></script>
+        <script src="/static/social-features.js"></script>
     </body>
     </html>
   `)
