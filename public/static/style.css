@@ -60,6 +60,80 @@
     margin-bottom: 0;
 }
 
+/* Areas for Improvement Styles */
+.improvement-item {
+    @apply flex items-center justify-between mb-4;
+}
+
+.improvement-label {
+    @apply flex-1 text-sm font-medium text-gray-700 mr-4;
+}
+
+.improvement-progress {
+    @apply flex-1 mr-4;
+}
+
+.improvement-percentage {
+    @apply text-sm font-semibold min-w-12 text-right;
+}
+
+.progress-bar-improvement {
+    @apply w-full bg-gray-200 rounded-full h-2;
+}
+
+.progress-fill-improvement {
+    @apply h-full rounded-full transition-all duration-500;
+}
+
+.progress-fill-improvement.critical {
+    @apply bg-red-500;
+}
+
+.progress-fill-improvement.needs-work {
+    @apply bg-orange-500;
+}
+
+.progress-fill-improvement.good {
+    @apply bg-yellow-500;
+}
+
+.progress-fill-improvement.excellent {
+    @apply bg-green-500;
+}
+
+/* AI Recommendations Styles */
+.ai-recommendation {
+    @apply p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100 mb-4;
+}
+
+.ai-recommendation-icon {
+    @apply w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mb-3;
+}
+
+.ai-recommendation-title {
+    @apply font-semibold text-gray-900 mb-2 flex items-center;
+}
+
+.ai-recommendation-text {
+    @apply text-sm text-gray-600 mb-3 leading-relaxed;
+}
+
+.ai-recommendation-actions {
+    @apply flex space-x-2;
+}
+
+.ai-action-btn {
+    @apply px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer;
+}
+
+.ai-action-btn.primary {
+    @apply bg-purple-100 text-purple-700 hover:bg-purple-200;
+}
+
+.ai-action-btn.secondary {
+    @apply bg-gray-100 text-gray-600 hover:bg-gray-200;
+}
+
 /* Ensure sidebar is visible when logged in */
 #sidebar.show {
     @apply block;

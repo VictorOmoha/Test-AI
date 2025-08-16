@@ -399,6 +399,28 @@ app.get('/', (c) => {
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Areas for Improvement and AI Recommendations -->
+                        <div class="grid lg:grid-cols-2 gap-8 mt-8">
+                            <!-- Areas for Improvement -->
+                            <div class="bg-white p-6 rounded-lg shadow-sm border">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-6">Areas for Improvement</h3>
+                                <div class="space-y-4" id="improvementAreas">
+                                    <!-- Improvement areas will be loaded here -->
+                                </div>
+                            </div>
+
+                            <!-- AI Recommendations -->
+                            <div class="bg-white p-6 rounded-lg shadow-sm border">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="text-lg font-semibold text-gray-900">AI Recommendations</h3>
+                                    <span class="text-xs text-purple-600 font-medium">Powered by AI</span>
+                                </div>
+                                <div class="space-y-4" id="aiRecommendations">
+                                    <!-- AI recommendations will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

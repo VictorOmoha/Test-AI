@@ -353,6 +353,10 @@ class TestApp {
             // Initialize performance chart
             this.initializePerformanceChart();
 
+            // Load improvement areas and AI recommendations
+            this.loadImprovementAreas();
+            this.loadAIRecommendations();
+
         } catch (error) {
             console.error('Failed to load user data:', error);
         }
@@ -649,6 +653,79 @@ class TestApp {
             select.value = categoryId;
         }
         // Could scroll to or highlight the quick test form
+    }
+
+    loadImprovementAreas() {
+        const container = document.getElementById('improvementAreas');
+        if (!container) return;
+
+        // Mock improvement data based on performance analysis
+        const improvementAreas = [
+            { subject: 'Calculus - Derivatives', percentage: 45, level: 'critical' },
+            { subject: 'Physics - Thermodynamics', percentage: 62, level: 'needs-work' },
+            { subject: 'Programming - Algorithms', percentage: 74, level: 'good' },
+            { subject: 'History - Ancient Civilizations', percentage: 58, level: 'needs-work' }
+        ];
+
+        container.innerHTML = improvementAreas.map(area => `
+            <div class="improvement-item">
+                <div class="improvement-label">${area.subject}</div>
+                <div class="improvement-progress">
+                    <div class="progress-bar-improvement">
+                        <div class="progress-fill-improvement ${area.level}" style="width: ${area.percentage}%"></div>
+                    </div>
+                </div>
+                <div class="improvement-percentage ${area.level === 'critical' ? 'text-red-600' : area.level === 'needs-work' ? 'text-orange-600' : area.level === 'good' ? 'text-yellow-600' : 'text-green-600'}">
+                    ${area.percentage}%
+                </div>
+            </div>
+        `).join('');
+    }
+
+    loadAIRecommendations() {
+        const container = document.getElementById('aiRecommendations');
+        if (!container) return;
+
+        // Mock AI recommendations based on performance analysis
+        const recommendations = [
+            {
+                icon: 'fas fa-calculator',
+                title: 'Focus on Calculus Fundamentals',
+                text: 'Your performance in derivatives suggests reviewing basic differentiation rules would help improve your scores.',
+                actions: ['Select', 'Move', 'Notes']
+            },
+            {
+                icon: 'fas fa-code',
+                title: 'Practice More Algorithm Questions',
+                text: 'Spend 20 minutes daily on algorithm practice to improve your problem-solving skills.',
+                actions: ['Select', 'Move', 'Notes']
+            }
+        ];
+
+        container.innerHTML = recommendations.map(rec => `
+            <div class="ai-recommendation">
+                <div class="ai-recommendation-icon">
+                    <i class="${rec.icon} text-purple-600 text-sm"></i>
+                </div>
+                <div class="ai-recommendation-title">
+                    <i class="fas fa-lightbulb text-purple-500 mr-2"></i>
+                    ${rec.title}
+                </div>
+                <div class="ai-recommendation-text">
+                    ${rec.text}
+                </div>
+                <div class="ai-recommendation-actions">
+                    ${rec.actions.map((action, index) => `
+                        <span class="ai-action-btn ${index === 0 ? 'primary' : 'secondary'}">
+                            ${action === 'Select' ? '<i class="fas fa-check mr-1"></i>' : 
+                              action === 'Move' ? '<i class="fas fa-hand-pointer mr-1"></i>' : 
+                              '<i class="fas fa-sticky-note mr-1"></i>'}
+                            ${action}
+                        </span>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
     }
 
     // Dashboard Features
