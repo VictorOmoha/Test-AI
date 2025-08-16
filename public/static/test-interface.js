@@ -478,7 +478,7 @@ class TestInterface {
         const savedAnswer = this.answers.get(question.id);
         
         if (question.question_type === 'MCQ') {
-            const options = JSON.parse(question.options);
+            const options = question.options;
             options.forEach((option, index) => {
                 const optionDiv = document.createElement('div');
                 optionDiv.className = 'flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer';

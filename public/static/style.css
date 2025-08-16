@@ -1,1 +1,141 @@
-h1 { font-family: Arial, Helvetica, sans-serif; }
+/* TestAI Dashboard Styles */
+
+/* Navigation Tabs */
+.nav-tab {
+    @apply px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 transition-colors;
+}
+
+.nav-tab.active {
+    @apply text-primary border-primary;
+}
+
+/* Sidebar Styles */
+.sidebar-item {
+    @apply flex items-center w-full px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors;
+}
+
+.sidebar-item.active {
+    @apply bg-primary text-white hover:bg-blue-700 hover:text-white;
+}
+
+.sidebar-item i {
+    @apply w-5 h-5 mr-3 text-center;
+}
+
+/* Chart Tab Buttons */
+.chart-tab-btn {
+    @apply px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors;
+}
+
+.chart-tab-btn.active {
+    @apply bg-primary text-white hover:bg-blue-700;
+}
+
+/* Difficulty Buttons */
+.difficulty-btn {
+    @apply flex-1 py-1 px-2 text-xs font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors text-center;
+}
+
+.difficulty-btn.active {
+    @apply bg-primary text-white hover:bg-blue-700;
+}
+
+/* Test Category Card */
+.test-category-card {
+    @apply p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors cursor-pointer;
+}
+
+.test-category-card.active {
+    @apply bg-primary text-white hover:bg-blue-700;
+}
+
+/* Progress Bars */
+.progress-bar {
+    @apply w-full bg-gray-200 rounded-full h-2 overflow-hidden;
+}
+
+.progress-fill {
+    @apply h-full rounded-full transition-all duration-300;
+}
+
+.progress-fill.mathematics { @apply bg-blue-500; }
+.progress-fill.programming { @apply bg-green-500; }
+.progress-fill.science { @apply bg-red-500; }
+.progress-fill.history { @apply bg-yellow-500; }
+.progress-fill.english { @apply bg-purple-500; }
+.progress-fill.general { @apply bg-indigo-500; }
+
+/* Recent Test Items */
+.recent-test-item {
+    @apply flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors;
+}
+
+.score-badge {
+    @apply px-2 py-1 text-xs font-medium rounded-full;
+}
+
+.score-badge.excellent {
+    @apply bg-green-100 text-green-800;
+}
+
+.score-badge.good {
+    @apply bg-blue-100 text-blue-800;
+}
+
+.score-badge.average {
+    @apply bg-yellow-100 text-yellow-800;
+}
+
+.score-badge.poor {
+    @apply bg-red-100 text-red-800;
+}
+
+/* Animation Classes */
+.fade-in {
+    @apply opacity-0 animate-pulse;
+    animation: fadeIn 0.5s ease-in forwards;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #CBD5E0 transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #CBD5E0;
+    border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #A0AEC0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .sidebar-item span {
+        @apply hidden;
+    }
+    
+    #sidebar {
+        @apply w-16;
+    }
+    
+    .nav-tab {
+        @apply px-2 text-xs;
+    }
+}
