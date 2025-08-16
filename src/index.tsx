@@ -237,26 +237,9 @@ app.get('/', (c) => {
                 <div id="dashboardSection" class="hidden flex-1 bg-gray-50">
                     <!-- Top Bar -->
                     <div class="bg-white border-b border-gray-200 px-6 py-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h1 class="text-2xl font-bold text-gray-900" id="welcomeMessage">Welcome back, John!</h1>
-                                <p class="text-gray-600 text-sm mt-1">Here's an overview of your test activities and performance.</p>
-                            </div>
-                            <div class="flex items-center space-x-4">
-                                <button class="p-2 text-gray-400 hover:text-gray-600">
-                                    <i class="fas fa-bell"></i>
-                                </button>
-                                <button class="p-2 text-gray-400 hover:text-gray-600">
-                                    <i class="fas fa-cog"></i>
-                                </button>
-                                <div class="flex items-center space-x-2">
-                                    <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                                        <span id="userInitials" class="text-white text-sm font-medium">JD</span>
-                                    </div>
-                                    <span id="userName" class="text-gray-700 font-medium">John Doe</span>
-                                    <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
-                                </div>
-                            </div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900" id="welcomeMessage">Welcome back, John!</h1>
+                            <p class="text-gray-600 text-sm mt-1">Here's an overview of your test activities and performance.</p>
                         </div>
                     </div>
                     
