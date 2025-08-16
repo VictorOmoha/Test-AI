@@ -15,9 +15,10 @@
 }
 
 .sidebar-item {
-    @apply flex items-center w-full px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 no-underline block;
+    @apply flex items-center w-full px-6 py-4 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 no-underline;
     text-decoration: none;
     display: flex !important;
+    margin-bottom: 8px;
 }
 
 .sidebar-item.active {
@@ -41,14 +42,22 @@
     font-size: 14px;
 }
 
-/* Sidebar navigation - single column layout */
+/* Sidebar navigation - single column layout with spacing */
 #sidebar nav {
-    @apply flex flex-col;
+    @apply flex flex-col space-y-2;
 }
 
 /* Bottom section spacing */
 #sidebar .bottom-section {
     @apply mt-auto pt-6 border-t border-gray-200;
+}
+
+.bottom-section .sidebar-item {
+    margin-bottom: 4px;
+}
+
+.bottom-section .sidebar-item:last-child {
+    margin-bottom: 0;
 }
 
 /* Ensure sidebar is visible when logged in */
