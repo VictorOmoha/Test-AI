@@ -15,12 +15,14 @@
 }
 
 .sidebar-item {
-    @apply flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 mb-1 no-underline;
+    @apply flex items-center w-full px-6 py-4 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 no-underline;
     text-decoration: none;
+    margin-bottom: 8px;
 }
 
 .sidebar-item.active {
-    @apply bg-primary text-white hover:bg-blue-700 hover:text-white shadow-sm;
+    @apply bg-blue-50 text-blue-600 border-r-3 border-blue-600;
+    background-color: #EFF6FF;
 }
 
 .sidebar-item:hover {
@@ -28,12 +30,29 @@
 }
 
 .sidebar-item i {
-    @apply w-4 h-4 mr-3 flex-shrink-0 text-center;
-    min-width: 16px;
+    @apply w-5 h-5 mr-4 flex-shrink-0;
+    min-width: 20px;
+    font-size: 16px;
 }
 
 .sidebar-item span {
-    @apply flex-1 text-left font-medium;
+    @apply flex-1 text-left;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+/* Sidebar navigation spacing */
+#sidebar nav {
+    @apply space-y-2;
+}
+
+/* Bottom section spacing */
+#sidebar .bottom-section {
+    @apply mt-8 pt-6 border-t border-gray-200;
+}
+
+.bottom-section .sidebar-item {
+    margin-bottom: 4px;
 }
 
 /* Ensure sidebar is visible when logged in */

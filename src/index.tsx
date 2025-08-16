@@ -73,6 +73,9 @@ app.get('/', (c) => {
                   warning: '#F59E0B',
                   error: '#EF4444',
                   purple: '#8B5CF6'
+                },
+                borderWidth: {
+                  '3': '3px'
                 }
               }
             }
@@ -140,11 +143,11 @@ app.get('/', (c) => {
         <!-- Main Content -->
         <div class="flex">
             <!-- Sidebar (hidden by default, shown when logged in) -->
-            <div id="sidebar" class="hidden w-64 bg-white border-r border-gray-200 min-h-screen shadow-sm">
+            <div id="sidebar" class="hidden w-64 bg-white border-r border-gray-200 min-h-screen">
                 <div class="flex flex-col h-full">
                     <!-- Main Navigation -->
-                    <div class="flex-1 px-4 py-6">
-                        <nav class="space-y-2">
+                    <div class="flex-1 py-8">
+                        <nav>
                             <a href="#" class="sidebar-item active" data-section="dashboard">
                                 <i class="fas fa-chart-pie"></i>
                                 <span>Dashboard</span>
@@ -173,17 +176,15 @@ app.get('/', (c) => {
                     </div>
                     
                     <!-- Bottom Section -->
-                    <div class="px-4 py-4 border-t border-gray-200">
-                        <div class="space-y-2">
-                            <a href="#" class="sidebar-item">
-                                <i class="fas fa-question-circle"></i>
-                                <span>Help & Support</span>
-                            </a>
-                            <a href="#" class="sidebar-item" onclick="testApp.logout()">
-                                <i class="fas fa-sign-out-alt"></i>
-                                <span>Logout</span>
-                            </a>
-                        </div>
+                    <div class="bottom-section">
+                        <a href="#" class="sidebar-item">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Help & Support</span>
+                        </a>
+                        <a href="#" class="sidebar-item" onclick="testApp.logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
                     </div>
                 </div>
             </div>
