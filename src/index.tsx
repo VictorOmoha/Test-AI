@@ -140,46 +140,46 @@ app.get('/', (c) => {
         <!-- Main Content -->
         <div class="flex">
             <!-- Sidebar (hidden by default, shown when logged in) -->
-            <div id="sidebar" class="hidden w-64 bg-white border-r border-gray-200 min-h-screen">
-                <div class="p-6">
-                    <div class="space-y-6">
-                        <!-- Navigation Menu -->
-                        <div>
-                            <div class="space-y-1">
-                                <a href="#" class="sidebar-item active" data-section="dashboard">
-                                    <i class="fas fa-chart-pie"></i>
-                                    <span>Dashboard</span>
-                                </a>
-                                <a href="#" class="sidebar-item" data-section="tests">
-                                    <i class="fas fa-tasks"></i>
-                                    <span>My Tests</span>
-                                </a>
-                                <a href="#" class="sidebar-item" data-section="history">
-                                    <i class="fas fa-history"></i>
-                                    <span>Test History</span>
-                                </a>
-                                <a href="#" class="sidebar-item" data-section="analytics">
-                                    <i class="fas fa-chart-line"></i>
-                                    <span>Analytics</span>
-                                </a>
-                                <a href="#" class="sidebar-item" data-section="profile">
-                                    <i class="fas fa-user"></i>
-                                    <span>Profile</span>
-                                </a>
-                                <a href="#" class="sidebar-item" data-section="settings">
-                                    <i class="fas fa-cog"></i>
-                                    <span>Settings</span>
-                                </a>
-                            </div>
-                        </div>
-                        
-                        <!-- Help & Support -->
-                        <div class="border-t pt-6">
+            <div id="sidebar" class="hidden w-64 bg-white border-r border-gray-200 min-h-screen shadow-sm">
+                <div class="flex flex-col h-full">
+                    <!-- Main Navigation -->
+                    <div class="flex-1 px-4 py-6">
+                        <nav class="space-y-2">
+                            <a href="#" class="sidebar-item active" data-section="dashboard">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="#" class="sidebar-item" data-section="tests">
+                                <i class="fas fa-tasks"></i>
+                                <span>My Tests</span>
+                            </a>
+                            <a href="#" class="sidebar-item" data-section="history">
+                                <i class="fas fa-history"></i>
+                                <span>Test History</span>
+                            </a>
+                            <a href="#" class="sidebar-item" data-section="analytics">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Analytics</span>
+                            </a>
+                            <a href="#" class="sidebar-item" data-section="profile">
+                                <i class="fas fa-user"></i>
+                                <span>Profile</span>
+                            </a>
+                            <a href="#" class="sidebar-item" data-section="settings">
+                                <i class="fas fa-cog"></i>
+                                <span>Settings</span>
+                            </a>
+                        </nav>
+                    </div>
+                    
+                    <!-- Bottom Section -->
+                    <div class="px-4 py-4 border-t border-gray-200">
+                        <div class="space-y-2">
                             <a href="#" class="sidebar-item">
                                 <i class="fas fa-question-circle"></i>
                                 <span>Help & Support</span>
                             </a>
-                            <a href="#" class="sidebar-item">
+                            <a href="#" class="sidebar-item" onclick="testApp.logout()">
                                 <i class="fas fa-sign-out-alt"></i>
                                 <span>Logout</span>
                             </a>
@@ -221,8 +221,8 @@ app.get('/', (c) => {
                 </div>
 
                 <!-- Dashboard Section (hidden by default) -->
-                <div id="dashboardSection" class="hidden">
-                    <div class="p-8">
+                <div id="dashboardSection" class="hidden min-h-screen bg-gray-50">
+                    <div class="p-6 lg:p-8">
                         <!-- Welcome Header -->
                         <div class="mb-8">
                             <h1 class="text-2xl font-bold text-gray-900 mb-2" id="welcomeMessage">Welcome back, John!</h1>

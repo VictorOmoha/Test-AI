@@ -253,13 +253,25 @@ class TestApp {
         // Toggle sidebar
         const sidebar = document.getElementById('sidebar');
         if (sidebar) {
-            sidebar.style.display = isLoggedIn ? 'block' : 'none';
+            if (isLoggedIn) {
+                sidebar.classList.remove('hidden');
+                sidebar.classList.add('block');
+            } else {
+                sidebar.classList.add('hidden');
+                sidebar.classList.remove('block');
+            }
         }
         
         // Toggle main nav tabs
         const mainNavTabs = document.getElementById('mainNavTabs');
         if (mainNavTabs) {
-            mainNavTabs.style.display = isLoggedIn ? 'flex' : 'none';
+            if (isLoggedIn) {
+                mainNavTabs.classList.remove('hidden');
+                mainNavTabs.classList.add('flex');
+            } else {
+                mainNavTabs.classList.add('hidden');
+                mainNavTabs.classList.remove('flex');
+            }
         }
         
         // Update user name and initials

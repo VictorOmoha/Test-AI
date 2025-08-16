@@ -2,7 +2,7 @@
 
 /* Navigation Tabs */
 .nav-tab {
-    @apply px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 transition-colors;
+    @apply px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 transition-colors cursor-pointer;
 }
 
 .nav-tab.active {
@@ -10,16 +10,35 @@
 }
 
 /* Sidebar Styles */
+#sidebar {
+    @apply bg-white;
+}
+
 .sidebar-item {
-    @apply flex items-center w-full px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors;
+    @apply flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 mb-1 no-underline;
+    text-decoration: none;
 }
 
 .sidebar-item.active {
-    @apply bg-primary text-white hover:bg-blue-700 hover:text-white;
+    @apply bg-primary text-white hover:bg-blue-700 hover:text-white shadow-sm;
+}
+
+.sidebar-item:hover {
+    text-decoration: none;
 }
 
 .sidebar-item i {
-    @apply w-5 h-5 mr-3 text-center;
+    @apply w-4 h-4 mr-3 flex-shrink-0 text-center;
+    min-width: 16px;
+}
+
+.sidebar-item span {
+    @apply flex-1 text-left font-medium;
+}
+
+/* Ensure sidebar is visible when logged in */
+#sidebar.show {
+    @apply block;
 }
 
 /* Chart Tab Buttons */
