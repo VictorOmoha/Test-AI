@@ -242,6 +242,108 @@
     background-color: #A0AEC0;
 }
 
+/* Test in Progress Styles */
+.test-progress-card {
+    @apply flex items-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg;
+}
+
+.test-progress-icon {
+    @apply w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4;
+}
+
+.test-progress-info {
+    @apply flex-1;
+}
+
+.test-progress-title {
+    @apply font-semibold text-gray-900 mb-1;
+}
+
+.test-progress-meta {
+    @apply text-sm text-gray-600 mb-2;
+}
+
+.test-progress-bar {
+    @apply w-full bg-white rounded-full h-2 mb-1;
+}
+
+.test-progress-fill {
+    @apply bg-blue-500 h-full rounded-full transition-all duration-300;
+}
+
+.test-progress-text {
+    @apply text-xs text-gray-600;
+}
+
+.test-progress-actions {
+    @apply flex flex-col space-y-2;
+}
+
+.continue-btn {
+    @apply px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors;
+}
+
+.resume-link {
+    @apply text-xs text-blue-600 hover:text-blue-800 cursor-pointer;
+}
+
+/* Statistics Card Styles - Reference Design */
+.stat-card {
+    @apply bg-white p-6 rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200;
+}
+
+.stat-card-content {
+    @apply flex items-center justify-between;
+}
+
+.stat-card-info {
+    @apply flex-1;
+}
+
+.stat-card-label {
+    @apply text-sm text-gray-600 font-medium mb-1;
+}
+
+.stat-card-value {
+    @apply text-2xl font-bold text-gray-900 mb-1;
+}
+
+.stat-card-change {
+    @apply text-xs flex items-center;
+}
+
+.stat-card-change.positive {
+    @apply text-green-600;
+}
+
+.stat-card-change.negative {
+    @apply text-red-600;
+}
+
+.stat-card-change.neutral {
+    @apply text-gray-600;
+}
+
+.stat-card-icon {
+    @apply w-12 h-12 rounded-lg flex items-center justify-center;
+}
+
+.stat-card-icon.primary {
+    @apply bg-blue-100 text-blue-600;
+}
+
+.stat-card-icon.success {
+    @apply bg-green-100 text-green-600;
+}
+
+.stat-card-icon.purple {
+    @apply bg-purple-100 text-purple-600;
+}
+
+.stat-card-icon.warning {
+    @apply bg-yellow-100 text-yellow-600;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .sidebar-item span {

@@ -141,48 +141,62 @@ app.get('/', (c) => {
         </nav>
 
         <!-- Main Content -->
-        <div class="flex">
-            <!-- Sidebar (hidden by default, shown when logged in) -->
+        <div class="flex bg-gray-50 min-h-screen">
+            <!-- Sidebar (shown when logged in) -->
             <div id="sidebar" class="hidden w-64 bg-white border-r border-gray-200 min-h-screen">
-                <div class="flex flex-col h-full py-6">
-                    <!-- Main Navigation - Single Column -->
-                    <nav class="flex-1">
-                        <a href="#" class="sidebar-item active" data-section="dashboard">
-                            <i class="fas fa-chart-pie"></i>
-                            <span>Dashboard</span>
-                        </a>
-                        <a href="#" class="sidebar-item" data-section="tests">
-                            <i class="fas fa-tasks"></i>
-                            <span>My Tests</span>
-                        </a>
-                        <a href="#" class="sidebar-item" data-section="history">
-                            <i class="fas fa-history"></i>
-                            <span>Test History</span>
-                        </a>
-                        <a href="#" class="sidebar-item" data-section="analytics">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Analytics</span>
-                        </a>
-                        <a href="#" class="sidebar-item" data-section="profile">
-                            <i class="fas fa-user"></i>
-                            <span>Profile</span>
-                        </a>
-                        <a href="#" class="sidebar-item" data-section="settings">
-                            <i class="fas fa-cog"></i>
-                            <span>Settings</span>
-                        </a>
+                <div class="flex flex-col h-full">
+                    <!-- Logo Section -->
+                    <div class="px-6 py-6 border-b border-gray-200">
+                        <div class="flex items-center">
+                            <div class="bg-primary text-white w-8 h-8 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-graduation-cap text-sm"></i>
+                            </div>
+                            <span class="font-bold text-xl text-gray-900">TestAI</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation -->
+                    <nav class="flex-1 px-4 py-6">
+                        <div class="space-y-1">
+                            <a href="#" class="sidebar-item active" data-section="dashboard">
+                                <i class="fas fa-home w-5"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="#" class="sidebar-item" data-section="tests">
+                                <i class="fas fa-tasks w-5"></i>
+                                <span>Tests</span>
+                            </a>
+                            <a href="#" class="sidebar-item" data-section="history">
+                                <i class="fas fa-history w-5"></i>
+                                <span>History</span>
+                            </a>
+                            <a href="#" class="sidebar-item" data-section="analytics">
+                                <i class="fas fa-chart-line w-5"></i>
+                                <span>Analytics</span>
+                            </a>
+                            <a href="#" class="sidebar-item" data-section="profile">
+                                <i class="fas fa-user w-5"></i>
+                                <span>Profile</span>
+                            </a>
+                            <a href="#" class="sidebar-item" data-section="settings">
+                                <i class="fas fa-cog w-5"></i>
+                                <span>Settings</span>
+                            </a>
+                        </div>
                     </nav>
                     
                     <!-- Bottom Section -->
-                    <div class="bottom-section">
-                        <a href="#" class="sidebar-item">
-                            <i class="fas fa-question-circle"></i>
-                            <span>Help & Support</span>
-                        </a>
-                        <a href="#" class="sidebar-item" onclick="testApp.logout()">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Logout</span>
-                        </a>
+                    <div class="px-4 py-6 border-t border-gray-200">
+                        <div class="space-y-1">
+                            <a href="#" class="sidebar-item">
+                                <i class="fas fa-question-circle w-5"></i>
+                                <span>Help & Support</span>
+                            </a>
+                            <a href="#" class="sidebar-item" onclick="testApp.logout()">
+                                <i class="fas fa-sign-out-alt w-5"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -220,13 +234,33 @@ app.get('/', (c) => {
                 </div>
 
                 <!-- Dashboard Section (hidden by default) -->
-                <div id="dashboardSection" class="hidden min-h-screen bg-gray-50">
-                    <div class="p-6 lg:p-8">
-                        <!-- Welcome Header -->
-                        <div class="mb-8">
-                            <h1 class="text-2xl font-bold text-gray-900 mb-2" id="welcomeMessage">Welcome back, John!</h1>
-                            <p class="text-gray-600">Here's an overview of your test activities and performance.</p>
+                <div id="dashboardSection" class="hidden flex-1 bg-gray-50">
+                    <!-- Top Bar -->
+                    <div class="bg-white border-b border-gray-200 px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900" id="welcomeMessage">Welcome back, John!</h1>
+                                <p class="text-gray-600 text-sm mt-1">Here's an overview of your test activities and performance.</p>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <button class="p-2 text-gray-400 hover:text-gray-600">
+                                    <i class="fas fa-bell"></i>
+                                </button>
+                                <button class="p-2 text-gray-400 hover:text-gray-600">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                                        <span id="userInitials" class="text-white text-sm font-medium">JD</span>
+                                    </div>
+                                    <span id="userName" class="text-gray-700 font-medium">John Doe</span>
+                                    <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                                </div>
+                            </div>
                         </div>
+                    </div>
+                    
+                    <div class="p-6">
 
                         <!-- Statistics Cards -->
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -400,8 +434,16 @@ app.get('/', (c) => {
                             </div>
                         </div>
 
+                        <!-- Test in Progress -->
+                        <div class="bg-white p-6 rounded-lg shadow-sm border mb-8">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Test in Progress</h3>
+                            <div id="testInProgress">
+                                <!-- Test in progress will be loaded here -->
+                            </div>
+                        </div>
+
                         <!-- Areas for Improvement and AI Recommendations -->
-                        <div class="grid lg:grid-cols-2 gap-8 mt-8">
+                        <div class="grid lg:grid-cols-2 gap-8">
                             <!-- Areas for Improvement -->
                             <div class="bg-white p-6 rounded-lg shadow-sm border">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-6">Areas for Improvement</h3>
@@ -414,7 +456,7 @@ app.get('/', (c) => {
                             <div class="bg-white p-6 rounded-lg shadow-sm border">
                                 <div class="flex justify-between items-center mb-6">
                                     <h3 class="text-lg font-semibold text-gray-900">AI Recommendations</h3>
-                                    <span class="text-xs text-purple-600 font-medium">Powered by AI</span>
+                                    <span class="text-xs text-purple-600 font-medium px-2 py-1 bg-purple-100 rounded-full">Powered by AI</span>
                                 </div>
                                 <div class="space-y-4" id="aiRecommendations">
                                     <!-- AI recommendations will be loaded here -->

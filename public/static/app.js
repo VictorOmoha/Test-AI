@@ -354,6 +354,7 @@ class TestApp {
             this.initializePerformanceChart();
 
             // Load improvement areas and AI recommendations
+            this.loadTestInProgress();
             this.loadImprovementAreas();
             this.loadAIRecommendations();
 
@@ -704,28 +705,58 @@ class TestApp {
 
         container.innerHTML = recommendations.map(rec => `
             <div class="ai-recommendation">
-                <div class="ai-recommendation-icon">
-                    <i class="${rec.icon} text-purple-600 text-sm"></i>
-                </div>
-                <div class="ai-recommendation-title">
-                    <i class="fas fa-lightbulb text-purple-500 mr-2"></i>
-                    ${rec.title}
-                </div>
-                <div class="ai-recommendation-text">
-                    ${rec.text}
-                </div>
-                <div class="ai-recommendation-actions">
-                    ${rec.actions.map((action, index) => `
-                        <span class="ai-action-btn ${index === 0 ? 'primary' : 'secondary'}">
-                            ${action === 'Select' ? '<i class="fas fa-check mr-1"></i>' : 
-                              action === 'Move' ? '<i class="fas fa-hand-pointer mr-1"></i>' : 
-                              '<i class="fas fa-sticky-note mr-1"></i>'}
-                            ${action}
-                        </span>
-                    `).join('')}
+                <div class="ai-recommendation-header">
+                    <div class="ai-recommendation-icon">
+                        <i class="${rec.icon}"></i>
+                    </div>
+                    <div class="ai-recommendation-content">
+                        <div class="ai-recommendation-title">${rec.title}</div>
+                        <div class="ai-recommendation-text">${rec.text}</div>
+                        <div class="ai-recommendation-actions">
+                            ${rec.actions.map(action => `
+                                <span class="ai-action-btn ${action.toLowerCase()}">
+                                    ${action}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
                 </div>
             </div>
         `).join('');
+    }
+
+    loadTestInProgress() {
+        const container = document.getElementById('testInProgress');
+        if (!container) return;
+
+        // Mock test in progress data
+        const testInProgress = {
+            title: 'Programming - JavaScript Basics',
+            difficulty: 'Medium',
+            questions: 30,
+            answered: 12,
+            progress: 40
+        };
+
+        container.innerHTML = `
+            <div class="test-progress-card">
+                <div class="test-progress-icon">
+                    <i class="fas fa-code text-blue-600"></i>
+                </div>
+                <div class="test-progress-info">
+                    <div class="test-progress-title">${testInProgress.title}</div>
+                    <div class="test-progress-meta">${testInProgress.difficulty} • ${testInProgress.answered}/${testInProgress.questions} questions • 45 Minutes</div>
+                    <div class="test-progress-bar">
+                        <div class="test-progress-fill" style="width: ${testInProgress.progress}%"></div>
+                    </div>
+                    <div class="test-progress-text">Progress: ${testInProgress.answered}/${testInProgress.questions} questions</div>
+                </div>
+                <div class="test-progress-actions">
+                    <button class="continue-btn">Continue</button>
+                    <div class="resume-link">Resume Test</div>
+                </div>
+            </div>
+        `;
     }
 
     // Dashboard Features
