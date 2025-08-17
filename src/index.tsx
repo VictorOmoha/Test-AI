@@ -448,6 +448,195 @@ app.get('/', (c) => {
                         </div>
                     </div>
                 </div>
+
+                <!-- Tests Section -->
+                <div id="testsSection" class="hidden flex-1 bg-gray-50">
+                    <div class="bg-white border-b border-gray-200 px-6 py-4">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">My Tests</h1>
+                            <p class="text-gray-600 text-sm mt-1">Create and manage your tests</p>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <!-- Test Creation Form -->
+                        <div class="bg-white p-6 rounded-lg shadow-sm border mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Create New Test</h3>
+                            <div id="testCreationForm">
+                                <!-- Test creation form will be loaded here -->
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Test Category</label>
+                                        <select id="testCategory" class="w-full p-3 border border-gray-300 rounded-lg">
+                                            <option value="">Select category...</option>
+                                            <option value="mathematics">Mathematics</option>
+                                            <option value="science">Science</option>
+                                            <option value="programming">Programming</option>
+                                            <option value="history">History</option>
+                                            <option value="english">English</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Difficulty Level</label>
+                                        <div class="flex space-x-2">
+                                            <button type="button" class="difficulty-btn active" data-difficulty="Easy">Easy</button>
+                                            <button type="button" class="difficulty-btn" data-difficulty="Medium">Medium</button>
+                                            <button type="button" class="difficulty-btn" data-difficulty="Hard">Hard</button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Number of Questions: <span id="questionCountDisplay">15</span>
+                                        </label>
+                                        <input type="range" id="questionCountSlider" min="5" max="50" value="15" class="w-full">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Time Limit</label>
+                                        <select id="timeLimit" class="w-full p-3 border border-gray-300 rounded-lg">
+                                            <option value="">No time limit</option>
+                                            <option value="15">15 minutes</option>
+                                            <option value="30">30 minutes</option>
+                                            <option value="45">45 minutes</option>
+                                            <option value="60">1 hour</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button id="createTestBtn" class="mt-6 bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                    Generate Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Section -->
+                <div id="historySection" class="hidden flex-1 bg-gray-50">
+                    <div class="bg-white border-b border-gray-200 px-6 py-4">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Test History</h1>
+                            <p class="text-gray-600 text-sm mt-1">Review your past test performances</p>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Test Results</h3>
+                            <div id="testHistoryList">
+                                <!-- Test history will be loaded here -->
+                                <div class="text-center py-8 text-gray-500">
+                                    <i class="fas fa-history text-4xl mb-4"></i>
+                                    <p>No test history available yet. Take a test to see your results here!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Section -->
+                <div id="analyticsSection" class="hidden flex-1 bg-gray-50">
+                    <div class="bg-white border-b border-gray-200 px-6 py-4">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Analytics</h1>
+                            <p class="text-gray-600 text-sm mt-1">Detailed performance insights and trends</p>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid lg:grid-cols-2 gap-6">
+                            <div class="bg-white p-6 rounded-lg shadow-sm border">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance Trends</h3>
+                                <div class="h-64 flex items-center justify-center text-gray-500">
+                                    <div class="text-center">
+                                        <i class="fas fa-chart-line text-4xl mb-4"></i>
+                                        <p>Analytics charts will appear here</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-sm border">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Subject Breakdown</h3>
+                                <div class="h-64 flex items-center justify-center text-gray-500">
+                                    <div class="text-center">
+                                        <i class="fas fa-chart-pie text-4xl mb-4"></i>
+                                        <p>Subject performance breakdown</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Section -->
+                <div id="profileSection" class="hidden flex-1 bg-gray-50">
+                    <div class="bg-white border-b border-gray-200 px-6 py-4">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Profile Settings</h1>
+                            <p class="text-gray-600 text-sm mt-1">Manage your account and preferences</p>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Account Information</h3>
+                            <div id="profileForm">
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                        <input type="text" id="profileName" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Your full name">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                        <input type="email" id="profileEmail" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="your@email.com">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Age</label>
+                                        <input type="number" id="profileAge" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Age">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Education Level</label>
+                                        <select id="profileEducation" class="w-full p-3 border border-gray-300 rounded-lg">
+                                            <option value="">Select education level</option>
+                                            <option value="High School">High School</option>
+                                            <option value="Associate's Degree">Associate's Degree</option>
+                                            <option value="Bachelor's Degree">Bachelor's Degree</option>
+                                            <option value="Master's Degree">Master's Degree</option>
+                                            <option value="Doctorate">Doctorate</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button id="updateProfileBtn" class="mt-6 bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                    Update Profile
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Section -->
+                <div id="settingsSection" class="hidden flex-1 bg-gray-50">
+                    <div class="bg-white border-b border-gray-200 px-6 py-4">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Settings</h1>
+                            <p class="text-gray-600 text-sm mt-1">Configure your application preferences</p>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Application Settings</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-700">Email Notifications</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-700">Auto-save Progress</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer" checked>
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

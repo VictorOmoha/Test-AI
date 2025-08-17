@@ -292,7 +292,20 @@ class TestApp {
         
         // Toggle main sections
         document.getElementById('welcomeSection').style.display = isLoggedIn ? 'none' : 'block';
-        document.getElementById('dashboardSection').style.display = isLoggedIn ? 'block' : 'none';
+        
+        // Hide all sections initially
+        const sections = ['dashboardSection', 'testsSection', 'historySection', 'analyticsSection', 'profileSection', 'settingsSection'];
+        sections.forEach(sectionId => {
+            const element = document.getElementById(sectionId);
+            if (element) {
+                element.style.display = 'none';
+            }
+        });
+
+        // Show dashboard by default when logged in
+        if (isLoggedIn) {
+            this.switchSection('dashboard');
+        }
     }
 
     switchSection(section) {
@@ -307,22 +320,41 @@ class TestApp {
 
         this.currentSection = section;
 
-        // Handle section switching
+        // Hide all sections first
+        const sections = ['dashboardSection', 'testsSection', 'historySection', 'analyticsSection', 'profileSection', 'settingsSection'];
+        sections.forEach(sectionId => {
+            const element = document.getElementById(sectionId);
+            if (element) {
+                element.classList.add('hidden');
+            }
+        });
+
+        // Show the selected section
+        const targetSection = `${section}Section`;
+        const element = document.getElementById(targetSection);
+        if (element) {
+            element.classList.remove('hidden');
+        }
+
+        // Handle section-specific logic
         switch(section) {
             case 'dashboard':
                 this.showDashboard();
                 break;
             case 'tests':
-                this.showTestCreation();
+                this.showTests();
                 break;
             case 'history':
-                this.showTestHistory();
+                this.showHistory();
                 break;
             case 'analytics':
                 this.showAnalytics();
                 break;
             case 'profile':
                 this.showProfile();
+                break;
+            case 'settings':
+                this.showSettings();
                 break;
             default:
                 this.showDashboard();
@@ -332,6 +364,31 @@ class TestApp {
     showDashboard() {
         // Dashboard is already visible, just refresh data
         this.loadUserData();
+    }
+
+    showTests() {
+        // Initialize test creation functionality
+        this.setupTestCreationForm();
+    }
+
+    showHistory() {
+        // Load test history
+        this.loadTestHistory();
+    }
+
+    showAnalytics() {
+        // Load analytics data
+        this.loadAnalytics();
+    }
+
+    showProfile() {
+        // Load user profile data
+        this.loadProfile();
+    }
+
+    showSettings() {
+        // Initialize settings
+        this.loadSettings();
     }
 
     async loadUserData() {
@@ -755,6 +812,160 @@ class TestApp {
                 </div>
             </div>
         `;
+    }
+
+    // Section-specific functionality
+    setupTestCreationForm() {
+        // Setup test creation form interactions
+        const slider = document.getElementById('questionCountSlider');
+        const display = document.getElementById('questionCountDisplay');
+        const createBtn = document.getElementById('createTestBtn');
+        
+        if (slider && display) {
+            slider.addEventListener('input', (e) => {
+                display.textContent = e.target.value;
+            });
+        }
+
+        // Setup difficulty buttons
+        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        if (createBtn) {
+            createBtn.addEventListener('click', () => this.handleCreateTest());
+        }
+    }
+
+    async handleCreateTest() {
+        const category = document.getElementById('testCategory')?.value;
+        const difficulty = document.querySelector('.difficulty-btn.active')?.dataset.difficulty || 'Medium';
+        const questionCount = document.getElementById('questionCountSlider')?.value || 15;
+        const timeLimit = document.getElementById('timeLimit')?.value;
+
+        if (!category) {
+            this.showError('Please select a test category');
+            return;
+        }
+
+        try {
+            const response = await axios.post('/api/tests/config', {
+                test_type: category,
+                difficulty: difficulty,
+                num_questions: parseInt(questionCount),
+                duration_minutes: timeLimit ? parseInt(timeLimit) : 30,
+                question_types: ['MCQ']
+            });
+
+            if (response.data.success) {
+                this.showSuccess('Test created successfully! Starting test...');
+                // Could start the test or show test interface
+            }
+        } catch (error) {
+            console.error('Test creation error:', error);
+            this.showError('Failed to create test. Please try again.');
+        }
+    }
+
+    async loadTestHistory() {
+        const container = document.getElementById('testHistoryList');
+        if (!container) return;
+
+        try {
+            const response = await axios.get('/api/tests/history');
+            if (response.data.success && response.data.tests.length > 0) {
+                container.innerHTML = response.data.tests.map(test => `
+                    <div class="recent-test-item mb-4">
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-900">${test.category} - ${test.difficulty}</div>
+                            <div class="text-sm text-gray-500">${new Date(test.completed_at).toLocaleDateString()}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="score-badge ${this.getScoreBadgeClass(test.score)}">${test.score}%</div>
+                            <div class="text-xs text-gray-500">${test.questions_count} questions</div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-history text-4xl mb-4"></i>
+                        <p>No test history available yet. Take a test to see your results here!</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Failed to load test history:', error);
+            container.innerHTML = `
+                <div class="text-center py-8 text-red-500">
+                    <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+                    <p>Failed to load test history. Please try again later.</p>
+                </div>
+            `;
+        }
+    }
+
+    getScoreBadgeClass(score) {
+        if (score >= 90) return 'excellent';
+        if (score >= 75) return 'good';
+        if (score >= 60) return 'average';
+        return 'poor';
+    }
+
+    loadAnalytics() {
+        // Placeholder for analytics functionality
+        console.log('Analytics section loaded');
+    }
+
+    async loadProfile() {
+        if (!this.user) return;
+
+        const nameField = document.getElementById('profileName');
+        const emailField = document.getElementById('profileEmail');
+        const ageField = document.getElementById('profileAge');
+        const educationField = document.getElementById('profileEducation');
+        const updateBtn = document.getElementById('updateProfileBtn');
+
+        // Populate current user data
+        if (nameField) nameField.value = this.user.name || '';
+        if (emailField) emailField.value = this.user.email || '';
+        if (ageField) ageField.value = this.user.age || '';
+        if (educationField) educationField.value = this.user.education || '';
+
+        // Setup update functionality
+        if (updateBtn) {
+            updateBtn.addEventListener('click', () => this.handleUpdateProfile());
+        }
+    }
+
+    async handleUpdateProfile() {
+        const name = document.getElementById('profileName')?.value;
+        const age = document.getElementById('profileAge')?.value;
+        const education = document.getElementById('profileEducation')?.value;
+
+        try {
+            const response = await axios.put('/api/auth/profile', {
+                name,
+                age: age ? parseInt(age) : null,
+                education
+            });
+
+            if (response.data.success) {
+                this.user = { ...this.user, ...response.data.user };
+                this.showSuccess('Profile updated successfully!');
+            }
+        } catch (error) {
+            console.error('Profile update error:', error);
+            this.showError('Failed to update profile. Please try again.');
+        }
+    }
+
+    loadSettings() {
+        // Placeholder for settings functionality
+        console.log('Settings section loaded');
     }
 
     // Dashboard Features
