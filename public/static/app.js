@@ -509,6 +509,7 @@ class TestApp {
 
         this.displayTestCategories(categories);
         this.populateQuickTestCategories(categories);
+        this.populateTestCreationCategories(categories);
     }
 
     displayTestCategories(categories) {
@@ -542,7 +543,7 @@ class TestApp {
             const colorClass = colors[index % colors.length];
 
             return `
-                <div class="test-category-card cursor-pointer" onclick="testApp.createTestForCategory('${category.id}')">
+                <div class="test-category-card cursor-pointer" onclick="testApp.createTestForCategory('${category.name}')">
                     <div class="flex items-center justify-between mb-3">
                         <i class="${icon} text-xl text-primary"></i>
                         <span class="text-right text-sm font-medium">${progress}%</span>
@@ -564,7 +565,16 @@ class TestApp {
 
         select.innerHTML = '<option value="">Select category...</option>' +
             categories.map(category => 
-                `<option value="${category.id}">${category.name}</option>`
+                `<option value="${category.name}">${category.name}</option>`
+            ).join('');
+    }
+
+    populateTestCreationCategories(categories) {
+        const select = document.getElementById('testCategory');
+        if (!select) return;
+        select.innerHTML = '<option value="">Select category...</option>' +
+            categories.map(category => 
+                `<option value="${category.name}">${category.name}</option>`
             ).join('');
     }
 
@@ -766,10 +776,14 @@ class TestApp {
         }
     }
 
-    createTestForCategory(categoryId) {
+    createTestForCategory(categoryName) {
         const select = document.getElementById('quickTestCategory');
         if (select) {
-            select.value = categoryId;
+            select.value = categoryName;
+        }
+        const testSelect = document.getElementById('testCategory');
+        if (testSelect) {
+            testSelect.value = categoryName;
         }
         // Could scroll to or highlight the quick test form
     }
