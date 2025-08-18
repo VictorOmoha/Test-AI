@@ -235,7 +235,7 @@ app.get('/', (c) => {
                 </div>
 
                 <!-- Dashboard Section (hidden by default) -->
-                <div id="dashboardSection" class="flex-1 bg-gray-50" style="display: none;">
+                <div id="dashboardSection" class="hidden flex-1 bg-gray-50">
                     <!-- Top Bar -->
                     <div class="bg-white border-b border-gray-200 px-6 py-4">
                         <div>

@@ -322,7 +322,8 @@ class TestApp {
         sections.forEach(sectionId => {
             const element = document.getElementById(sectionId);
             if (element) {
-                element.style.display = 'none';
+                element.classList.add('hidden');
+                element.style.display = '';
             }
         });
 
@@ -361,6 +362,7 @@ class TestApp {
         console.log('Target section:', targetSection, 'Element found:', !!element);
         if (element) {
             element.classList.remove('hidden');
+            element.style.display = 'block';
             console.log('Removed hidden class from', targetSection);
         }
 
