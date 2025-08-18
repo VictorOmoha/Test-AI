@@ -302,8 +302,25 @@ curl http://localhost:3000/api/health
 
 ---
 
-**Demo Account**: 
-- Email: `demo@testapp.dev`
-- Password: `demo123`
+## 🚀 **How to Access the Dashboard**
+
+**IMPORTANT**: When you first visit the application, you'll see the **landing page** with "Welcome to AI Test Application". This is the correct behavior for non-logged-in users.
+
+To access the **full dashboard** with statistics, progress bars, and all features:
+
+1. **Click the "Login" button** in the top-right corner
+2. **Enter ANY email and password** (demo login accepts any credentials)
+   - Example: `test@example.com` / `password123`
+   - Or use: `demo@testapp.dev` / `demo123`
+3. **Click "Login"** and you'll see the complete dashboard with:
+   - Statistics cards (24 tests taken, 78% average score)
+   - Progress bars for Areas for Improvement
+   - Test in Progress section with blue progress bar
+   - AI Recommendations with actionable suggestions
+   - Performance charts and analytics
+
+**Note**: The application uses **demo authentication** - any email/password combination will work for testing purposes.
+
+---
 
 For development questions or contributions, please check the source code structure and API documentation above.
