@@ -84,24 +84,44 @@ export class AIService {
   // Fallback question generation when OpenAI API is not available
   private generateFallbackQuestions(request: AIQuestionRequest, category?: TestCategory): AIGenerationResponse {
     console.log(`Generating fallback questions for ${request.test_type} - ${request.difficulty}`)
-    
+
+    // Use a dynamic generator for Mathematics to avoid repeats
+    if ((request.test_type || '').toLowerCase().includes('math')) {
+      return this.generateDynamicMathQuestions(request)
+    }
+
     const questions: GeneratedQuestion[] = []
     const { test_type, difficulty, num_questions, question_types } = request
 
     // Question templates by category
     const questionTemplates = this.getQuestionTemplates(test_type, difficulty)
-    
+
+    // Build a non-repeating rotation of template questions
+    const usedText = new Set<string>()
+
     for (let i = 0; i < num_questions; i++) {
       const questionType = question_types[i % question_types.length]
       const template = questionTemplates[questionType] || questionTemplates['MCQ']
-      const questionIndex = i % template.length
-      
+
+      // Shuffle index pick with retry to reduce duplicates
+      let picked: any | null = null
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const idx = Math.floor(Math.random() * template.length)
+        const candidate = template[idx]
+        if (!usedText.has(candidate.question)) {
+          picked = candidate
+          usedText.add(candidate.question)
+          break
+        }
+      }
+      if (!picked) picked = template[i % template.length]
+
       questions.push({
-        question: template[questionIndex].question,
+        question: picked.question,
         type: questionType,
-        options: template[questionIndex].options,
-        correct_answer: template[questionIndex].correct_answer,
-        explanation: template[questionIndex].explanation
+        options: picked.options,
+        correct_answer: picked.correct_answer,
+        explanation: picked.explanation
       })
     }
 
@@ -111,6 +131,138 @@ export class AIService {
       tokens_used: 0,
       cost_estimate: 0
     }
+  }
+
+  // Dynamically generate varied math questions to avoid repetition in fallback mode
+  private generateDynamicMathQuestions(request: AIQuestionRequest): AIGenerationResponse {
+    const { num_questions, question_types, difficulty } = request
+    const questions: GeneratedQuestion[] = []
+    const used = new Set<string>()
+
+    const makeUnique = (gen: () => GeneratedQuestion): GeneratedQuestion => {
+      for (let i = 0; i < 20; i++) {
+        const q = gen()
+        if (!used.has(q.question)) {
+          used.add(q.question)
+          return q
+        }
+      }
+      return gen()
+    }
+
+    const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
+
+    const genMCQ = (): GeneratedQuestion => {
+      // Randomly choose a pattern
+      const pattern = randInt(1, 6)
+      let question = ''
+      let answerNum: number = 0
+      let explanation = ''
+
+      if (pattern === 1) {
+        const a = randInt(10, 99), b = randInt(10, 99)
+        question = `What is ${a} + ${b}?`
+        answerNum = a + b
+        explanation = `${a} + ${b} = ${answerNum}`
+      } else if (pattern === 2) {
+        let a = randInt(30, 120), b = randInt(10, 29)
+        if (b > a) [a, b] = [b, a]
+        question = `What is ${a} − ${b}?`
+        answerNum = a - b
+        explanation = `${a} − ${b} = ${answerNum}`
+      } else if (pattern === 3) {
+        const a = randInt(5, 20), b = randInt(3, 12)
+        question = `What is ${a} × ${b}?`
+        answerNum = a * b
+        explanation = `${a} × ${b} = ${answerNum}`
+      } else if (pattern === 4) {
+        const a = randInt(3, 12), b = randInt(3, 12)
+        const dividend = a * b
+        question = `What is ${dividend} ÷ ${a}?`
+        answerNum = b
+        explanation = `${dividend} ÷ ${a} = ${b}`
+      } else if (pattern === 5) {
+        const k = randInt(3, 15)
+        const n = k * k
+        question = `What is the square root of ${n}?`
+        answerNum = k
+        explanation = `√${n} = ${k} because ${k} × ${k} = ${n}`
+      } else {
+        const a = randInt(2, 12)
+        const x = randInt(2, 20)
+        const b = randInt(1, 30)
+        const c = a * x + b
+        question = `Solve for x: ${a}x + ${b} = ${c}`
+        answerNum = x
+        explanation = `${a}x + ${b} = ${c} → ${a}x = ${c - b} → x = ${(c - b)}/${a} = ${x}`
+      }
+
+      // Build options with plausible distractors
+      const correct = answerNum
+      const optsSet = new Set<number>([correct])
+      while (optsSet.size < 4) {
+        const delta = randInt(1, Math.max(2, Math.floor(Math.abs(correct) * 0.2) + 2))
+        const sign = Math.random() < 0.5 ? -1 : 1
+        const candidate = correct + sign * delta
+        optsSet.add(candidate)
+      }
+      const values = Array.from(optsSet)
+      // Shuffle values and place correct randomly
+      for (let i = values.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[values[i], values[j]] = [values[j], values[i]]
+      }
+      const correctIndex = values.indexOf(correct)
+      const letters = ['A', 'B', 'C', 'D']
+      const options = values.map((v, i) => `${letters[i]}. ${v}`)
+      const correct_answer = letters[correctIndex]
+
+      return { question, type: 'MCQ', options, correct_answer, explanation }
+    }
+
+    const genTF = (): GeneratedQuestion => {
+      const a = randInt(5, 30), b = randInt(5, 30)
+      const left = a * b
+      const right = a * b + (Math.random() < 0.5 ? 0 : randInt(1, 5))
+      const isTrue = left === right
+      const question = `${a} × ${b} = ${right}. Is this statement true?`
+      return {
+        question,
+        type: 'TrueFalse',
+        correct_answer: isTrue ? 'True' : 'False',
+        explanation: `${a} × ${b} = ${a * b}${isTrue ? '' : `, not ${right}`}`
+      }
+    }
+
+    const genSA = (): GeneratedQuestion => {
+      const a = randInt(20, 120), b = randInt(2, 12)
+      const question = `Compute ${a} ÷ ${b}.`
+      const exact = (a / b).toFixed(2)
+      return {
+        question,
+        type: 'ShortAnswer',
+        correct_answer: `${exact}`,
+        explanation: `${a} ÷ ${b} = ${a / b}`
+      }
+    }
+
+    for (let i = 0; i < num_questions; i++) {
+      const qType = question_types[i % question_types.length]
+      let q: GeneratedQuestion
+      if (qType === 'TrueFalse') q = makeUnique(genTF)
+      else if (qType === 'ShortAnswer') q = makeUnique(genSA)
+      else q = makeUnique(genMCQ)
+      questions.push(q)
+    }
+
+    // Adjust difficulty lightly by nudging number ranges
+    if (difficulty === 'Easy') {
+      // nothing extra; ranges already easy-ish
+    } else if (difficulty === 'Hard') {
+      // Could increase ranges in the future
+    }
+
+    return { success: true, questions, tokens_used: 0, cost_estimate: 0 }
   }
 
   // Get question templates for fallback generation

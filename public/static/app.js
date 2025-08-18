@@ -16,23 +16,23 @@ class TestApp {
         this.checkAuthState();
         this.setupAxiosInterceptors();
         this.initializeModules();
+        // Ensure categories populate regardless of auth timing
+        try {
+            this.loadTestCategories();
+        } catch (e) {}
     }
 
     initializeModules() {
-        // Initialize modules after DOM is ready
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof TestInterface !== 'undefined') {
-                this.testInterface = new TestInterface(this);
-            }
-            if (typeof ResultsDashboard !== 'undefined') {
-                this.resultsDashboard = new ResultsDashboard(this);
-            }
-            if (typeof SocialFeatures !== 'undefined') {
-                this.socialFeatures = new SocialFeatures(this);
-            }
-            // Ensure categories are populated even before login
-            this.loadTestCategories().catch(() => {});
-        });
+        // Initialize modules once available
+        if (typeof TestInterface !== 'undefined') {
+            this.testInterface = new TestInterface(this);
+        }
+        if (typeof ResultsDashboard !== 'undefined') {
+            this.resultsDashboard = new ResultsDashboard(this);
+        }
+        if (typeof SocialFeatures !== 'undefined') {
+            this.socialFeatures = new SocialFeatures(this);
+        }
     }
 
     setupAxiosInterceptors() {
@@ -500,14 +500,17 @@ class TestApp {
 
         try {
             // Use SSR-provided categories first if present
-            if (Array.isArray(window.__CATEGORIES__) && window.__CATEGORIES__.length > 0) {
+            if (typeof window !== 'undefined' && Array.isArray(window.__CATEGORIES__) && window.__CATEGORIES__.length > 0) {
                 categories = window.__CATEGORIES__;
                 console.log('Using SSR categories', categories.length);
-            } else {
-                const response = await axios.get('/api/tests/categories');
-                if (response.data.success && Array.isArray(response.data.categories) && response.data.categories.length > 0) {
-                    categories = response.data.categories;
-                }
+            }
+        } catch (e) {}
+
+        // Always try API fetch to ensure latest
+        try {
+            const response = await axios.get('/api/tests/categories');
+            if (response.data?.success && Array.isArray(response.data.categories) && response.data.categories.length > 0) {
+                categories = response.data.categories;
             }
         } catch (error) {
             console.log('Using fallback categories data');

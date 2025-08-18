@@ -37,7 +37,7 @@ class TestInterface {
                     <div class="grid md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Test Category</label>
-                            <select id="testCategory" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" required>
+                            <select id="testCategoryModal" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" required>
                                 <option value="">Select a category...</option>
                             </select>
                         </div>
@@ -271,7 +271,7 @@ class TestInterface {
             // Load test categories
             const response = await axios.get('/api/tests/categories');
             if (response.data.success) {
-                const categorySelect = document.getElementById('testCategory');
+                const categorySelect = document.getElementById('testCategoryModal');
                 categorySelect.innerHTML = '<option value="">Select a category...</option>';
                 
                 response.data.categories.forEach(category => {
@@ -299,7 +299,7 @@ class TestInterface {
     async handleTestConfigSubmit(e) {
         e.preventDefault();
         
-        const category = document.getElementById('testCategory').value;
+        const category = document.getElementById('testCategoryModal').value;
         const difficulty = document.getElementById('testDifficulty').value;
         const numQuestions = parseInt(document.getElementById('testQuestions').value);
         const duration = parseInt(document.getElementById('testDuration').value);
