@@ -935,7 +935,7 @@ class TestApp {
 
         try {
             const response = await axios.get('/api/tests/history');
-            if (response.data.success && response.data.tests.length > 0) {
+            if (response.data.success && response.data.tests && response.data.tests.length > 0) {
                 container.innerHTML = response.data.tests.map(test => `
                     <div class="recent-test-item mb-4">
                         <div class="flex-1">
