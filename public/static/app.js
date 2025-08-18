@@ -333,6 +333,8 @@ class TestApp {
     }
 
     switchSection(section) {
+        console.log('switchSection called with:', section);
+        
         // Update navigation active states
         document.querySelectorAll('.nav-tab').forEach(tab => {
             tab.classList.toggle('active', tab.getAttribute('data-tab') === section);
@@ -356,8 +358,10 @@ class TestApp {
         // Show the selected section
         const targetSection = `${section}Section`;
         const element = document.getElementById(targetSection);
+        console.log('Target section:', targetSection, 'Element found:', !!element);
         if (element) {
             element.classList.remove('hidden');
+            console.log('Removed hidden class from', targetSection);
         }
 
         // Handle section-specific logic
@@ -387,6 +391,7 @@ class TestApp {
 
     showDashboard() {
         // Dashboard is already visible, just refresh data
+        console.log('showDashboard called');
         this.loadUserData();
     }
 
@@ -417,6 +422,8 @@ class TestApp {
 
     async loadUserData() {
         try {
+            console.log('loadUserData called, user:', this.user);
+            
             // Load user statistics (with fallback data)
             let stats = {
                 tests_taken: 24,
@@ -436,6 +443,7 @@ class TestApp {
                 }
             }
 
+            console.log('Displaying dashboard stats:', stats);
             this.displayDashboardStats(stats);
 
             // Load test categories
