@@ -737,66 +737,7 @@ app.get('/', async (c) => {
         <script src="/static/test-interface.js"></script>
         <script src="/static/results-dashboard.js"></script>
         <script src="/static/social-features.js"></script>
-        
-        <!-- Emergency Dashboard Fix -->
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Emergency fix: Show dashboard if user appears to be logged in
-            setTimeout(function() {
-                const userMenu = document.getElementById('userMenu');
-                const sidebar = document.getElementById('sidebar');
-                const dashboardSection = document.getElementById('dashboardSection');
-                const welcomeSection = document.getElementById('welcomeSection');
-                
-                // If user menu is visible or sidebar is visible, user is logged in
-                if ((userMenu && userMenu.style.display !== 'none') || 
-                    (sidebar && !sidebar.classList.contains('hidden'))) {
-                    
-                    console.log('Emergency dashboard fix: User appears logged in');
-                    
-                    // Hide welcome section
-                    if (welcomeSection) {
-                        welcomeSection.style.display = 'none';
-                    }
-                    
-                    // Show dashboard section
-                    if (dashboardSection) {
-                        dashboardSection.style.display = 'block';
-                        dashboardSection.classList.remove('hidden');
-                    }
-                    
-                    // Populate dashboard with static content
-                    const testsTaken = document.getElementById('testsTaken');
-                    const averageScore = document.getElementById('averageScore');
-                    const testCategories = document.getElementById('testCategories');
-                    const timeSpent = document.getElementById('timeSpent');
-                    
-                    if (testsTaken) testsTaken.textContent = '24';
-                    if (averageScore) averageScore.textContent = '78%';
-                    if (testCategories) testCategories.textContent = '5';
-                    if (timeSpent) timeSpent.textContent = '12h 30m';
-                    
-                    // Show test in progress
-                    const testInProgress = document.getElementById('testInProgress');
-                    if (testInProgress) {
-                        testInProgress.innerHTML = '<div class="test-progress-card"><div class="test-progress-icon"><i class="fas fa-code text-blue-600"></i></div><div class="test-progress-info"><div class="test-progress-title">Programming - JavaScript Basics</div><div class="test-progress-meta">Medium • 12/30 questions • 45 Minutes</div><div class="test-progress-bar"><div class="test-progress-fill" style="width: 40%"></div></div><div class="test-progress-text">Progress: 12/30 questions</div></div><div class="test-progress-actions"><button class="continue-btn">Continue</button><div class="resume-link">Resume Test</div></div></div>';
-                    }
-                    
-                    // Show improvement areas
-                    const improvementAreas = document.getElementById('improvementAreas');
-                    if (improvementAreas) {
-                        improvementAreas.innerHTML = '<div class="improvement-item"><div class="improvement-subject">Calculus - Derivatives</div><div class="improvement-progress-container"><div class="improvement-progress-bar"><div class="improvement-progress-fill critical" style="width: 45%"></div></div><div class="improvement-percentage critical">45%</div></div></div><div class="improvement-item"><div class="improvement-subject">Physics - Thermodynamics</div><div class="improvement-progress-container"><div class="improvement-progress-bar"><div class="improvement-progress-fill needs-work" style="width: 62%"></div></div><div class="improvement-percentage needs-work">62%</div></div></div><div class="improvement-item"><div class="improvement-subject">Programming - Algorithms</div><div class="improvement-progress-container"><div class="improvement-progress-bar"><div class="improvement-progress-fill good" style="width: 74%"></div></div><div class="improvement-percentage good">74%</div></div></div>';
-                    }
-                    
-                    // Show AI recommendations
-                    const aiRecommendations = document.getElementById('aiRecommendations');
-                    if (aiRecommendations) {
-                        aiRecommendations.innerHTML = '<div class="ai-recommendation"><div class="ai-recommendation-header"><div class="ai-recommendation-icon"><i class="fas fa-lightbulb"></i></div><div class="ai-recommendation-content"><div class="ai-recommendation-title">Focus on Calculus Fundamentals</div><div class="ai-recommendation-text">Your performance in derivatives suggests reviewing basic differentiation rules would help improve your scores.</div><div class="ai-recommendation-actions"><span class="ai-action-btn select">Select</span><span class="ai-action-btn move">Move</span><span class="ai-action-btn notes">Notes</span></div></div></div></div>';
-                    }
-                }
-            }, 1000); // Wait 1 second for other scripts to load
-        });
-        </script>
+
     </body>
     </html>
   `)
