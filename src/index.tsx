@@ -51,7 +51,16 @@ app.get('/api/health', async (c) => {
 })
 
 // Main application route
-app.get('/', (c) => {
+app.get('/', async (c) => {
+  // Preload categories for immediate rendering (SSR -> client bootstrap)
+  let ssrCategories: Array<{ id: string; name: string; description: string }> = []
+  try {
+    const db = new DatabaseService(c.env.DB)
+    const all = await db.getAllTestCategories()
+    ssrCategories = all.map(cat => ({ id: cat.id, name: cat.name, description: cat.description }))
+  } catch (e) {
+    // ignore; frontend will fallback/fetch
+  }
   return c.html(`
     <!DOCTYPE html>
     <html lang="en">
@@ -720,6 +729,9 @@ app.get('/', (c) => {
             </div>
         </div>
 
+        <script>
+          window.__CATEGORIES__ = ${JSON.stringify(ssrCategories)};
+        </script>
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
         <script src="/static/app.js"></script>
         <script src="/static/test-interface.js"></script>

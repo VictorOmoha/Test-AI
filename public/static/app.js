@@ -30,6 +30,8 @@ class TestApp {
             if (typeof SocialFeatures !== 'undefined') {
                 this.socialFeatures = new SocialFeatures(this);
             }
+            // Ensure categories are populated even before login
+            this.loadTestCategories().catch(() => {});
         });
     }
 
@@ -497,9 +499,13 @@ class TestApp {
         let categories = fallbackCategories;
 
         try {
-            if (this.user) {
+            // Use SSR-provided categories first if present
+            if (Array.isArray(window.__CATEGORIES__) && window.__CATEGORIES__.length > 0) {
+                categories = window.__CATEGORIES__;
+                console.log('Using SSR categories', categories.length);
+            } else {
                 const response = await axios.get('/api/tests/categories');
-                if (response.data.success) {
+                if (response.data.success && Array.isArray(response.data.categories) && response.data.categories.length > 0) {
                     categories = response.data.categories;
                 }
             }
@@ -563,19 +569,17 @@ class TestApp {
         const select = document.getElementById('quickTestCategory');
         if (!select) return;
 
-        select.innerHTML = '<option value="">Select category...</option>' +
-            categories.map(category => 
-                `<option value="${category.name}">${category.name}</option>`
-            ).join('');
+        const opts = categories.map(category => `<option value="${category.name}">${category.name}</option>`).join('');
+        select.innerHTML = '<option value="">Select category...</option>' + opts;
+        console.log('Populated quickTestCategory with', categories.length, 'categories');
     }
 
     populateTestCreationCategories(categories) {
         const select = document.getElementById('testCategory');
         if (!select) return;
-        select.innerHTML = '<option value="">Select category...</option>' +
-            categories.map(category => 
-                `<option value="${category.name}">${category.name}</option>`
-            ).join('');
+        const opts2 = categories.map(category => `<option value="${category.name}">${category.name}</option>`).join('');
+        select.innerHTML = '<option value="">Select category...</option>' + opts2;
+        console.log('Populated testCategory with', categories.length, 'categories');
     }
 
     async loadRecentTests() {
