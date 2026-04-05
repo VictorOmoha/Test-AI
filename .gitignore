@@ -44,3 +44,9 @@ pids/
 
 # misc
 .DS_Store
+
+# Vercel
+.vercel/
+
+# Vercel
+.vercel/
