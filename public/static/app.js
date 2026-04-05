@@ -1092,23 +1092,20 @@ class TestApp {
 
     // Modal Management
     showLoginModal() {
-        document.getElementById('loginModal').classList.remove('hidden');
-        document.getElementById('loginModal').classList.add('flex');
+        document.getElementById('loginModal').classList.add('show');
+
     }
 
     hideLoginModal() {
-        document.getElementById('loginModal').classList.add('hidden');
-        document.getElementById('loginModal').classList.remove('flex');
+        document.getElementById('loginModal').classList.remove('show');
     }
 
     showRegisterModal() {
-        document.getElementById('registerModal').classList.remove('hidden');
-        document.getElementById('registerModal').classList.add('flex');
+        document.getElementById('registerModal').classList.add('show');
     }
 
     hideRegisterModal() {
-        document.getElementById('registerModal').classList.add('hidden');
-        document.getElementById('registerModal').classList.remove('flex');
+        document.getElementById('registerModal').classList.remove('show');
     }
 
     hideAllModals() {
