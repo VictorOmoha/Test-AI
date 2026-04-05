@@ -238,47 +238,46 @@ app.get('/', async (c) => {
             <main class="flex-1">
 
                 <!-- ======== HERO / LANDING SECTION ======== -->
-                <section id="welcomeSection" class="relative overflow-hidden">
-                    <!-- Hero BG -->
-                    <div class="gradient-bg-hero relative pt-20 pb-32 px-6">
-                        <!-- Decorative orbs -->
-                        <div class="absolute top-20 left-10 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl"></div>
-                        <div class="absolute bottom-10 right-10 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
-                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-indigo-500/5 rounded-full blur-3xl"></div>
-                        
-                        <div class="relative max-w-5xl mx-auto text-center">
-                            <!-- Badge -->
-                            <div class="hero-badge mb-8 animate-fade-up">
-                                <i class="fas fa-sparkles text-amber-300"></i>
-                                Powered by Advanced AI
-                            </div>
-                            
-                            <!-- Headline -->
-                            <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight mb-6 animate-fade-up" style="animation-delay: 0.1s">
-                                Master Any Subject<br>
-                                <span class="gradient-text-white">With AI-Powered Tests</span>
-                            </h1>
-                            
-                            <!-- Subheadline -->
-                            <p class="text-lg md:text-xl text-indigo-200/90 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-up font-light" style="animation-delay: 0.2s">
-                                Create adaptive tests powered by AI, get instant scoring, detailed analytics, 
-                                and personalized learning paths — all in one platform.
-                            </p>
-                            
-                            <!-- CTA Buttons -->
-                            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up" style="animation-delay: 0.3s">
-                                <button onclick="document.getElementById('registerModal').classList.add('show')" class="hero-cta-primary">
-                                    <i class="fas fa-rocket"></i> Start Testing Free
-                                    <i class="fas fa-arrow-right text-xs ml-1"></i>
-                                </button>
-                                <button class="hero-cta-secondary">
-                                    <i class="fas fa-play-circle"></i> Watch Demo
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Feature Cards (floating above hero) -->
+<section id="welcomeSection" class="relative overflow-hidden">
+    <!-- Hero BG -->
+    <div class="gradient-bg-hero relative pt-20 pb-32 px-6">
+        <!-- Animated Orbs -->
+        <div class="hero-glow-orb" style="top: -10%; left: -10%;"></div>
+        <div class="hero-glow-orb" style="bottom: -10%; right: -10%; animation-delay: -5s; background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, rgba(6, 182, 212, 0) 70%);"></div>
+        
+        <div class="relative max-w-5xl mx-auto text-center">
+            <!-- Badge -->
+            <div class="hero-badge mb-8 animate-fade-up">
+                <i class="fas fa-sparkles text-amber-300"></i>
+                Powered by Advanced AI
+            </div>
+            
+            <!-- Headline -->
+            <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight mb-6 animate-fade-up" style="animation-delay: 0.1s">
+                Master Any Subject<br>
+                <span class="gradient-text-white">With AI-Powered Tests</span>
+            </h1>
+            
+            <!-- Subheadline -->
+            <p class="text-lg md:text-xl text-indigo-200/80 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-up font-light" style="animation-delay: 0.2s">
+                Create adaptive tests powered by AI, get instant scoring, detailed analytics, 
+                and personalized learning paths — all in one platform.
+            </p>
+            
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up" style="animation-delay: 0.3s">
+                <button onclick="document.getElementById('registerModal').classList.add('show')" class="hero-cta-primary shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all">
+                    <i class="fas fa-rocket"></i> Start Testing Free
+                    <i class="fas fa-arrow-right text-xs ml-1"></i>
+                </button>
+                <button class="hero-cta-secondary">
+                    <i class="fas fa-play-circle"></i> Watch Demo
+                </button>
+            </div>
+        </div>
+    </div>
+    ...
+</section>
                     <div class="relative max-w-6xl mx-auto px-6 -mt-16 mb-20">
                         <div class="grid md:grid-cols-3 gap-6 stagger-children">
                             <div class="feature-card fade-in">
