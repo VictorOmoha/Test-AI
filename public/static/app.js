@@ -557,8 +557,8 @@ class TestApp {
                         <i class="${icon} text-xl text-primary"></i>
                         <span class="text-right text-sm font-medium">${progress}%</span>
                     </div>
-                    <h4 class="font-medium text-gray-900 mb-1">${category.name}</h4>
-                    <p class="text-xs text-gray-600 mb-3 line-clamp-2">${category.description}</p>
+                    <h4 class="font-medium text-white mb-1">${category.name}</h4>
+                    <p class="text-xs text-gray-400 mb-3 line-clamp-2">${category.description}</p>
                     <div class="progress-bar">
                         <div class="progress-fill ${colorClass}" style="width: ${progress}%"></div>
                     </div>
@@ -613,8 +613,8 @@ class TestApp {
             return `
                 <div class="recent-test-item">
                     <div class="flex-1">
-                        <h4 class="font-medium text-gray-900 text-sm">${test.subject}</h4>
-                        <p class="text-xs text-gray-600">${test.questions} questions • ${test.timestamp}</p>
+                        <h4 class="font-medium text-white text-sm">${test.subject}</h4>
+                        <p class="text-xs text-gray-500">${test.questions} questions • ${test.timestamp}</p>
                     </div>
                     <div class="score-badge ${scoreClass}">${test.score}%</div>
                 </div>
@@ -666,9 +666,9 @@ class TestApp {
         const range = maxValue - minValue;
         
         // Draw grid lines
-        ctx.strokeStyle = '#E5E7EB';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
         ctx.lineWidth = 1;
-        
+
         for (let i = 0; i <= 5; i++) {
             const y = padding + (chartHeight * i) / 5;
             ctx.beginPath();
@@ -676,9 +676,9 @@ class TestApp {
             ctx.lineTo(width - padding, y);
             ctx.stroke();
         }
-        
+
         // Draw data line
-        ctx.strokeStyle = '#1E40AF';
+        ctx.strokeStyle = '#818CF8';
         ctx.lineWidth = 3;
         ctx.beginPath();
         
@@ -696,7 +696,7 @@ class TestApp {
         ctx.stroke();
         
         // Draw data points
-        ctx.fillStyle = '#1E40AF';
+        ctx.fillStyle = '#818CF8';
         data.values.forEach((value, index) => {
             const x = padding + (chartWidth * index) / (data.values.length - 1);
             const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
@@ -962,7 +962,7 @@ class TestApp {
                 container.innerHTML = response.data.tests.map(test => `
                     <div class="recent-test-item mb-4">
                         <div class="flex-1">
-                            <div class="font-medium text-gray-900">${test.category} - ${test.difficulty}</div>
+                            <div class="font-medium text-white">${test.category} - ${test.difficulty}</div>
                             <div class="text-sm text-gray-500">${new Date(test.completed_at).toLocaleDateString()}</div>
                         </div>
                         <div class="text-right">
@@ -1129,20 +1129,21 @@ class TestApp {
     showNotification(message, type = 'info') {
         // Create notification element
         const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
-        
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-xl shadow-2xl transition-all duration-300 transform translate-x-full border`;
+
         const colors = {
-            success: 'bg-green-500 text-white',
-            error: 'bg-red-500 text-white',
-            info: 'bg-blue-500 text-white'
+            success: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+            error: 'bg-red-500/20 text-red-300 border-red-500/30',
+            info: 'bg-blue-500/20 text-blue-300 border-blue-500/30'
         };
         
         notification.classList.add(...colors[type].split(' '));
+        notification.style.backdropFilter = 'blur(16px)';
         notification.innerHTML = `
             <div class="flex items-center">
                 <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation' : 'info'}-circle mr-2"></i>
-                <span>${message}</span>
-                <button class="ml-4 text-white hover:text-gray-200" onclick="this.parentElement.parentElement.remove()">
+                <span class="font-medium">${message}</span>
+                <button class="ml-4 opacity-60 hover:opacity-100 transition-opacity" onclick="this.parentElement.parentElement.remove()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
