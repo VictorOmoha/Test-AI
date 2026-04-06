@@ -678,7 +678,7 @@ class TestApp {
         }
 
         // Draw data line
-        ctx.strokeStyle = '#818CF8';
+        ctx.strokeStyle = '#E2A039';
         ctx.lineWidth = 3;
         ctx.beginPath();
         
@@ -696,7 +696,7 @@ class TestApp {
         ctx.stroke();
         
         // Draw data points
-        ctx.fillStyle = '#818CF8';
+        ctx.fillStyle = '#E2A039';
         data.values.forEach((value, index) => {
             const x = padding + (chartWidth * index) / (data.values.length - 1);
             const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
@@ -1132,9 +1132,9 @@ class TestApp {
         notification.className = `fixed top-4 right-4 z-50 p-4 rounded-xl shadow-2xl transition-all duration-300 transform translate-x-full border`;
 
         const colors = {
-            success: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-            error: 'bg-red-500/20 text-red-300 border-red-500/30',
-            info: 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+            success: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/20',
+            error: 'bg-red-500/15 text-red-300 border-red-500/20',
+            info: 'bg-amber-500/15 text-amber-300 border-amber-500/20'
         };
         
         notification.classList.add(...colors[type].split(' '));

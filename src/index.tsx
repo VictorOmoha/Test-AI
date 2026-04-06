@@ -73,10 +73,10 @@ app.get('/', async (c) => {
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Instrument+Serif&display=swap" rel="stylesheet">
         <link href="/static/style.css" rel="stylesheet">
         <style>
-          * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+          * { font-family: 'DM Sans', system-ui, -apple-system, sans-serif; }
         </style>
         <script>
           tailwind.config = {
@@ -84,18 +84,20 @@ app.get('/', async (c) => {
             theme: {
               extend: {
                 colors: {
-                  primary: { DEFAULT: '#6366F1', light: '#818CF8', dark: '#4F46E5' },
-                  secondary: '#9CA3AF',
-                  success: '#34D399',
+                  primary: { DEFAULT: '#E2A039', light: '#F0C060', dark: '#C88A20' },
+                  secondary: '#9B9588',
+                  success: '#95D5B2',
                   warning: '#FBBF24',
-                  error: '#FB7185',
-                  purple: '#8B5CF6',
-                  cyan: '#22D3EE',
-                  rose: '#FB7185',
-                  midnight: { 50: '#1F2937', 100: '#111827', 200: '#0B0F1A' }
+                  error: '#FF6B6B',
+                  purple: '#B4A7D6',
+                  cyan: '#4ECDC4',
+                  rose: '#FF6B6B',
+                  amber: { DEFAULT: '#E2A039', light: '#F0C060' },
+                  midnight: { 50: '#222236', 100: '#1A1A2E', 200: '#0D0D14' }
                 },
                 fontFamily: {
-                  sans: ['Inter', 'system-ui', 'sans-serif']
+                  sans: ['DM Sans', 'system-ui', 'sans-serif'],
+                  display: ['Instrument Serif', 'Georgia', 'serif']
                 },
                 borderRadius: {
                   '2xl': '1rem',
@@ -104,8 +106,7 @@ app.get('/', async (c) => {
                 },
                 animation: {
                   'float': 'float 6s ease-in-out infinite',
-                  'fade-up': 'fadeInUp 0.6s ease-out both',
-                  'glow-pulse': 'glowPulse 3s ease-in-out infinite'
+                  'fade-up': 'fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both'
                 },
                 keyframes: {
                   float: {
@@ -113,12 +114,8 @@ app.get('/', async (c) => {
                     '50%': { transform: 'translateY(-10px)' }
                   },
                   fadeInUp: {
-                    from: { opacity: 0, transform: 'translateY(24px)' },
+                    from: { opacity: 0, transform: 'translateY(32px)' },
                     to: { opacity: 1, transform: 'translateY(0)' }
-                  },
-                  glowPulse: {
-                    '0%, 100%': { boxShadow: '0 0 20px rgba(99, 102, 241, 0.15)' },
-                    '50%': { boxShadow: '0 0 30px rgba(99, 102, 241, 0.3)' }
                   }
                 }
               }
@@ -247,53 +244,54 @@ app.get('/', async (c) => {
 <section id="welcomeSection" class="relative overflow-hidden">
     <!-- Hero BG -->
     <div class="gradient-bg-hero relative pt-24 pb-36 px-6">
-        <!-- Animated Orbs -->
-        <div class="hero-glow-orb" style="top: -10%; left: -10%;"></div>
-        <div class="hero-glow-orb" style="bottom: -10%; right: -10%; animation-delay: -5s; background: radial-gradient(circle, rgba(34, 211, 238, 0.08) 0%, rgba(34, 211, 238, 0) 70%);"></div>
-        <div class="hero-glow-orb" style="top: 50%; left: 60%; animation-delay: -10s; width: 400px; height: 400px; background: radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 70%);"></div>
+        <!-- Ambient orbs -->
+        <div class="hero-glow-orb" style="top: -10%; left: -15%; width: 500px; height: 500px; background: radial-gradient(circle, rgba(226, 160, 57, 0.06) 0%, transparent 70%);"></div>
+        <div class="hero-glow-orb" style="bottom: -15%; right: -10%; width: 600px; height: 600px; animation-delay: -7s; background: radial-gradient(circle, rgba(78, 205, 196, 0.04) 0%, transparent 70%);"></div>
 
-        <!-- Grid pattern overlay -->
-        <div class="absolute inset-0 opacity-[0.03]" style="background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 60px 60px;"></div>
+        <!-- Subtle dot grid -->
+        <div class="absolute inset-0 opacity-[0.02]" style="background-image: radial-gradient(rgba(226, 160, 57, 0.4) 1px, transparent 1px); background-size: 32px 32px;"></div>
 
         <div class="relative max-w-5xl mx-auto text-center">
             <!-- Badge -->
-            <div class="hero-badge mb-8 animate-fade-up">
-                <i class="fas fa-sparkles text-cyan"></i>
-                Powered by Advanced AI
+            <div class="hero-badge mb-10 animate-fade-up">
+                <i class="fas fa-sparkles"></i>
+                AI-Powered Learning
             </div>
 
-            <!-- Headline -->
-            <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[1.1] mb-6 animate-fade-up" style="animation-delay: 0.1s">
-                Master Any Subject<br>
-                <span class="gradient-text-white">With AI-Powered Tests</span>
+            <!-- Headline: editorial serif -->
+            <h1 class="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl leading-[1.05] mb-8 animate-fade-up" style="animation-delay: 0.1s; font-weight: 400;">
+                <span style="color: var(--text-hero);">Master Any</span><br>
+                <span class="gradient-text" style="font-style: italic;">Subject</span>
             </h1>
 
+            <!-- Editorial rule -->
+            <div class="editorial-rule mx-auto mb-8 animate-fade-up" style="animation-delay: 0.15s;"></div>
+
             <!-- Subheadline -->
-            <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed animate-fade-up font-light" style="animation-delay: 0.2s">
-                Create adaptive tests powered by AI, get instant scoring, detailed analytics,
-                and personalized learning paths — all in one platform.
+            <p class="text-base md:text-lg max-w-xl mx-auto mb-12 leading-relaxed animate-fade-up" style="animation-delay: 0.2s; color: var(--text-secondary);">
+                Adaptive tests crafted by AI. Instant scoring. Deep analytics.
+                Personalized paths to mastery.
             </p>
 
             <!-- CTA Buttons -->
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up" style="animation-delay: 0.3s">
                 <button onclick="document.getElementById('registerModal').classList.add('show')" class="hero-cta-primary">
-                    <i class="fas fa-rocket"></i> Start Testing Free
-                    <i class="fas fa-arrow-right text-xs ml-1"></i>
+                    <i class="fas fa-arrow-right"></i> Begin Your Journey
                 </button>
                 <button class="hero-cta-secondary">
-                    <i class="fas fa-play-circle"></i> Watch Demo
+                    <i class="fas fa-play-circle"></i> See It in Action
                 </button>
             </div>
 
-            <!-- Trusted by indicator -->
-            <div class="mt-16 animate-fade-up" style="animation-delay: 0.5s">
-                <p class="text-xs font-semibold uppercase tracking-widest text-gray-600 mb-4">Trusted by learners worldwide</p>
-                <div class="flex items-center justify-center gap-8 opacity-40">
-                    <i class="fas fa-graduation-cap text-2xl"></i>
-                    <i class="fas fa-university text-2xl"></i>
-                    <i class="fas fa-book-open text-2xl"></i>
-                    <i class="fas fa-laptop-code text-2xl"></i>
-                    <i class="fas fa-flask text-2xl"></i>
+            <!-- Trust line -->
+            <div class="mt-20 animate-fade-up" style="animation-delay: 0.5s">
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] mb-4" style="color: var(--text-muted);">Trusted by curious minds everywhere</p>
+                <div class="flex items-center justify-center gap-10 opacity-25">
+                    <i class="fas fa-graduation-cap text-xl"></i>
+                    <i class="fas fa-university text-xl"></i>
+                    <i class="fas fa-book-open text-xl"></i>
+                    <i class="fas fa-laptop-code text-xl"></i>
+                    <i class="fas fa-flask text-xl"></i>
                 </div>
             </div>
         </div>
@@ -354,8 +352,8 @@ app.get('/', async (c) => {
                     <!-- How It Works -->
                     <div class="max-w-5xl mx-auto px-6 mb-28">
                         <div class="text-center mb-14">
-                            <p class="text-sm font-bold uppercase tracking-widest text-primary-light mb-3">How It Works</p>
-                            <h2 class="text-3xl md:text-4xl font-extrabold text-white">Three steps to mastery</h2>
+                            <p class="text-xs font-bold uppercase tracking-[0.2em] mb-4" style="color: var(--amber);">How It Works</p>
+                            <h2 class="font-display text-3xl md:text-4xl text-white" style="font-weight: 400;">Three steps to <em>mastery</em></h2>
                         </div>
                         <div class="grid md:grid-cols-3 gap-10">
                             <div class="step-card">
@@ -378,16 +376,14 @@ app.get('/', async (c) => {
 
                     <!-- CTA Banner -->
                     <div class="max-w-5xl mx-auto px-6 pb-28">
-                        <div class="rounded-3xl bg-gradient-to-r from-primary/90 via-purple/80 to-primary/90 p-10 md:p-16 text-center relative overflow-hidden border border-white/10">
-                            <!-- Subtle grid pattern -->
-                            <div class="absolute inset-0 opacity-10" style="background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 40px 40px;"></div>
-                            <!-- Glow effect -->
-                            <div class="absolute inset-0" style="background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.3) 0%, transparent 70%);"></div>
+                        <div class="rounded-2xl p-10 md:p-16 text-center relative overflow-hidden border border-white/5" style="background: linear-gradient(135deg, var(--surface) 0%, var(--surface-raised) 100%);">
+                            <!-- Ambient glow -->
+                            <div class="absolute inset-0" style="background: radial-gradient(ellipse at 50% 50%, rgba(226, 160, 57, 0.06) 0%, transparent 60%);"></div>
                             <div class="relative">
-                                <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-4">Ready to level up?</h2>
-                                <p class="text-indigo-200/80 text-lg mb-8 max-w-xl mx-auto">Join thousands of learners using AI to master any subject faster.</p>
-                                <button onclick="document.getElementById('registerModal').classList.add('show')" class="inline-flex items-center gap-2 px-10 py-4 bg-white text-primary-dark font-black text-lg rounded-2xl hover:bg-gray-100 transition-all duration-300 shadow-2xl shadow-black/20 hover:-translate-y-1 active:scale-[0.98]">
-                                    Get Started Free <i class="fas fa-arrow-right"></i>
+                                <h2 class="font-display text-3xl md:text-4xl text-white mb-4" style="font-weight: 400;">Ready to <em>level up?</em></h2>
+                                <p class="text-base mb-8 max-w-lg mx-auto" style="color: var(--text-secondary);">Join thousands of learners using AI to master any subject, faster.</p>
+                                <button onclick="document.getElementById('registerModal').classList.add('show')" class="hero-cta-primary text-base">
+                                    Get Started Free <i class="fas fa-arrow-right ml-1"></i>
                                 </button>
                             </div>
                         </div>
