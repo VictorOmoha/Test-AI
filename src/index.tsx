@@ -63,7 +63,7 @@ app.get('/', async (c) => {
   }
   return c.html(`
     <!DOCTYPE html>
-    <html lang="en">
+    <html lang="en" class="dark">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -77,21 +77,22 @@ app.get('/', async (c) => {
         <link href="/static/style.css" rel="stylesheet">
         <style>
           * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-          .gradient-text { background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #06B6D4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         </style>
         <script>
           tailwind.config = {
+            darkMode: 'class',
             theme: {
               extend: {
                 colors: {
-                  primary: { DEFAULT: '#4F46E5', light: '#818CF8', dark: '#3730A3' },
-                  secondary: '#64748B',
-                  success: '#10B981',
-                  warning: '#F59E0B',
-                  error: '#EF4444',
-                  purple: '#7C3AED',
-                  cyan: '#06B6D4',
-                  rose: '#F43F5E'
+                  primary: { DEFAULT: '#6366F1', light: '#818CF8', dark: '#4F46E5' },
+                  secondary: '#9CA3AF',
+                  success: '#34D399',
+                  warning: '#FBBF24',
+                  error: '#FB7185',
+                  purple: '#8B5CF6',
+                  cyan: '#22D3EE',
+                  rose: '#FB7185',
+                  midnight: { 50: '#1F2937', 100: '#111827', 200: '#0B0F1A' }
                 },
                 fontFamily: {
                   sans: ['Inter', 'system-ui', 'sans-serif']
@@ -103,7 +104,8 @@ app.get('/', async (c) => {
                 },
                 animation: {
                   'float': 'float 6s ease-in-out infinite',
-                  'fade-up': 'fadeInUp 0.6s ease-out both'
+                  'fade-up': 'fadeInUp 0.6s ease-out both',
+                  'glow-pulse': 'glowPulse 3s ease-in-out infinite'
                 },
                 keyframes: {
                   float: {
@@ -113,6 +115,10 @@ app.get('/', async (c) => {
                   fadeInUp: {
                     from: { opacity: 0, transform: 'translateY(24px)' },
                     to: { opacity: 1, transform: 'translateY(0)' }
+                  },
+                  glowPulse: {
+                    '0%, 100%': { boxShadow: '0 0 20px rgba(99, 102, 241, 0.15)' },
+                    '50%': { boxShadow: '0 0 30px rgba(99, 102, 241, 0.3)' }
                   }
                 }
               }
@@ -120,20 +126,20 @@ app.get('/', async (c) => {
           }
         </script>
     </head>
-    <body class="bg-[#F8FAFC] min-h-screen antialiased">
+    <body class="bg-[#0B0F1A] min-h-screen antialiased text-gray-100">
 
         <!-- ========== NAVIGATION ========== -->
         <nav class="glass-nav sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-6">
-                <div class="flex justify-between items-center h-18">
+                <div class="flex justify-between items-center h-16">
                     <!-- Logo -->
                     <div class="flex items-center group cursor-pointer">
-                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center mr-3 shadow-lg shadow-indigo-500/25 group-hover:shadow-indigo-500/40 transition-all duration-300 group-hover:-rotate-3">
+                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-purple text-white flex items-center justify-center mr-3 shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-all duration-300 group-hover:-rotate-3">
                             <i class="fas fa-brain text-base"></i>
                         </div>
-                        <span class="font-extrabold text-xl tracking-tight"><span class="gradient-text">Test</span><span class="text-gray-900">AI</span></span>
+                        <span class="font-extrabold text-xl tracking-tight"><span class="gradient-text">Test</span><span class="text-white">AI</span></span>
                     </div>
-                    
+
                     <!-- Nav Tabs -->
                     <div id="mainNavTabs" class="hidden md:flex space-x-1">
                         <button class="nav-tab active" data-tab="dashboard">
@@ -149,7 +155,7 @@ app.get('/', async (c) => {
                             <i class="fas fa-chart-line mr-1.5"></i>Analytics
                         </button>
                     </div>
-                    
+
                     <!-- Auth Buttons / User Menu -->
                     <div class="flex items-center gap-3">
                         <button id="loginBtn" class="btn-ghost px-4 py-2">
@@ -159,17 +165,17 @@ app.get('/', async (c) => {
                             <i class="fas fa-rocket mr-1.5"></i>Get Started
                         </button>
                         <div id="userMenu" class="hidden flex items-center gap-3">
-                            <button class="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-all duration-200 flex items-center justify-center">
+                            <button class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-gray-200 transition-all duration-200 flex items-center justify-center border border-white/5">
                                 <i class="fas fa-bell text-sm"></i>
                             </button>
-                            <div class="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-xl hover:bg-gray-100/80 transition-all duration-200 cursor-pointer">
-                                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-500/20">
+                            <div class="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-xl hover:bg-white/5 transition-all duration-200 cursor-pointer">
+                                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-purple flex items-center justify-center shadow-md shadow-primary/20">
                                     <span id="userInitials" class="text-white text-xs font-bold"></span>
                                 </div>
-                                <span id="userName" class="text-gray-700 font-semibold text-sm hidden sm:block"></span>
-                                <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                                <span id="userName" class="text-gray-300 font-semibold text-sm hidden sm:block"></span>
+                                <i class="fas fa-chevron-down text-gray-500 text-xs"></i>
                             </div>
-                            <button id="logoutBtn" class="text-rose-500 hover:text-rose-700 transition-colors duration-200 ml-1" title="Logout">
+                            <button id="logoutBtn" class="text-rose hover:text-rose/80 transition-colors duration-200 ml-1" title="Logout">
                                 <i class="fas fa-right-from-bracket"></i>
                             </button>
                         </div>
@@ -181,14 +187,14 @@ app.get('/', async (c) => {
         <!-- Main Layout Wrapper -->
         <div class="flex min-h-screen">
             <!-- Sidebar (logged-in) -->
-            <aside id="sidebar" class="hidden w-64 bg-white/95 backdrop-blur-xl border-r border-gray-100 min-h-screen">
+            <aside id="sidebar" class="hidden w-64 min-h-screen">
                 <div class="flex flex-col h-full py-5">
-                    <div class="px-5 pb-4 mb-2 border-b border-gray-100">
+                    <div class="px-5 pb-4 mb-2 border-b border-white/5">
                         <div class="flex items-center">
-                            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center mr-3 shadow-lg shadow-indigo-500/25">
+                            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-purple text-white flex items-center justify-center mr-3 shadow-lg shadow-primary/25">
                                 <i class="fas fa-brain text-base"></i>
                             </div>
-                            <span class="font-extrabold text-lg tracking-tight"><span class="gradient-text">Test</span><span class="text-gray-900">AI</span></span>
+                            <span class="font-extrabold text-lg tracking-tight"><span class="gradient-text">Test</span><span class="text-white">AI</span></span>
                         </div>
                     </div>
                     <nav class="flex-1 px-3 overflow-y-auto custom-scrollbar">
@@ -219,7 +225,7 @@ app.get('/', async (c) => {
                             </a>
                         </div>
                     </nav>
-                    <div class="px-3 pt-4 mt-2 border-t border-gray-100 bottom-section">
+                    <div class="px-3 pt-4 mt-2 border-t border-white/5 bottom-section">
                         <div class="space-y-0.5">
                             <a href="#" class="sidebar-item">
                                 <i class="fas fa-life-ring"></i>
@@ -240,33 +246,37 @@ app.get('/', async (c) => {
                 <!-- ======== HERO / LANDING SECTION ======== -->
 <section id="welcomeSection" class="relative overflow-hidden">
     <!-- Hero BG -->
-    <div class="gradient-bg-hero relative pt-20 pb-32 px-6">
+    <div class="gradient-bg-hero relative pt-24 pb-36 px-6">
         <!-- Animated Orbs -->
         <div class="hero-glow-orb" style="top: -10%; left: -10%;"></div>
-        <div class="hero-glow-orb" style="bottom: -10%; right: -10%; animation-delay: -5s; background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, rgba(6, 182, 212, 0) 70%);"></div>
-        
+        <div class="hero-glow-orb" style="bottom: -10%; right: -10%; animation-delay: -5s; background: radial-gradient(circle, rgba(34, 211, 238, 0.08) 0%, rgba(34, 211, 238, 0) 70%);"></div>
+        <div class="hero-glow-orb" style="top: 50%; left: 60%; animation-delay: -10s; width: 400px; height: 400px; background: radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 70%);"></div>
+
+        <!-- Grid pattern overlay -->
+        <div class="absolute inset-0 opacity-[0.03]" style="background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 60px 60px;"></div>
+
         <div class="relative max-w-5xl mx-auto text-center">
             <!-- Badge -->
             <div class="hero-badge mb-8 animate-fade-up">
-                <i class="fas fa-sparkles text-amber-300"></i>
+                <i class="fas fa-sparkles text-cyan"></i>
                 Powered by Advanced AI
             </div>
-            
+
             <!-- Headline -->
-            <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight mb-6 animate-fade-up" style="animation-delay: 0.1s">
+            <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[1.1] mb-6 animate-fade-up" style="animation-delay: 0.1s">
                 Master Any Subject<br>
                 <span class="gradient-text-white">With AI-Powered Tests</span>
             </h1>
-            
+
             <!-- Subheadline -->
-            <p class="text-lg md:text-xl text-indigo-200/80 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-up font-light" style="animation-delay: 0.2s">
-                Create adaptive tests powered by AI, get instant scoring, detailed analytics, 
+            <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed animate-fade-up font-light" style="animation-delay: 0.2s">
+                Create adaptive tests powered by AI, get instant scoring, detailed analytics,
                 and personalized learning paths — all in one platform.
             </p>
-            
+
             <!-- CTA Buttons -->
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up" style="animation-delay: 0.3s">
-                <button onclick="document.getElementById('registerModal').classList.add('show')" class="hero-cta-primary shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all">
+                <button onclick="document.getElementById('registerModal').classList.add('show')" class="hero-cta-primary">
                     <i class="fas fa-rocket"></i> Start Testing Free
                     <i class="fas fa-arrow-right text-xs ml-1"></i>
                 </button>
@@ -274,29 +284,41 @@ app.get('/', async (c) => {
                     <i class="fas fa-play-circle"></i> Watch Demo
                 </button>
             </div>
+
+            <!-- Trusted by indicator -->
+            <div class="mt-16 animate-fade-up" style="animation-delay: 0.5s">
+                <p class="text-xs font-semibold uppercase tracking-widest text-gray-600 mb-4">Trusted by learners worldwide</p>
+                <div class="flex items-center justify-center gap-8 opacity-40">
+                    <i class="fas fa-graduation-cap text-2xl"></i>
+                    <i class="fas fa-university text-2xl"></i>
+                    <i class="fas fa-book-open text-2xl"></i>
+                    <i class="fas fa-laptop-code text-2xl"></i>
+                    <i class="fas fa-flask text-2xl"></i>
+                </div>
+            </div>
         </div>
     </div>
     ...
 </section>
-                    <div class="relative max-w-6xl mx-auto px-6 -mt-16 mb-20">
+                    <div class="relative max-w-6xl mx-auto px-6 -mt-20 mb-24">
                         <div class="grid md:grid-cols-3 gap-6 stagger-children">
-                            <div class="feature-card fade-in">
+                            <div class="feature-card">
                                 <div class="icon-wrap relative z-10">
                                     <i class="fas fa-sliders"></i>
                                 </div>
                                 <h3 class="relative z-10">Fully Customizable</h3>
                                 <p class="relative z-10">Pick subjects, difficulty, question types — build tests that match your exact needs.</p>
                             </div>
-                            <div class="feature-card fade-in">
+                            <div class="feature-card">
                                 <div class="icon-wrap relative z-10">
                                     <i class="fas fa-wand-magic-sparkles"></i>
                                 </div>
                                 <h3 class="relative z-10">AI Question Engine</h3>
                                 <p class="relative z-10">Fresh, context-aware questions every time with smart explanations.</p>
                             </div>
-                            <div class="feature-card fade-in">
+                            <div class="feature-card">
                                 <div class="icon-wrap relative z-10">
-                                    <i class="fas fa-chart-mix"></i>
+                                    <i class="fas fa-chart-line"></i>
                                 </div>
                                 <h3 class="relative z-10">Deep Analytics</h3>
                                 <p class="relative z-10">Track progress, spot weaknesses, get AI-driven recommendations.</p>
@@ -305,24 +327,25 @@ app.get('/', async (c) => {
                     </div>
 
                     <!-- Stats Bar -->
-                    <div class="max-w-5xl mx-auto px-6 mb-24">
-                        <div class="glass-card rounded-2xl p-8 md:p-12">
-                            <div class="stats-bar">
+                    <div class="max-w-5xl mx-auto px-6 mb-28">
+                        <div class="glass-card rounded-2xl p-8 md:p-12 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-gradient-to-r from-primary/5 via-purple/5 to-cyan/5"></div>
+                            <div class="relative stats-bar">
                                 <div class="stat-item">
                                     <div class="stat-number gradient-text">50K+</div>
-                                    <div class="stat-label text-gray-500">Tests Taken</div>
+                                    <div class="stat-label">Tests Taken</div>
                                 </div>
                                 <div class="stat-item">
                                     <div class="stat-number gradient-text">98%</div>
-                                    <div class="stat-label text-gray-500">Accuracy Rate</div>
+                                    <div class="stat-label">Accuracy Rate</div>
                                 </div>
                                 <div class="stat-item">
                                     <div class="stat-number gradient-text">200+</div>
-                                    <div class="stat-label text-gray-500">Categories</div>
+                                    <div class="stat-label">Categories</div>
                                 </div>
                                 <div class="stat-item">
                                     <div class="stat-number gradient-text">4.9<span class="text-lg">/5</span></div>
-                                    <div class="stat-label text-gray-500">User Rating</div>
+                                    <div class="stat-label">User Rating</div>
                                 </div>
                             </div>
                         </div>
@@ -331,8 +354,8 @@ app.get('/', async (c) => {
                     <!-- How It Works -->
                     <div class="max-w-5xl mx-auto px-6 mb-28">
                         <div class="text-center mb-14">
-                            <p class="text-sm font-bold uppercase tracking-widest text-indigo-500 mb-3">How It Works</p>
-                            <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900">Three steps to mastery</h2>
+                            <p class="text-sm font-bold uppercase tracking-widest text-primary-light mb-3">How It Works</p>
+                            <h2 class="text-3xl md:text-4xl font-extrabold text-white">Three steps to mastery</h2>
                         </div>
                         <div class="grid md:grid-cols-3 gap-10">
                             <div class="step-card">
@@ -354,26 +377,62 @@ app.get('/', async (c) => {
                     </div>
 
                     <!-- CTA Banner -->
-                    <div class="max-w-5xl mx-auto px-6 pb-24">
-                        <div class="rounded-3xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 p-10 md:p-16 text-center relative overflow-hidden">
-                            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-30"></div>
+                    <div class="max-w-5xl mx-auto px-6 pb-28">
+                        <div class="rounded-3xl bg-gradient-to-r from-primary/90 via-purple/80 to-primary/90 p-10 md:p-16 text-center relative overflow-hidden border border-white/10">
+                            <!-- Subtle grid pattern -->
+                            <div class="absolute inset-0 opacity-10" style="background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 40px 40px;"></div>
+                            <!-- Glow effect -->
+                            <div class="absolute inset-0" style="background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.3) 0%, transparent 70%);"></div>
                             <div class="relative">
                                 <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-4">Ready to level up?</h2>
-                                <p class="text-indigo-200 text-lg mb-8 max-w-xl mx-auto">Join thousands of learners using AI to master any subject faster.</p>
-                                <button onclick="document.getElementById('registerModal').classList.add('show')" class="inline-flex items-center gap-2 px-10 py-4 bg-white text-indigo-700 font-black text-lg rounded-2xl hover:bg-gray-50 transition-all duration-300 shadow-2xl hover:-translate-y-0.5 active:scale-[0.98]">
+                                <p class="text-indigo-200/80 text-lg mb-8 max-w-xl mx-auto">Join thousands of learners using AI to master any subject faster.</p>
+                                <button onclick="document.getElementById('registerModal').classList.add('show')" class="inline-flex items-center gap-2 px-10 py-4 bg-white text-primary-dark font-black text-lg rounded-2xl hover:bg-gray-100 transition-all duration-300 shadow-2xl shadow-black/20 hover:-translate-y-1 active:scale-[0.98]">
                                     Get Started Free <i class="fas fa-arrow-right"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Footer -->
+                    <footer class="site-footer">
+                        <div class="footer-grid">
+                            <div class="footer-col">
+                                <h4>Product</h4>
+                                <a href="#">Features</a>
+                                <a href="#">Pricing</a>
+                                <a href="#">API</a>
+                            </div>
+                            <div class="footer-col">
+                                <h4>Resources</h4>
+                                <a href="#">Documentation</a>
+                                <a href="#">Blog</a>
+                                <a href="#">Tutorials</a>
+                            </div>
+                            <div class="footer-col">
+                                <h4>Company</h4>
+                                <a href="#">About</a>
+                                <a href="#">Careers</a>
+                                <a href="#">Contact</a>
+                            </div>
+                            <div class="footer-col">
+                                <h4>Legal</h4>
+                                <a href="#">Privacy</a>
+                                <a href="#">Terms</a>
+                                <a href="#">Security</a>
+                            </div>
+                        </div>
+                        <div class="footer-bottom">
+                            <p>&copy; 2026 TestAI. Built with <i class="fas fa-heart text-rose text-xs"></i> and AI.</p>
+                        </div>
+                    </footer>
                 </section>
 
                 <!-- ======== DASHBOARD SECTION (hidden by default) ======== -->
-                <section id="dashboardSection" class="hidden flex-1 bg-[#F8FAFC]">
-                    <header class="bg-white/80 backdrop-blur-sm border-b border-gray-100 px-6 lg:px-8 py-6">
+                <section id="dashboardSection" class="hidden flex-1 bg-[#0B0F1A]">
+                    <header class="bg-[#0B0F1A]/80 backdrop-blur-sm border-b border-white/5 px-6 lg:px-8 py-6">
                         <div>
-                            <h1 class="text-2xl font-extrabold text-gray-900" id="welcomeMessage">Welcome back!</h1>
-                            <p class="text-gray-500 text-sm mt-1.5">Here's an overview of your test activities and performance.</p>
+                            <h1 class="text-2xl font-extrabold text-white" id="welcomeMessage">Welcome back!</h1>
+                            <p class="text-gray-400 text-sm mt-1.5">Here's an overview of your test activities and performance.</p>
                         </div>
                     </header>
                     
@@ -383,8 +442,8 @@ app.get('/', async (c) => {
                             <div class="stat-card">
                                 <div class="stat-card-content">
                                     <div class="stat-card-info">
-                                        <p class="stat-card-label">Tests Taken</p>
-                                        <p class="stat-card-value" id="testsTaken">24</p>
+                                        <p class="stat-card-label text-gray-400">Tests Taken</p>
+                                        <p class="stat-card-value text-white" id="testsTaken">24</p>
                                         <p class="stat-card-change positive">
                                             <i class="fas fa-arrow-trend-up mr-1"></i>+2% vs last month
                                         </p>
@@ -398,8 +457,8 @@ app.get('/', async (c) => {
                             <div class="stat-card">
                                 <div class="stat-card-content">
                                     <div class="stat-card-info">
-                                        <p class="stat-card-label">Average Score</p>
-                                        <p class="stat-card-value" id="averageScore">78%</p>
+                                        <p class="stat-card-label text-gray-400">Average Score</p>
+                                        <p class="stat-card-value text-white" id="averageScore">78%</p>
                                         <p class="stat-card-change positive">
                                             <i class="fas fa-arrow-trend-up mr-1"></i>+5% vs last month
                                         </p>
@@ -413,8 +472,8 @@ app.get('/', async (c) => {
                             <div class="stat-card">
                                 <div class="stat-card-content">
                                     <div class="stat-card-info">
-                                        <p class="stat-card-label">Test Categories</p>
-                                        <p class="stat-card-value" id="testCategories">5</p>
+                                        <p class="stat-card-label text-gray-400">Test Categories</p>
+                                        <p class="stat-card-value text-white" id="testCategories">5</p>
                                         <p class="stat-card-change positive">
                                             <i class="fas fa-plus mr-1"></i>2 new added
                                         </p>
@@ -428,8 +487,8 @@ app.get('/', async (c) => {
                             <div class="stat-card">
                                 <div class="stat-card-content">
                                     <div class="stat-card-info">
-                                        <p class="stat-card-label">Time Spent</p>
-                                        <p class="stat-card-value" id="timeSpent">12h 30m</p>
+                                        <p class="stat-card-label text-gray-400">Time Spent</p>
+                                        <p class="stat-card-value text-white" id="timeSpent">12h 30m</p>
                                         <p class="stat-card-change negative">
                                             <i class="fas fa-arrow-trend-down mr-1"></i>-3% vs last month
                                         </p>
@@ -445,7 +504,7 @@ app.get('/', async (c) => {
                         <div class="grid lg:grid-cols-3 gap-6 mb-8">
                             <div class="lg:col-span-2 glass-card rounded-2xl p-6">
                                 <div class="flex justify-between items-center mb-6">
-                                    <h3 class="text-lg font-bold text-gray-900">Performance Trend</h3>
+                                    <h3 class="text-lg font-bold text-white">Performance Trend</h3>
                                     <div class="flex gap-1.5">
                                         <button class="chart-tab-btn active" data-period="weekly">Weekly</button>
                                         <button class="chart-tab-btn" data-period="monthly">Monthly</button>
@@ -459,8 +518,8 @@ app.get('/', async (c) => {
 
                             <div class="glass-card rounded-2xl p-6">
                                 <div class="flex justify-between items-center mb-5">
-                                    <h3 class="text-lg font-bold text-gray-900">Recent Tests</h3>
-                                    <a href="#" class="text-sm font-semibold text-indigo-500 hover:text-indigo-700 transition-colors">View All</a>
+                                    <h3 class="text-lg font-bold text-white">Recent Tests</h3>
+                                    <a href="#" class="text-sm font-semibold text-primary-light hover:text-cyan transition-colors">View All</a>
                                 </div>
                                 <div class="space-y-3" id="recentTestsList"></div>
                                 <button id="takeNewTestBtn" class="btn-primary-sm w-full mt-5">
@@ -473,14 +532,14 @@ app.get('/', async (c) => {
                         <div class="grid lg:grid-cols-3 gap-6 mb-8">
                             <div class="lg:col-span-2 glass-card rounded-2xl p-6">
                                 <div class="flex justify-between items-center mb-6">
-                                    <h3 class="text-lg font-bold text-gray-900">Test Categories</h3>
-                                    <a href="#" class="text-sm font-semibold text-indigo-500 hover:text-indigo-700 transition-colors">View All</a>
+                                    <h3 class="text-lg font-bold text-white">Test Categories</h3>
+                                    <a href="#" class="text-sm font-semibold text-primary-light hover:text-cyan transition-colors">View All</a>
                                 </div>
                                 <div class="grid sm:grid-cols-2 gap-4" id="testCategoriesGrid"></div>
                             </div>
 
                             <div class="glass-card rounded-2xl p-6">
-                                <h3 class="text-lg font-bold text-gray-900 mb-5">Quick Test</h3>
+                                <h3 class="text-lg font-bold text-white mb-5">Quick Test</h3>
                                 <form id="quickTestForm">
                                     <div class="space-y-4">
                                         <div>
@@ -498,19 +557,19 @@ app.get('/', async (c) => {
                                             </div>
                                         </div>
                                         <div>
-                                            <label class="form-label">Questions: <span id="questionCount" class="font-bold text-indigo-600">15</span></label>
-                                            <input type="range" id="questionSlider" min="10" max="50" value="15" class="w-full accent-indigo-500">
+                                            <label class="form-label">Questions: <span id="questionCount" class="font-bold text-primary-light">15</span></label>
+                                            <input type="range" id="questionSlider" min="10" max="50" value="15" class="w-full accent-primary">
                                         </div>
                                         <div>
                                             <label class="form-label">Types</label>
                                             <div class="flex flex-wrap gap-3">
                                                 <label class="flex items-center gap-1.5 cursor-pointer">
-                                                    <input type="checkbox" value="MCQ" checked class="w-4 h-4 accent-indigo-500 rounded">
-                                                    <span class="text-sm text-gray-700">MCQ</span>
+                                                    <input type="checkbox" value="MCQ" checked class="w-4 h-4 accent-primary rounded">
+                                                    <span class="text-sm text-gray-300">MCQ</span>
                                                 </label>
                                                 <label class="flex items-center gap-1.5 cursor-pointer">
-                                                    <input type="checkbox" value="TrueFalse" class="w-4 h-4 accent-indigo-500 rounded">
-                                                    <span class="text-sm text-gray-700">T/F</span>
+                                                    <input type="checkbox" value="TrueFalse" class="w-4 h-4 accent-primary rounded">
+                                                    <span class="text-sm text-gray-300">T/F</span>
                                                 </label>
                                             </div>
                                         </div>
@@ -534,20 +593,20 @@ app.get('/', async (c) => {
 
                         <!-- Test In Progress -->
                         <div class="glass-card rounded-2xl p-6 mb-8">
-                            <h3 class="text-lg font-bold text-gray-900 mb-4">In Progress</h3>
+                            <h3 class="text-lg font-bold text-white mb-4">In Progress</h3>
                             <div id="testInProgress"></div>
                         </div>
 
                         <!-- Improvement + AI Recs -->
                         <div class="grid lg:grid-cols-2 gap-6">
                             <div class="glass-card rounded-2xl p-6">
-                                <h3 class="text-lg font-bold text-gray-900 mb-6">Areas for Improvement</h3>
+                                <h3 class="text-lg font-bold text-white mb-6">Areas for Improvement</h3>
                                 <div class="space-y-4" id="improvementAreas"></div>
                             </div>
                             <div class="glass-card rounded-2xl p-6">
                                 <div class="flex justify-between items-center mb-6">
-                                    <h3 class="text-lg font-bold text-gray-900">AI Recommendations</h3>
-                                    <span class="text-xs font-bold px-3 py-1 rounded-full bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 border border-purple-200">
+                                    <h3 class="text-lg font-bold text-white">AI Recommendations</h3>
+                                    <span class="text-xs font-bold px-3 py-1 rounded-full bg-gradient-to-r from-purple/20 to-primary/20 text-purple border border-purple/20">
                                         <i class="fas fa-sparkles mr-1"></i>Powered by AI
                                     </span>
                                 </div>
@@ -558,16 +617,16 @@ app.get('/', async (c) => {
                 </section>
 
                 <!-- ======== TESTS SECTION ======== -->
-                <section id="testsSection" class="hidden flex-1 bg-[#F8FAFC]">
-                    <header class="bg-white/80 backdrop-blur-sm border-b border-gray-100 px-6 lg:px-8 py-6">
+                <section id="testsSection" class="hidden flex-1 bg-[#0B0F1A]">
+                    <header class="bg-[#0B0F1A]/80 backdrop-blur-sm border-b border-white/5 px-6 lg:px-8 py-6">
                         <div>
-                            <h1 class="text-2xl font-extrabold text-gray-900">My Tests</h1>
-                            <p class="text-gray-500 text-sm mt-1.5">Create and manage your tests</p>
+                            <h1 class="text-2xl font-extrabold text-white">My Tests</h1>
+                            <p class="text-gray-400 text-sm mt-1.5">Create and manage your tests</p>
                         </div>
                     </header>
                     <div class="p-6 lg:p-8">
                         <div class="glass-card rounded-2xl p-7 mb-6">
-                            <h3 class="text-lg font-bold text-gray-900 mb-5">Create New Test</h3>
+                            <h3 class="text-lg font-bold text-white mb-5">Create New Test</h3>
                             <div id="testCreationForm">
                                 <div class="grid md:grid-cols-2 gap-6">
                                     <div>
@@ -590,8 +649,8 @@ app.get('/', async (c) => {
                                         </div>
                                     </div>
                                     <div>
-                                        <label class="form-label">Questions: <span id="questionCountDisplay" class="font-bold text-indigo-600">15</span></label>
-                                        <input type="range" id="questionCountSlider" min="5" max="50" value="15" class="w-full accent-indigo-500">
+                                        <label class="form-label">Questions: <span id="questionCountDisplay" class="font-bold text-primary-light">15</span></label>
+                                        <input type="range" id="questionCountSlider" min="5" max="50" value="15" class="w-full accent-primary">
                                     </div>
                                     <div>
                                         <label class="form-label">Time Limit</label>
@@ -613,19 +672,19 @@ app.get('/', async (c) => {
                 </section>
 
                 <!-- ======== HISTORY SECTION ======== -->
-                <section id="historySection" class="hidden flex-1 bg-[#F8FAFC]">
-                    <header class="bg-white/80 backdrop-blur-sm border-b border-gray-100 px-6 lg:px-8 py-6">
+                <section id="historySection" class="hidden flex-1 bg-[#0B0F1A]">
+                    <header class="bg-[#0B0F1A]/80 backdrop-blur-sm border-b border-white/5 px-6 lg:px-8 py-6">
                         <div>
-                            <h1 class="text-2xl font-extrabold text-gray-900">Test History</h1>
-                            <p class="text-gray-500 text-sm mt-1.5">Review your past test performances</p>
+                            <h1 class="text-2xl font-extrabold text-white">Test History</h1>
+                            <p class="text-gray-400 text-sm mt-1.5">Review your past test performances</p>
                         </div>
                     </header>
                     <div class="p-6 lg:p-8">
                         <div class="glass-card rounded-2xl p-7">
-                            <h3 class="text-lg font-bold text-gray-900 mb-5">Recent Test Results</h3>
+                            <h3 class="text-lg font-bold text-white mb-5">Recent Test Results</h3>
                             <div id="testHistoryList">
                                 <div class="text-center py-14 text-gray-400">
-                                    <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
                                         <i class="fas fa-clock-rotate-left text-2xl"></i>
                                     </div>
                                     <p class="font-medium">No test history yet</p>
@@ -637,20 +696,20 @@ app.get('/', async (c) => {
                 </section>
 
                 <!-- ======== ANALYTICS SECTION ======== -->
-                <section id="analyticsSection" class="hidden flex-1 bg-[#F8FAFC]">
-                    <header class="bg-white/80 backdrop-blur-sm border-b border-gray-100 px-6 lg:px-8 py-6">
+                <section id="analyticsSection" class="hidden flex-1 bg-[#0B0F1A]">
+                    <header class="bg-[#0B0F1A]/80 backdrop-blur-sm border-b border-white/5 px-6 lg:px-8 py-6">
                         <div>
-                            <h1 class="text-2xl font-extrabold text-gray-900">Analytics</h1>
-                            <p class="text-gray-500 text-sm mt-1.5">Detailed performance insights and trends</p>
+                            <h1 class="text-2xl font-extrabold text-white">Analytics</h1>
+                            <p class="text-gray-400 text-sm mt-1.5">Detailed performance insights and trends</p>
                         </div>
                     </header>
                     <div class="p-6 lg:p-8">
                         <div class="grid lg:grid-cols-2 gap-6">
                             <div class="glass-card rounded-2xl p-7">
-                                <h3 class="text-lg font-bold text-gray-900 mb-4">Performance Trends</h3>
+                                <h3 class="text-lg font-bold text-white mb-4">Performance Trends</h3>
                                 <div class="h-72 flex items-center justify-center text-gray-400">
                                     <div class="text-center">
-                                        <div class="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                        <div class="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
                                             <i class="fas fa-chart-line text-xl"></i>
                                         </div>
                                         <p class="font-medium">Analytics charts will appear here</p>
@@ -658,10 +717,10 @@ app.get('/', async (c) => {
                                 </div>
                             </div>
                             <div class="glass-card rounded-2xl p-7">
-                                <h3 class="text-lg font-bold text-gray-900 mb-4">Subject Breakdown</h3>
+                                <h3 class="text-lg font-bold text-white mb-4">Subject Breakdown</h3>
                                 <div class="h-72 flex items-center justify-center text-gray-400">
                                     <div class="text-center">
-                                        <div class="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                        <div class="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
                                             <i class="fas fa-chart-pie text-xl"></i>
                                         </div>
                                         <p class="font-medium">Subject performance breakdown</p>
@@ -673,16 +732,16 @@ app.get('/', async (c) => {
                 </section>
 
                 <!-- ======== PROFILE SECTION ======== -->
-                <section id="profileSection" class="hidden flex-1 bg-[#F8FAFC]">
-                    <header class="bg-white/80 backdrop-blur-sm border-b border-gray-100 px-6 lg:px-8 py-6">
+                <section id="profileSection" class="hidden flex-1 bg-[#0B0F1A]">
+                    <header class="bg-[#0B0F1A]/80 backdrop-blur-sm border-b border-white/5 px-6 lg:px-8 py-6">
                         <div>
-                            <h1 class="text-2xl font-extrabold text-gray-900">Profile Settings</h1>
-                            <p class="text-gray-500 text-sm mt-1.5">Manage your account and preferences</p>
+                            <h1 class="text-2xl font-extrabold text-white">Profile Settings</h1>
+                            <p class="text-gray-400 text-sm mt-1.5">Manage your account and preferences</p>
                         </div>
                     </header>
                     <div class="p-6 lg:p-8">
                         <div class="glass-card rounded-2xl p-7 max-w-3xl">
-                            <h3 class="text-lg font-bold text-gray-900 mb-6">Account Information</h3>
+                            <h3 class="text-lg font-bold text-white mb-6">Account Information</h3>
                             <form id="profileForm">
                                 <div class="grid md:grid-cols-2 gap-5">
                                     <div>
@@ -718,29 +777,29 @@ app.get('/', async (c) => {
                 </section>
 
                 <!-- ======== SETTINGS SECTION ======== -->
-                <section id="settingsSection" class="hidden flex-1 bg-[#F8FAFC]">
-                    <header class="bg-white/80 backdrop-blur-sm border-b border-gray-100 px-6 lg:px-8 py-6">
+                <section id="settingsSection" class="hidden flex-1 bg-[#0B0F1A]">
+                    <header class="bg-[#0B0F1A]/80 backdrop-blur-sm border-b border-white/5 px-6 lg:px-8 py-6">
                         <div>
-                            <h1 class="text-2xl font-extrabold text-gray-900">Settings</h1>
-                            <p class="text-gray-500 text-sm mt-1.5">Configure your application preferences</p>
+                            <h1 class="text-2xl font-extrabold text-white">Settings</h1>
+                            <p class="text-gray-400 text-sm mt-1.5">Configure your application preferences</p>
                         </div>
                     </header>
                     <div class="p-6 lg:p-8">
                         <div class="glass-card rounded-2xl p-7 max-w-3xl">
-                            <h3 class="text-lg font-bold text-gray-900 mb-6">Preferences</h3>
+                            <h3 class="text-lg font-bold text-white mb-6">Preferences</h3>
                             <div class="space-y-5">
-                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                                    <span class="font-semibold text-gray-700 text-sm">Email Notifications</span>
+                                <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+                                    <span class="font-semibold text-gray-300 text-sm">Email Notifications</span>
                                     <label class="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" class="sr-only peer">
-                                        <div class="w-12 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-indigo-600"></div>
+                                        <div class="w-12 h-7 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-primary peer-checked:to-purple"></div>
                                     </label>
                                 </div>
-                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                                    <span class="font-semibold text-gray-700 text-sm">Auto-save Progress</span>
+                                <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+                                    <span class="font-semibold text-gray-300 text-sm">Auto-save Progress</span>
                                     <label class="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" class="sr-only peer" checked>
-                                        <div class="w-12 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-indigo-600"></div>
+                                        <div class="w-12 h-7 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-primary peer-checked:to-purple"></div>
                                     </label>
                                 </div>
                             </div>
@@ -773,9 +832,9 @@ app.get('/', async (c) => {
                         <i class="fas fa-arrow-right-to-bracket mr-2"></i>Sign In
                     </button>
                 </form>
-                <p class="mt-6 text-center text-sm text-gray-500">
+                <p class="mt-6 text-center text-sm text-gray-400">
                     Don't have an account? 
-                    <button id="switchToRegister" class="font-bold text-indigo-600 hover:text-indigo-800 transition-colors">Create one</button>
+                    <button id="switchToRegister" class="font-bold text-primary-light hover:text-cyan transition-colors">Create one</button>
                 </p>
             </div>
         </div>
@@ -820,9 +879,9 @@ app.get('/', async (c) => {
                         <i class="fas fa-user-plus mr-2"></i>Create Account
                     </button>
                 </form>
-                <p class="mt-6 text-center text-sm text-gray-500">
+                <p class="mt-6 text-center text-sm text-gray-400">
                     Already have an account? 
-                    <button id="switchToLogin" class="font-bold text-indigo-600 hover:text-indigo-800 transition-colors">Sign in</button>
+                    <button id="switchToLogin" class="font-bold text-primary-light hover:text-cyan transition-colors">Sign in</button>
                 </p>
             </div>
         </div>
