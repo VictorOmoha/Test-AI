@@ -160,7 +160,7 @@ class TestApp {
         if (token) {
             this.token = token;
             try {
-                const response = await axios.post('/api/auth/verify');
+                const response = await axios.post('/api/auth/verify', {}, { timeout: 3000 });
                 if (response.data.success && response.data.user) {
                     this.user = response.data.user;
                     this.updateUI();
@@ -187,8 +187,8 @@ class TestApp {
         }
 
         try {
-            // Try API login first
-            const response = await axios.post('/api/auth/login', { email, password });
+            // Try API login first (short timeout so demo fallback kicks in fast)
+            const response = await axios.post('/api/auth/login', { email, password }, { timeout: 5000 });
             
             if (response.data.success) {
                 this.user = response.data.user;
@@ -236,24 +236,38 @@ class TestApp {
         if (education_level) userData.education_level = education_level;
 
         try {
-            const response = await axios.post('/api/auth/register', userData);
-            
+            const response = await axios.post('/api/auth/register', userData, { timeout: 5000 });
+
             if (response.data.success) {
                 this.user = response.data.user;
                 this.token = response.data.token;
                 localStorage.setItem('ai_test_token', this.token);
-                
+
                 this.hideRegisterModal();
                 this.updateUI();
                 await this.loadUserData();
                 this.showSuccess('Registration successful! Welcome to TestAI!');
-            } else {
-                this.showError(response.data.message || 'Registration failed');
+                return;
             }
         } catch (error) {
-            console.error('Registration error:', error);
-            this.showError(error.response?.data?.message || 'Registration failed');
+            console.log('API registration failed, using demo registration');
         }
+
+        // Fallback to demo registration
+        this.user = {
+            id: 1,
+            name: name,
+            email: email,
+            age: age ? parseInt(age) : null,
+            education: education_level || null
+        };
+        this.token = 'demo-token-' + Date.now();
+        localStorage.setItem('ai_test_token', this.token);
+
+        this.hideRegisterModal();
+        this.updateUI();
+        await this.loadUserData();
+        this.showSuccess('Welcome to TestAI! (Demo mode)');
     }
 
     logout() {

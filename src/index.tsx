@@ -22,6 +22,26 @@ app.use('/api/*', cors({
 // Serve static files
 app.use('/static/*', serveStatic({ root: './public' }))
 
+// Fail-fast middleware: reject API calls immediately if DB is unavailable
+app.use('/api/auth/*', async (c, next) => {
+  if (!c.env?.DB) {
+    return c.json({ success: false, message: 'Database not available' }, 503)
+  }
+  await next()
+})
+app.use('/api/tests/*', async (c, next) => {
+  if (!c.env?.DB) {
+    return c.json({ success: false, message: 'Database not available' }, 503)
+  }
+  await next()
+})
+app.use('/api/social/*', async (c, next) => {
+  if (!c.env?.DB) {
+    return c.json({ success: false, message: 'Database not available' }, 503)
+  }
+  await next()
+})
+
 // API Routes
 app.route('/api/auth', auth)
 app.route('/api/tests', tests)
