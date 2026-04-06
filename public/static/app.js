@@ -571,8 +571,8 @@ class TestApp {
                         <i class="${icon} text-xl text-primary"></i>
                         <span class="text-right text-sm font-medium">${progress}%</span>
                     </div>
-                    <h4 class="font-medium text-white mb-1">${category.name}</h4>
-                    <p class="text-xs text-gray-400 mb-3 line-clamp-2">${category.description}</p>
+                    <h4 class="font-medium text-slate-900 mb-1">${category.name}</h4>
+                    <p class="text-xs text-slate-400 mb-3 line-clamp-2">${category.description}</p>
                     <div class="progress-bar">
                         <div class="progress-fill ${colorClass}" style="width: ${progress}%"></div>
                     </div>
@@ -627,7 +627,7 @@ class TestApp {
             return `
                 <div class="recent-test-item">
                     <div class="flex-1">
-                        <h4 class="font-medium text-white text-sm">${test.subject}</h4>
+                        <h4 class="font-medium text-slate-900 text-sm">${test.subject}</h4>
                         <p class="text-xs text-gray-500">${test.questions} questions • ${test.timestamp}</p>
                     </div>
                     <div class="score-badge ${scoreClass}">${test.score}%</div>
@@ -680,7 +680,7 @@ class TestApp {
         const range = maxValue - minValue;
         
         // Draw grid lines
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+        ctx.strokeStyle = '#E2E8F0';
         ctx.lineWidth = 1;
 
         for (let i = 0; i <= 5; i++) {
@@ -692,7 +692,7 @@ class TestApp {
         }
 
         // Draw data line
-        ctx.strokeStyle = '#E2A039';
+        ctx.strokeStyle = '#2563EB';
         ctx.lineWidth = 3;
         ctx.beginPath();
         
@@ -710,7 +710,7 @@ class TestApp {
         ctx.stroke();
         
         // Draw data points
-        ctx.fillStyle = '#E2A039';
+        ctx.fillStyle = '#2563EB';
         data.values.forEach((value, index) => {
             const x = padding + (chartWidth * index) / (data.values.length - 1);
             const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
@@ -976,7 +976,7 @@ class TestApp {
                 container.innerHTML = response.data.tests.map(test => `
                     <div class="recent-test-item mb-4">
                         <div class="flex-1">
-                            <div class="font-medium text-white">${test.category} - ${test.difficulty}</div>
+                            <div class="font-medium text-slate-900">${test.category} - ${test.difficulty}</div>
                             <div class="text-sm text-gray-500">${new Date(test.completed_at).toLocaleDateString()}</div>
                         </div>
                         <div class="text-right">
@@ -1146,13 +1146,13 @@ class TestApp {
         notification.className = `fixed top-4 right-4 z-50 p-4 rounded-xl shadow-2xl transition-all duration-300 transform translate-x-full border`;
 
         const colors = {
-            success: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/20',
-            error: 'bg-red-500/15 text-red-300 border-red-500/20',
-            info: 'bg-amber-500/15 text-amber-300 border-amber-500/20'
+            success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            error: 'bg-red-50 text-red-700 border-red-200',
+            info: 'bg-blue-50 text-blue-700 border-blue-200'
         };
         
         notification.classList.add(...colors[type].split(' '));
-        notification.style.backdropFilter = 'blur(16px)';
+        notification.style.backdropFilter = 'blur(8px)';
         notification.innerHTML = `
             <div class="flex items-center">
                 <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation' : 'info'}-circle mr-2"></i>
