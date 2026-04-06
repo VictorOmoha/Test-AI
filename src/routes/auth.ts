@@ -2,7 +2,7 @@
 import { Hono } from 'hono'
 import { Env, CreateUserRequest, LoginRequest } from '../types/database'
 import { DatabaseService } from '../utils/database'
-import { hashPassword, verifyPassword, generateJWT, isValidEmail, isValidPassword, generateUUID } from '../utils/auth'
+import { hashPassword, verifyPassword, generateJWT, verifyJWT, isValidEmail, isValidPassword, generateUUID } from '../utils/auth'
 
 const auth = new Hono<{ Bindings: Env }>()
 
