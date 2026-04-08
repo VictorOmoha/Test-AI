@@ -289,9 +289,23 @@ app.get('/', async (c) => {
                     <i class="fas fa-play-circle"></i> Watch Demo
                 </button>
             </div>
+
+            <div class="hero-proof-grid mt-10 animate-fade-up" style="animation-delay: 0.32s">
+                <div class="hero-proof-card">
+                    <div class="hero-proof-label">Personalized mastery</div>
+                    <div class="hero-proof-value">Adaptive test creation</div>
+                </div>
+                <div class="hero-proof-card">
+                    <div class="hero-proof-label">Actionable review</div>
+                    <div class="hero-proof-value">Instant performance feedback</div>
+                </div>
+                <div class="hero-proof-card">
+                    <div class="hero-proof-label">Built for consistency</div>
+                    <div class="hero-proof-value">Progress you can actually track</div>
+                </div>
+            </div>
         </div>
     </div>
-    ...
 </section>
                     <div class="relative max-w-6xl mx-auto px-6 -mt-20 mb-24">
                         <div class="grid md:grid-cols-3 gap-6 stagger-children">
@@ -427,6 +441,12 @@ app.get('/', async (c) => {
                     
                     <div class="p-6 lg:p-8">
                         <!-- Stats Grid -->
+                        <div class="flex flex-wrap gap-3 mb-5">
+                            <span class="metric-chip"><i class="fas fa-graduation-cap"></i> Personalized assessment paths</span>
+                            <span class="metric-chip"><i class="fas fa-chart-line"></i> Weekly momentum tracking</span>
+                            <span class="metric-chip"><i class="fas fa-brain"></i> AI-assisted review</span>
+                        </div>
+
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
                             <div class="stat-card">
                                 <div class="stat-card-content">
@@ -434,7 +454,7 @@ app.get('/', async (c) => {
                                         <p class="stat-card-label text-slate-500">Tests Taken</p>
                                         <p class="stat-card-value text-slate-900" id="testsTaken">24</p>
                                         <p class="stat-card-change positive">
-                                            <i class="fas fa-arrow-trend-up mr-1"></i>+2% vs last month
+                                            <i class="fas fa-arrow-trend-up mr-1"></i>Momentum is building
                                         </p>
                                     </div>
                                     <div class="stat-card-icon primary">
@@ -449,7 +469,7 @@ app.get('/', async (c) => {
                                         <p class="stat-card-label text-slate-500">Average Score</p>
                                         <p class="stat-card-value text-slate-900" id="averageScore">78%</p>
                                         <p class="stat-card-change positive">
-                                            <i class="fas fa-arrow-trend-up mr-1"></i>+5% vs last month
+                                            <i class="fas fa-arrow-trend-up mr-1"></i>Consistent improvement
                                         </p>
                                     </div>
                                     <div class="stat-card-icon success">
@@ -464,7 +484,7 @@ app.get('/', async (c) => {
                                         <p class="stat-card-label text-slate-500">Test Categories</p>
                                         <p class="stat-card-value text-slate-900" id="testCategories">5</p>
                                         <p class="stat-card-change positive">
-                                            <i class="fas fa-plus mr-1"></i>2 new added
+                                            <i class="fas fa-plus mr-1"></i>Broader subject coverage
                                         </p>
                                     </div>
                                     <div class="stat-card-icon purple">
@@ -478,8 +498,8 @@ app.get('/', async (c) => {
                                     <div class="stat-card-info">
                                         <p class="stat-card-label text-slate-500">Time Spent</p>
                                         <p class="stat-card-value text-slate-900" id="timeSpent">12h 30m</p>
-                                        <p class="stat-card-change negative">
-                                            <i class="fas fa-arrow-trend-down mr-1"></i>-3% vs last month
+                                        <p class="stat-card-change positive">
+                                            <i class="fas fa-book-open mr-1"></i>Focused practice hours
                                         </p>
                                     </div>
                                     <div class="stat-card-icon warning">
@@ -493,7 +513,10 @@ app.get('/', async (c) => {
                         <div class="grid lg:grid-cols-3 gap-6 mb-8">
                             <div class="lg:col-span-2 glass-card rounded-2xl p-6">
                                 <div class="flex justify-between items-center mb-6">
+                                    <div>
+                                    <div class="section-kicker">Learning analytics</div>
                                     <h3 class="text-lg font-bold text-slate-900">Performance Trend</h3>
+                                </div>
                                     <div class="flex gap-1.5">
                                         <button class="chart-tab-btn active" data-period="weekly">Weekly</button>
                                         <button class="chart-tab-btn" data-period="monthly">Monthly</button>
@@ -507,7 +530,10 @@ app.get('/', async (c) => {
 
                             <div class="glass-card rounded-2xl p-6">
                                 <div class="flex justify-between items-center mb-5">
-                                    <h3 class="text-lg font-bold text-slate-900">Recent Tests</h3>
+                                    <div>
+                                        <div class="section-kicker">Recent activity</div>
+                                        <h3 class="text-lg font-bold text-slate-900">Recent Tests</h3>
+                                    </div>
                                     <a href="#" class="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">View All</a>
                                 </div>
                                 <div class="space-y-3" id="recentTestsList"></div>
@@ -521,13 +547,17 @@ app.get('/', async (c) => {
                         <div class="grid lg:grid-cols-3 gap-6 mb-8">
                             <div class="lg:col-span-2 glass-card rounded-2xl p-6">
                                 <div class="flex justify-between items-center mb-6">
-                                    <h3 class="text-lg font-bold text-slate-900">Test Categories</h3>
+                                    <div>
+                                        <div class="section-kicker">Subject intelligence</div>
+                                        <h3 class="text-lg font-bold text-slate-900">Test Categories</h3>
+                                    </div>
                                     <a href="#" class="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">View All</a>
                                 </div>
                                 <div class="grid sm:grid-cols-2 gap-4" id="testCategoriesGrid"></div>
                             </div>
 
                             <div class="glass-card rounded-2xl p-6">
+                                <div class="section-kicker">Start focused practice</div>
                                 <h3 class="text-lg font-bold text-slate-900 mb-5">Quick Test</h3>
                                 <form id="quickTestForm">
                                     <div class="space-y-4">
@@ -802,76 +832,88 @@ app.get('/', async (c) => {
         </div>
 
         <!-- ======== LOGIN MODAL ======== -->
-        <div id="loginModal" class="modal-overlay">
-            <div class="modal-content">
-                <button id="closeLoginModal" class="modal-close-btn">
+        <div id="loginModal" class="modal-overlay hidden items-center justify-center z-50">
+            <div class="modal-content glass-card rounded-[28px] p-8 w-full max-w-md mx-4 relative overflow-hidden">
+                <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.08),transparent_35%)] pointer-events-none"></div>
+                <button id="closeLoginModal" class="modal-close-btn absolute top-5 right-5 w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-all">
                     <i class="fas fa-xmark text-lg"></i>
                 </button>
-                <h2>Welcome back</h2>
-                <form id="loginForm">
-                    <div class="mb-5">
-                        <label class="form-label">Email Address</label>
-                        <input type="email" id="loginEmail" class="form-input" placeholder="you@example.com" required>
-                    </div>
-                    <div class="mb-7">
-                        <label class="form-label">Password</label>
-                        <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" autocomplete="current-password" required>
-                    </div>
-                    <button type="submit" class="btn-primary">
-                        <i class="fas fa-arrow-right-to-bracket mr-2"></i>Sign In
-                    </button>
-                </form>
-                <p class="mt-6 text-center text-sm text-slate-400">
-                    Don't have an account? 
-                    <button id="switchToRegister" class="font-bold text-blue-600 hover:text-cyan transition-colors">Create one</button>
-                </p>
+                <div class="relative">
+                    <div class="section-kicker">Welcome back</div>
+                    <h2 class="text-3xl font-extrabold text-slate-900 mb-2">Continue your learning flow</h2>
+                    <p class="text-slate-500 text-sm mb-7">Sign in to access your personalized dashboard, progress insights, and AI-powered practice.</p>
+                    <form id="loginForm">
+                        <div class="mb-5">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" id="loginEmail" class="form-input" placeholder="you@example.com" required>
+                        </div>
+                        <div class="mb-7">
+                            <label class="form-label">Password</label>
+                            <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" autocomplete="current-password" required>
+                        </div>
+                        <button type="submit" class="btn-primary w-full">
+                            <i class="fas fa-arrow-right-to-bracket mr-2"></i>Sign In
+                        </button>
+                    </form>
+                    <p class="mt-6 text-center text-sm text-slate-400">
+                        Don't have an account? 
+                        <button id="switchToRegister" class="font-bold text-blue-600 hover:text-cyan transition-colors">Create one</button>
+                    </p>
+                </div>
             </div>
         </div>
 
         <!-- ======== REGISTER MODAL ======== -->
-        <div id="registerModal" class="modal-overlay">
-            <div class="modal-content">
-                <button id="closeRegisterModal" class="modal-close-btn">
+        <div id="registerModal" class="modal-overlay hidden items-center justify-center z-50">
+            <div class="modal-content glass-card rounded-[28px] p-8 w-full max-w-lg mx-4 relative overflow-hidden">
+                <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.08),transparent_35%)] pointer-events-none"></div>
+                <button id="closeRegisterModal" class="modal-close-btn absolute top-5 right-5 w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-all">
                     <i class="fas fa-xmark text-lg"></i>
                 </button>
-                <h2>Create your account</h2>
-                <form id="registerForm">
-                    <div class="mb-4">
-                        <label class="form-label">Full Name</label>
-                        <input type="text" id="registerName" class="form-input" placeholder="Your full name" required>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label">Email Address</label>
-                        <input type="email" id="registerEmail" class="form-input" placeholder="you@example.com" required>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label">Password</label>
-                        <input type="password" id="registerPassword" class="form-input" placeholder="Create a strong password" autocomplete="new-password" required>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label">Age (optional)</label>
-                        <input type="number" id="registerAge" class="form-input" placeholder="Your age" min="13" max="120">
-                    </div>
-                    <div class="mb-7">
-                        <label class="form-label">Education Level (optional)</label>
-                        <select id="registerEducation" class="form-select">
-                            <option value="">Select education level</option>
-                            <option value="High School">High School</option>
-                            <option value="Associate's Degree">Associate's Degree</option>
-                            <option value="Bachelor's Degree">Bachelor's Degree</option>
-                            <option value="Master's Degree">Master's Degree</option>
-                            <option value="Doctorate">Doctorate</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn-primary">
-                        <i class="fas fa-user-plus mr-2"></i>Create Account
-                    </button>
-                </form>
-                <p class="mt-6 text-center text-sm text-slate-400">
-                    Already have an account? 
-                    <button id="switchToLogin" class="font-bold text-blue-600 hover:text-cyan transition-colors">Sign in</button>
-                </p>
+                <div class="relative">
+                    <div class="section-kicker">Create your account</div>
+                    <h2 class="text-3xl font-extrabold text-slate-900 mb-2">Start building academic momentum</h2>
+                    <p class="text-slate-500 text-sm mb-7">Create your profile and get access to guided practice, AI-generated tests, and deeper learning analytics.</p>
+                    <form id="registerForm">
+                        <div class="mb-4">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" id="registerName" class="form-input" placeholder="Your full name" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" id="registerEmail" class="form-input" placeholder="you@example.com" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Password</label>
+                            <input type="password" id="registerPassword" class="form-input" placeholder="Create a strong password" autocomplete="new-password" required>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="mb-4 md:mb-0">
+                                <label class="form-label">Age (optional)</label>
+                                <input type="number" id="registerAge" class="form-input" placeholder="Your age" min="13" max="120">
+                            </div>
+                            <div class="mb-7 md:mb-0">
+                                <label class="form-label">Education Level</label>
+                                <select id="registerEducation" class="form-select">
+                                    <option value="">Select level</option>
+                                    <option value="High School">High School</option>
+                                    <option value="Associate's Degree">Associate's Degree</option>
+                                    <option value="Bachelor's Degree">Bachelor's Degree</option>
+                                    <option value="Master's Degree">Master's Degree</option>
+                                    <option value="Doctorate">Doctorate</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary w-full mt-3">
+                            <i class="fas fa-user-plus mr-2"></i>Create Account
+                        </button>
+                    </form>
+                    <p class="mt-6 text-center text-sm text-slate-400">
+                        Already have an account? 
+                        <button id="switchToLogin" class="font-bold text-blue-600 hover:text-cyan transition-colors">Sign in</button>
+                    </p>
+                </div>
             </div>
         </div>
 
