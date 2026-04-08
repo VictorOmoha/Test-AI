@@ -282,7 +282,7 @@ app.get('/', async (c) => {
 
             <!-- CTA Buttons -->
             <div class="flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-up" style="animation-delay: 0.24s">
-                <button onclick="document.getElementById('registerModal').classList.add('show')" class="hero-cta-primary">
+                <button onclick="window.testApp ? window.testApp.showTestCreation() : document.getElementById('registerModal').classList.add('show')" class="hero-cta-primary">
                     Start Testing Free <i class="fas fa-arrow-right text-sm"></i>
                 </button>
                 <button class="hero-cta-secondary">
@@ -389,7 +389,7 @@ app.get('/', async (c) => {
                             <div class="relative">
                                 <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-4">Ready to test yourself?</h2>
                                 <p class="text-blue-100/80 text-base mb-8 max-w-lg mx-auto">Join thousands of learners using AI to master any subject.</p>
-                                <button onclick="document.getElementById('registerModal').classList.add('show')" class="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-blue-700 font-bold rounded-xl hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]">
+                                <button onclick="window.testApp ? window.testApp.showTestCreation() : document.getElementById('registerModal').classList.add('show')" class="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-blue-700 font-bold rounded-xl hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]">
                                     Get Started Free <i class="fas fa-arrow-right"></i>
                                 </button>
                             </div>

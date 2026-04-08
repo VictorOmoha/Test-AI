@@ -39,7 +39,10 @@ class TestApp {
         // Add token to all requests
         axios.interceptors.request.use(
             config => {
-                if (this.token) {
+                config.headers = config.headers || {};
+                config.__skipGlobal401Handler = config.__skipGlobal401Handler || false;
+
+                if (this.token && !config.headers.Authorization) {
                     config.headers.Authorization = `Bearer ${this.token}`;
                 }
                 return config;
@@ -51,8 +54,12 @@ class TestApp {
         axios.interceptors.response.use(
             response => response,
             error => {
-                if (error.response?.status === 401) {
-                    this.logout();
+                const status = error.response?.status;
+                const skipGlobal401Handler = error.config?.__skipGlobal401Handler;
+
+                if (status === 401 && !skipGlobal401Handler) {
+                    this.logout(false);
+                    this.showError('Your session expired or is invalid. Please log in again.');
                 }
                 return Promise.reject(error);
             }
@@ -64,11 +71,11 @@ class TestApp {
         document.getElementById('loginBtn').addEventListener('click', () => this.showLoginModal());
         document.getElementById('registerBtn').addEventListener('click', () => this.showRegisterModal());
         document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
-        
+
         // Modal close buttons
         document.getElementById('closeLoginModal').addEventListener('click', () => this.hideLoginModal());
         document.getElementById('closeRegisterModal').addEventListener('click', () => this.hideRegisterModal());
-        
+
         // Modal switch buttons
         document.getElementById('switchToRegister').addEventListener('click', () => {
             this.hideLoginModal();
@@ -157,27 +164,34 @@ class TestApp {
 
     async checkAuthState() {
         const token = localStorage.getItem('ai_test_token');
-        if (token) {
-            this.token = token;
-            try {
-                const response = await axios.post('/api/auth/verify', {}, { timeout: 3000 });
-                if (response.data.success && response.data.user) {
-                    this.user = response.data.user;
-                    this.updateUI();
-                    await this.loadUserData();
-                } else {
-                    this.logout();
-                }
-            } catch (error) {
-                console.error('Token verification failed:', error);
-                this.logout();
+        if (!token) return;
+
+        this.token = token;
+        try {
+            const response = await axios.post('/api/auth/verify', {}, {
+                timeout: 3000,
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                __skipGlobal401Handler: true
+            });
+
+            if (response.data.success && response.data.user) {
+                this.user = response.data.user;
+                this.updateUI();
+                await this.loadUserData();
+            } else {
+                this.logout(false);
             }
+        } catch (error) {
+            console.error('Token verification failed:', error);
+            this.logout(false);
         }
     }
 
     async handleLogin(e) {
         e.preventDefault();
-        
+
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
 
@@ -187,44 +201,30 @@ class TestApp {
         }
 
         try {
-            // Try API login first (short timeout so demo fallback kicks in fast)
             const response = await axios.post('/api/auth/login', { email, password }, { timeout: 5000 });
-            
-            if (response.data.success) {
+
+            if (response.data.success && response.data.token && response.data.user) {
                 this.user = response.data.user;
                 this.token = response.data.token;
                 localStorage.setItem('ai_test_token', this.token);
-                
+
                 this.hideLoginModal();
                 this.updateUI();
                 await this.loadUserData();
                 this.showSuccess('Login successful!');
                 return;
             }
-        } catch (error) {
-            console.log('API login failed, using demo login');
-        }
 
-        // Fallback to demo login for any email/password
-        this.user = {
-            id: 1,
-            name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
-            email: email,
-            age: null,
-            education: null
-        };
-        this.token = 'demo-token-' + Date.now();
-        localStorage.setItem('ai_test_token', this.token);
-        
-        this.hideLoginModal();
-        this.updateUI();
-        await this.loadUserData();
-        this.showSuccess('Demo login successful!');
+            this.showError(response.data.message || 'Login failed');
+        } catch (error) {
+            console.error('API login failed:', error);
+            this.showError(error.response?.data?.message || 'Login failed. Please try again.');
+        }
     }
 
     async handleRegister(e) {
         e.preventDefault();
-        
+
         const name = document.getElementById('registerName').value;
         const email = document.getElementById('registerEmail').value;
         const password = document.getElementById('registerPassword').value;
@@ -238,7 +238,7 @@ class TestApp {
         try {
             const response = await axios.post('/api/auth/register', userData, { timeout: 5000 });
 
-            if (response.data.success) {
+            if (response.data.success && response.data.token && response.data.user) {
                 this.user = response.data.user;
                 this.token = response.data.token;
                 localStorage.setItem('ai_test_token', this.token);
@@ -249,47 +249,37 @@ class TestApp {
                 this.showSuccess('Registration successful! Welcome to TestAI!');
                 return;
             }
+
+            this.showError(response.data.message || 'Registration failed');
         } catch (error) {
-            console.log('API registration failed, using demo registration');
+            console.error('API registration failed:', error);
+            this.showError(error.response?.data?.message || 'Registration failed. Please try again.');
         }
-
-        // Fallback to demo registration
-        this.user = {
-            id: 1,
-            name: name,
-            email: email,
-            age: age ? parseInt(age) : null,
-            education: education_level || null
-        };
-        this.token = 'demo-token-' + Date.now();
-        localStorage.setItem('ai_test_token', this.token);
-
-        this.hideRegisterModal();
-        this.updateUI();
-        await this.loadUserData();
-        this.showSuccess('Welcome to TestAI! (Demo mode)');
     }
 
-    logout() {
+    logout(showMessage = true) {
         this.user = null;
         this.token = null;
         localStorage.removeItem('ai_test_token');
         this.updateUI();
-        this.showSuccess('Logged out successfully');
+
+        if (showMessage) {
+            this.showSuccess('Logged out successfully');
+        }
     }
 
     updateUI() {
         const isLoggedIn = this.user !== null;
-        
+
         // Toggle navigation elements
         const loginBtn = document.getElementById('loginBtn');
         const registerBtn = document.getElementById('registerBtn');
         const userMenu = document.getElementById('userMenu');
-        
+
         if (loginBtn) loginBtn.style.display = isLoggedIn ? 'none' : 'inline-flex';
         if (registerBtn) registerBtn.style.display = isLoggedIn ? 'none' : 'inline-flex';
         if (userMenu) userMenu.style.display = isLoggedIn ? 'flex' : 'none';
-        
+
         // Toggle sidebar
         const sidebar = document.getElementById('sidebar');
         if (sidebar) {
@@ -301,7 +291,7 @@ class TestApp {
                 sidebar.classList.remove('block');
             }
         }
-        
+
         // Toggle main nav tabs
         const mainNavTabs = document.getElementById('mainNavTabs');
         if (mainNavTabs) {
@@ -313,13 +303,13 @@ class TestApp {
                 mainNavTabs.classList.remove('flex');
             }
         }
-        
+
         // Update user name and initials
         if (isLoggedIn) {
             const userName = document.getElementById('userName');
             const userInitials = document.getElementById('userInitials');
             const welcomeMessage = document.getElementById('welcomeMessage');
-            
+
             if (userName) userName.textContent = this.user.name;
             if (userInitials) {
                 const initials = this.user.name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -329,10 +319,10 @@ class TestApp {
                 welcomeMessage.textContent = `Welcome back, ${this.user.name.split(' ')[0]}!`;
             }
         }
-        
+
         // Toggle main sections
         document.getElementById('welcomeSection').style.display = isLoggedIn ? 'none' : 'block';
-        
+
         // Hide all sections initially
         const sections = ['dashboardSection', 'testsSection', 'historySection', 'analyticsSection', 'profileSection', 'settingsSection'];
         sections.forEach(sectionId => {
@@ -350,13 +340,18 @@ class TestApp {
     }
 
     switchSection(section) {
+        if (!this.user && ['dashboard', 'tests', 'history', 'analytics', 'profile', 'settings'].includes(section)) {
+            this.showRegisterModal();
+            return;
+        }
+
         console.log('switchSection called with:', section);
-        
+
         // Update navigation active states
         document.querySelectorAll('.nav-tab').forEach(tab => {
             tab.classList.toggle('active', tab.getAttribute('data-tab') === section);
         });
-        
+
         document.querySelectorAll('.sidebar-item').forEach(item => {
             item.classList.toggle('active', item.getAttribute('data-section') === section);
         });
@@ -441,7 +436,7 @@ class TestApp {
     async loadUserData() {
         try {
             console.log('loadUserData called, user:', this.user);
-            
+
             // Load user statistics (with fallback data)
             let stats = {
                 tests_taken: 24,
@@ -620,8 +615,8 @@ class TestApp {
         if (!container) return;
 
         container.innerHTML = tests.map(test => {
-            const scoreClass = test.score >= 85 ? 'excellent' : 
-                             test.score >= 70 ? 'good' : 
+            const scoreClass = test.score >= 85 ? 'excellent' :
+                             test.score >= 70 ? 'good' :
                              test.score >= 50 ? 'average' : 'poor';
 
             return `
@@ -641,7 +636,7 @@ class TestApp {
         if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
-        
+
         // Mock performance data
         const data = {
             weekly: {
@@ -665,20 +660,20 @@ class TestApp {
         const canvas = ctx.canvas;
         const width = canvas.width;
         const height = canvas.height;
-        
+
         // Clear canvas
         ctx.clearRect(0, 0, width, height);
-        
+
         // Set up chart area
         const padding = 40;
         const chartWidth = width - 2 * padding;
         const chartHeight = height - 2 * padding;
-        
+
         // Find min/max values
         const minValue = Math.min(...data.values) - 10;
         const maxValue = Math.max(...data.values) + 10;
         const range = maxValue - minValue;
-        
+
         // Draw grid lines
         ctx.strokeStyle = '#E2E8F0';
         ctx.lineWidth = 1;
@@ -695,31 +690,31 @@ class TestApp {
         ctx.strokeStyle = '#2563EB';
         ctx.lineWidth = 3;
         ctx.beginPath();
-        
+
         data.values.forEach((value, index) => {
             const x = padding + (chartWidth * index) / (data.values.length - 1);
             const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
-            
+
             if (index === 0) {
                 ctx.moveTo(x, y);
             } else {
                 ctx.lineTo(x, y);
             }
         });
-        
+
         ctx.stroke();
-        
+
         // Draw data points
         ctx.fillStyle = '#2563EB';
         data.values.forEach((value, index) => {
             const x = padding + (chartWidth * index) / (data.values.length - 1);
             const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
-            
+
             ctx.beginPath();
             ctx.arc(x, y, 4, 0, 2 * Math.PI);
             ctx.fill();
         });
-        
+
         return { data, ctx };
     }
 
@@ -746,12 +741,12 @@ class TestApp {
 
     async handleQuickTest(e) {
         e.preventDefault();
-        
+
         const category = document.getElementById('quickTestCategory').value;
         const difficulty = document.querySelector('.difficulty-btn.active')?.getAttribute('data-difficulty') || 'Medium';
         const numQuestions = document.getElementById('questionSlider').value;
         const timeLimit = document.getElementById('timeLimitSelect').value;
-        
+
         if (!category) {
             this.showError('Please select a test category');
             return;
@@ -916,7 +911,7 @@ class TestApp {
         const slider = document.getElementById('questionCountSlider');
         const display = document.getElementById('questionCountDisplay');
         const createBtn = document.getElementById('createTestBtn');
-        
+
         if (slider && display) {
             slider.addEventListener('input', (e) => {
                 display.textContent = e.target.value;
@@ -1075,6 +1070,13 @@ class TestApp {
 
     // Dashboard Features
     showTestCreation() {
+        if (!this.user) {
+            this.showRegisterModal();
+            return;
+        }
+
+        this.switchSection('tests');
+
         if (this.testInterface) {
             this.testInterface.showTestConfigModal();
         } else {
@@ -1106,8 +1108,12 @@ class TestApp {
 
     // Modal Management
     showLoginModal() {
-        document.getElementById('loginModal').classList.add('show');
+        if (this.user) {
+            this.switchSection('dashboard');
+            return;
+        }
 
+        document.getElementById('loginModal').classList.add('show');
     }
 
     hideLoginModal() {
@@ -1115,6 +1121,11 @@ class TestApp {
     }
 
     showRegisterModal() {
+        if (this.user) {
+            this.switchSection('tests');
+            return;
+        }
+
         document.getElementById('registerModal').classList.add('show');
     }
 
@@ -1150,7 +1161,7 @@ class TestApp {
             error: 'bg-red-50 text-red-700 border-red-200',
             info: 'bg-blue-50 text-blue-700 border-blue-200'
         };
-        
+
         notification.classList.add(...colors[type].split(' '));
         notification.style.backdropFilter = 'blur(8px)';
         notification.innerHTML = `
@@ -1162,14 +1173,14 @@ class TestApp {
                 </button>
             </div>
         `;
-        
+
         document.body.appendChild(notification);
-        
+
         // Animate in
         setTimeout(() => {
             notification.classList.remove('translate-x-full');
         }, 10);
-        
+
         // Auto remove after 5 seconds
         setTimeout(() => {
             notification.classList.add('translate-x-full');
@@ -1181,7 +1192,7 @@ class TestApp {
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     window.testApp = new TestApp();
-    
+
     // Initialize modules if they exist
     if (window.testApp.testInterface === null && typeof TestInterface !== 'undefined') {
         window.testApp.testInterface = new TestInterface(window.testApp);
