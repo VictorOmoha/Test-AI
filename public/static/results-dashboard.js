@@ -358,8 +358,13 @@ class ResultsDashboard {
         }
         
         // Update button styles
-        document.querySelectorAll('#questionReview').forEach(btn => {
-            btn.className = btn.className.replace(' bg-blue-500 text-white', ' bg-gray-200 text-gray-700');
+        ['showAllQuestions', 'showCorrectQuestions', 'showIncorrectQuestions'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            btn.className = btn.className.replace('bg-blue-500 text-white', '').trim();
+            if (!btn.className.includes('bg-gray-200') && !btn.className.includes('bg-green-200') && !btn.className.includes('bg-red-200')) {
+                btn.className += ' bg-gray-200 text-gray-700';
+            }
         });
         
         const buttons = {
@@ -380,7 +385,9 @@ class ResultsDashboard {
             const questionDiv = document.createElement('div');
             questionDiv.className = `p-4 border rounded-lg ${question.is_correct ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`;
             
-            const options = question.options ? JSON.parse(question.options) : null;
+            const options = Array.isArray(question.options)
+                ? question.options
+                : (question.options ? JSON.parse(question.options) : null);
             const timeMinutes = Math.floor(question.time_spent_seconds / 60);
             const timeSeconds = question.time_spent_seconds % 60;
             
@@ -564,7 +571,8 @@ class ResultsDashboard {
             const config = this.currentResults.config;
             
             // Pre-fill the test configuration modal with previous settings
-            document.getElementById('testCategory').value = config.test_type;
+            const modalCategory = document.getElementById('testCategoryModal');
+            if (modalCategory) modalCategory.value = config.test_type;
             document.getElementById('testDifficulty').value = config.difficulty;
             document.getElementById('testQuestions').value = config.num_questions;
             document.getElementById('testDuration').value = config.duration_minutes;
@@ -574,7 +582,9 @@ class ResultsDashboard {
             document.getElementById('durationValue').textContent = config.duration_minutes;
             
             // Set question types
-            const questionTypes = JSON.parse(config.question_types);
+            const questionTypes = Array.isArray(config.question_types)
+                ? config.question_types
+                : JSON.parse(config.question_types);
             document.getElementById('typeMCQ').checked = questionTypes.includes('MCQ');
             document.getElementById('typeTrueFalse').checked = questionTypes.includes('TrueFalse');
             document.getElementById('typeShortAnswer').checked = questionTypes.includes('ShortAnswer');

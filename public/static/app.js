@@ -108,7 +108,7 @@ class TestApp {
 
         // Close modals on outside click
         document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('fixed') && e.target.classList.contains('bg-black')) {
+            if (e.target.classList.contains('modal-overlay')) {
                 this.hideAllModals();
             }
         });
@@ -972,16 +972,18 @@ class TestApp {
 
         try {
             const response = await axios.get('/api/tests/history');
-            if (response.data.success && response.data.tests && response.data.tests.length > 0) {
-                container.innerHTML = response.data.tests.map(test => `
+            const attempts = response.data?.attempts || [];
+
+            if (response.data.success && attempts.length > 0) {
+                container.innerHTML = attempts.map(test => `
                     <div class="recent-test-item mb-4">
                         <div class="flex-1">
-                            <div class="font-medium text-slate-900">${test.category} - ${test.difficulty}</div>
-                            <div class="text-sm text-gray-500">${new Date(test.completed_at).toLocaleDateString()}</div>
+                            <div class="font-medium text-slate-900">${test.test_type || 'Test'} - ${test.difficulty || 'Mixed'}</div>
+                            <div class="text-sm text-gray-500">${new Date(test.end_time || test.start_time).toLocaleDateString()}</div>
                         </div>
                         <div class="text-right">
-                            <div class="score-badge ${this.getScoreBadgeClass(test.score)}">${test.score}%</div>
-                            <div class="text-xs text-gray-500">${test.questions_count} questions</div>
+                            <div class="score-badge ${this.getScoreBadgeClass(test.score || 0)}">${Math.round(test.score || 0)}%</div>
+                            <div class="text-xs text-gray-500">${test.total_questions || 0} questions</div>
                         </div>
                     </div>
                 `).join('');
@@ -1004,6 +1006,14 @@ class TestApp {
         }
     }
 
+    showProfileSection() {
+        this.loadProfile();
+    }
+
+    showAnalyticsSection() {
+        this.loadAnalytics();
+    }
+
     getScoreBadgeClass(score) {
         if (score >= 90) return 'excellent';
         if (score >= 75) return 'good';
@@ -1012,7 +1022,6 @@ class TestApp {
     }
 
     loadAnalytics() {
-        // Placeholder for analytics functionality
         console.log('Analytics section loaded');
     }
 
@@ -1079,21 +1088,12 @@ class TestApp {
         this.showInfo('Test history feature coming soon!');
     }
 
-    showProfile() {
-        // TODO: Implement profile management interface
-        this.showInfo('Profile management feature coming soon!');
-    }
-
     showSocialHub() {
         if (this.socialFeatures) {
             this.socialFeatures.showSocialModal();
         } else {
             this.showError('Social features not loaded. Please refresh the page.');
         }
-    }
-
-    showAnalytics() {
-        this.showInfo('Advanced analytics dashboard coming soon!');
     }
 
     showResultsModal(resultsData) {

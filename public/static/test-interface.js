@@ -203,19 +203,13 @@ class TestInterface {
         const submitTest = document.getElementById('submitTest');
         const prevQuestion = document.getElementById('prevQuestion');
         const nextQuestion = document.getElementById('nextQuestion');
-        const saveAnswer = document.getElementById('saveAnswer');
-        const clearAnswer = document.getElementById('clearAnswer');
         const bookmarkQuestion = document.getElementById('bookmarkQuestion');
-        const reviewAnswers = document.getElementById('reviewAnswers');
         
         if (pauseTest) pauseTest.addEventListener('click', () => this.pauseTest());
         if (submitTest) submitTest.addEventListener('click', () => this.submitTest());
         if (prevQuestion) prevQuestion.addEventListener('click', () => this.previousQuestion());
         if (nextQuestion) nextQuestion.addEventListener('click', () => this.nextQuestion());
-        if (saveAnswer) saveAnswer.addEventListener('click', () => this.saveCurrentAnswer());
-        if (clearAnswer) clearAnswer.addEventListener('click', () => this.clearCurrentAnswer());
         if (bookmarkQuestion) bookmarkQuestion.addEventListener('click', () => this.toggleBookmark());
-        if (reviewAnswers) reviewAnswers.addEventListener('click', () => this.showReviewMode());
     }
 
     async showTestConfigModal() {
@@ -462,20 +456,11 @@ class TestInterface {
                 `;
                 
                 optionDiv.onclick = () => {
-                    // Remove selected class from others
                     Array.from(optionsContainer.children).forEach(child => child.classList.remove('selected'));
                     optionDiv.classList.add('selected');
-                    
-                    // Set hidden input for compatibility if needed, or just handle via state
-                    const radio = document.createElement('input');
-                    radio.type = 'radio';
-                    radio.name = 'answer';
-                    radio.value = letter;
-                    radio.checked = true;
-                    radio.style.display = 'none';
-                    optionsContainer.appendChild(radio);
-                    
-                    this.tempSelectedAnswer = letter;
+                    this.answers.set(question.id, letter);
+                    this.submitAnswer(question.id, letter, this.questionTimes.get(question.id) || 0);
+                    this.updateNavigator();
                 };
                 
                 optionsContainer.appendChild(optionDiv);
@@ -500,7 +485,9 @@ class TestInterface {
                 optionDiv.onclick = () => {
                     Array.from(optionsContainer.children).forEach(child => child.classList.remove('selected'));
                     optionDiv.classList.add('selected');
-                    this.tempSelectedAnswer = option;
+                    this.answers.set(question.id, option);
+                    this.submitAnswer(question.id, option, this.questionTimes.get(question.id) || 0);
+                    this.updateNavigator();
                 };
                 
                 optionsContainer.appendChild(optionDiv);
@@ -512,6 +499,16 @@ class TestInterface {
             textArea.rows = 5;
             textArea.placeholder = 'Type your answer here...';
             textArea.value = savedAnswer || '';
+            textArea.addEventListener('blur', () => {
+                const value = textArea.value.trim();
+                if (value) {
+                    this.answers.set(question.id, value);
+                    this.submitAnswer(question.id, value, this.questionTimes.get(question.id) || 0);
+                } else {
+                    this.answers.delete(question.id);
+                }
+                this.updateNavigator();
+            });
             
             optionsContainer.appendChild(textArea);
         }
@@ -531,22 +528,16 @@ class TestInterface {
         let answer = '';
         
         if (question.question_type === 'ShortAnswer') {
-            answer = document.querySelector('textarea[name="answer"]').value.trim();
+            answer = document.querySelector('textarea[name="answer"]')?.value.trim() || '';
         } else {
-            const selectedOption = document.querySelector('input[name="answer"]:checked');
-            answer = selectedOption ? selectedOption.value : '';
+            answer = this.answers.get(question.id) || '';
         }
         
         if (answer) {
             this.answers.set(question.id, answer);
-            
-            // Update question time
             const timeSpent = Math.floor((Date.now() - this.questionStartTime) / 1000);
-            this.questionTimes.set(question.id, this.questionTimes.get(question.id) + timeSpent);
-            
-            // Submit answer to backend
+            this.questionTimes.set(question.id, (this.questionTimes.get(question.id) || 0) + timeSpent);
             this.submitAnswer(question.id, answer, this.questionTimes.get(question.id));
-            
             this.updateNavigator();
             this.app.showSuccess('Answer saved');
         } else {
@@ -595,6 +586,7 @@ class TestInterface {
     }
 
     previousQuestion() {
+        this.saveCurrentAnswer();
         if (this.currentQuestionIndex > 0) {
             this.saveQuestionTime();
             this.currentQuestionIndex--;
@@ -604,13 +596,13 @@ class TestInterface {
     }
 
     nextQuestion() {
+        this.saveCurrentAnswer();
         if (this.currentQuestionIndex < this.questions.length - 1) {
             this.saveQuestionTime();
             this.currentQuestionIndex++;
             this.displayCurrentQuestion();
             this.questionStartTime = Date.now();
         } else {
-            // Last question - show submit confirmation
             this.confirmSubmitTest();
         }
     }
