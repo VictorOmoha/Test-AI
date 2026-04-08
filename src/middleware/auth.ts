@@ -25,8 +25,7 @@ export const authMiddleware = async (c: Context<{ Bindings: Env }>, next: Next) 
     return c.json({ success: false, message: 'Invalid or expired token' }, 401)
   }
 
-  // Verify user still exists in database
-  const db = new DatabaseService(c.env.DB)
+  const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
   const user = await db.getUserById(payload.user_id)
   
   if (!user) {
@@ -49,7 +48,7 @@ export const optionalAuthMiddleware = async (c: Context<{ Bindings: Env }>, next
     const payload = await verifyJWT(token, jwtSecret)
     
     if (payload) {
-      const db = new DatabaseService(c.env.DB)
+      const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
       const user = await db.getUserById(payload.user_id)
       
       if (user) {

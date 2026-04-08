@@ -128,10 +128,9 @@ export interface TestResultsResponse {
   };
 }
 
-// Cloudflare Workers Environment Bindings
+// Runtime environment bindings / vars
 export interface Env {
-  DB: D1Database;
-  // Add other bindings as needed (KV, R2, AI, etc.)
+  DATABASE_URL?: string;
   OPENAI_API_KEY?: string;
   JWT_SECRET?: string;
 }

@@ -10,6 +10,10 @@ import { DatabaseService } from './utils/database'
 
 const app = new Hono<{ Bindings: Env }>()
 
+function getDb(c: any) {
+  return DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
+}
+
 // Middleware
 app.use('*', logger())
 app.use('/api/*', cors({
@@ -24,19 +28,19 @@ app.use('/static/*', serveStatic({ root: './public' }))
 
 // Fail-fast middleware: reject API calls immediately if DB is unavailable
 app.use('/api/auth/*', async (c, next) => {
-  if (!c.env?.DB) {
+  if (!c.env?.DATABASE_URL) {
     return c.json({ success: false, message: 'Database not available' }, 503)
   }
   await next()
 })
 app.use('/api/tests/*', async (c, next) => {
-  if (!c.env?.DB) {
+  if (!c.env?.DATABASE_URL) {
     return c.json({ success: false, message: 'Database not available' }, 503)
   }
   await next()
 })
 app.use('/api/social/*', async (c, next) => {
-  if (!c.env?.DB) {
+  if (!c.env?.DATABASE_URL) {
     return c.json({ success: false, message: 'Database not available' }, 503)
   }
   await next()
@@ -50,9 +54,8 @@ app.route('/api/social', social)
 // Health check endpoint
 app.get('/api/health', async (c) => {
   try {
-    // Test database connection
-    const db = new DatabaseService(c.env.DB)
-    await c.env.DB.prepare('SELECT 1').first()
+    const db = getDb(c)
+    await db.rawQuery('SELECT 1')
     
     return c.json({
       success: true,
@@ -75,7 +78,7 @@ app.get('/', async (c) => {
   // Preload categories for immediate rendering (SSR -> client bootstrap)
   let ssrCategories: Array<{ id: string; name: string; description: string }> = []
   try {
-    const db = new DatabaseService(c.env.DB)
+    const db = getDb(c)
     const all = await db.getAllTestCategories()
     ssrCategories = all.map(cat => ({ id: cat.id, name: cat.name, description: cat.description }))
   } catch (e) {

@@ -11,7 +11,7 @@ const tests = new Hono<{ Bindings: Env }>()
 // Get all available test categories
 tests.get('/categories', async (c) => {
   try {
-    const db = new DatabaseService(c.env.DB)
+    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
     const categories = await db.getAllTestCategories()
     
     return c.json({
@@ -66,7 +66,7 @@ tests.post('/config', authMiddleware, async (c) => {
     }
 
     // Create configuration
-    const db = new DatabaseService(c.env.DB)
+    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
     const configId = await db.createTestConfiguration({
       user_id: auth.user_id,
       test_type,
@@ -96,7 +96,7 @@ tests.get('/config', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Authentication required' }, 401)
     }
 
-    const db = new DatabaseService(c.env.DB)
+    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
     const configs = await db.getUserTestConfigurations(auth.user_id)
     
     return c.json({
@@ -128,7 +128,7 @@ tests.post('/start', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Configuration ID is required' }, 400)
     }
 
-    const db = new DatabaseService(c.env.DB)
+    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
     
     // Get test configuration
     const config = await db.getTestConfiguration(config_id)
@@ -235,7 +235,7 @@ tests.post('/answer', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Question ID, answer, and time spent are required' }, 400)
     }
 
-    const db = new DatabaseService(c.env.DB)
+    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
     
     // Update question with user's answer
     await db.updateQuestionAnswer(question_id, user_answer, time_spent_seconds)
@@ -264,7 +264,7 @@ tests.post('/complete/:attempt_id', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Attempt ID is required' }, 400)
     }
 
-    const db = new DatabaseService(c.env.DB)
+    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
     
     // Get test attempt
     const attempt = await db.getTestAttempt(attempt_id)
@@ -372,7 +372,7 @@ tests.get('/history', authMiddleware, async (c) => {
     }
 
     const limit = parseInt(c.req.query('limit') || '20')
-    const db = new DatabaseService(c.env.DB)
+    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
     
     const attempts = await db.getUserTestAttempts(auth.user_id, limit)
     
@@ -395,7 +395,7 @@ tests.get('/stats', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Authentication required' }, 401)
     }
 
-    const db = new DatabaseService(c.env.DB)
+    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
     const stats = await db.getTestStatistics(auth.user_id)
     
     return c.json({

@@ -31,7 +31,7 @@ auth.post('/register', async (c) => {
     }
 
     // Check if user already exists
-    const db = new DatabaseService(c.env.DB)
+    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
     const existingUser = await db.getUserByEmail(email)
     
     if (existingUser) {
@@ -89,7 +89,7 @@ auth.post('/login', async (c) => {
     }
 
     // Find user
-    const db = new DatabaseService(c.env.DB)
+    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
     const user = await db.getUserByEmail(email)
     
     if (!user) {
@@ -141,7 +141,7 @@ auth.post('/verify', async (c) => {
     }
 
     // Get current user info
-    const db = new DatabaseService(c.env.DB)
+    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
     const user = await db.getUserById(payload.user_id)
     
     if (!user) {
