@@ -10,8 +10,12 @@ import { DatabaseService } from './utils/database'
 
 const app = new Hono<{ Bindings: Env }>()
 
+function getEnvValue(c: any, key: 'DATABASE_URL' | 'OPENAI_API_KEY' | 'JWT_SECRET') {
+  return c?.env?.[key] || process.env[key]
+}
+
 function getDb(c: any) {
-  return DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
+  return DatabaseService.fromDatabaseUrl(getEnvValue(c, 'DATABASE_URL'))
 }
 
 // Middleware
@@ -28,19 +32,19 @@ app.use('/static/*', serveStatic({ root: './public' }))
 
 // Fail-fast middleware: reject API calls immediately if DB is unavailable
 app.use('/api/auth/*', async (c, next) => {
-  if (!c.env?.DATABASE_URL) {
+  if (!getEnvValue(c, 'DATABASE_URL')) {
     return c.json({ success: false, message: 'Database not available' }, 503)
   }
   await next()
 })
 app.use('/api/tests/*', async (c, next) => {
-  if (!c.env?.DATABASE_URL) {
+  if (!getEnvValue(c, 'DATABASE_URL')) {
     return c.json({ success: false, message: 'Database not available' }, 503)
   }
   await next()
 })
 app.use('/api/social/*', async (c, next) => {
-  if (!c.env?.DATABASE_URL) {
+  if (!getEnvValue(c, 'DATABASE_URL')) {
     return c.json({ success: false, message: 'Database not available' }, 503)
   }
   await next()
