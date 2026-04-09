@@ -7,6 +7,8 @@ class TestApp {
         this.resultsDashboard = null;
         this.socialFeatures = null;
         this.performanceChart = null;
+        this.performanceData = null;
+        this.testHistoryData = [];
         this.currentSection = 'dashboard';
         this.init();
     }
@@ -611,15 +613,39 @@ class TestApp {
 
     async loadRecentTests() {
         try {
-            // Mock recent tests data (would come from API)
-            const recentTests = [
-                { subject: 'Mathematics', score: 92, timestamp: 'Today', questions: 20 },
-                { subject: 'Programming', score: 75, timestamp: 'Yesterday', questions: 15 },
-                { subject: 'Science', score: 62, timestamp: '3 days ago', questions: 30 },
-                { subject: 'History', score: 88, timestamp: '5 days ago', questions: 25 }
-            ];
+            let attempts = [];
+
+            if (this.user) {
+                try {
+                    const response = await axios.get('/api/tests/history', { params: { limit: 24 } });
+                    if (response.data?.success && Array.isArray(response.data.attempts)) {
+                        attempts = response.data.attempts;
+                    }
+                } catch (error) {
+                    console.log('Using fallback recent tests data');
+                }
+            }
+
+            if (!attempts.length) {
+                attempts = [
+                    { test_type: 'Mathematics', score: 92, end_time: new Date().toISOString(), total_questions: 20 },
+                    { test_type: 'Programming', score: 75, end_time: new Date(Date.now() - 86400000).toISOString(), total_questions: 15 },
+                    { test_type: 'Science', score: 62, end_time: new Date(Date.now() - 3 * 86400000).toISOString(), total_questions: 30 },
+                    { test_type: 'History', score: 88, end_time: new Date(Date.now() - 5 * 86400000).toISOString(), total_questions: 25 }
+                ];
+            }
+
+            this.testHistoryData = attempts;
+            const recentTests = attempts.slice(0, 4).map(test => ({
+                subject: test.test_type || 'Test',
+                score: Math.round(test.score || 0),
+                timestamp: this.formatRelativeDate(test.end_time || test.start_time),
+                questions: test.total_questions || 0
+            }));
 
             this.displayRecentTests(recentTests);
+            this.performanceData = this.buildPerformanceDatasets(attempts);
+            this.initializePerformanceChart();
         } catch (error) {
             console.error('Failed to load recent tests:', error);
         }
@@ -651,24 +677,10 @@ class TestApp {
         if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
+        const datasets = this.performanceData || this.buildPerformanceDatasets(this.testHistoryData || []);
+        this.performanceData = datasets;
 
-        // Mock performance data
-        const data = {
-            weekly: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                values: [65, 70, 75, 68, 80, 85, 82]
-            },
-            monthly: {
-                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-                values: [70, 75, 82, 88]
-            },
-            yearly: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                values: [65, 70, 78, 82, 85, 88]
-            }
-        };
-
-        this.performanceChart = this.createSimpleLineChart(ctx, data.weekly);
+        this.performanceChart = this.createSimpleLineChart(ctx, datasets.weekly);
     }
 
     createSimpleLineChart(ctx, data) {
@@ -803,22 +815,9 @@ class TestApp {
     updatePerformanceChart(period) {
         if (!this.performanceChart) return;
 
-        const data = {
-            weekly: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                values: [65, 70, 75, 68, 80, 85, 82]
-            },
-            monthly: {
-                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-                values: [70, 75, 82, 88]
-            },
-            yearly: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                values: [65, 70, 78, 82, 85, 88]
-            }
-        };
-
-        this.createSimpleLineChart(this.performanceChart.ctx, data[period]);
+        const datasets = this.performanceData || this.buildPerformanceDatasets(this.testHistoryData || []);
+        const selected = datasets[period] || datasets.weekly;
+        this.createSimpleLineChart(this.performanceChart.ctx, selected);
     }
 
     async handleQuickTest(e) {
@@ -876,6 +875,87 @@ class TestApp {
             console.error('Quick test error:', error);
             this.showError(error.response?.data?.message || 'Failed to create test');
         }
+    }
+
+    buildPerformanceDatasets(attempts = []) {
+        const normalized = (attempts || [])
+            .filter(item => item && (item.end_time || item.start_time || item.created_at))
+            .map(item => ({
+                score: Number(item.score || 0),
+                date: new Date(item.end_time || item.start_time || item.created_at)
+            }))
+            .filter(item => !Number.isNaN(item.date.getTime()))
+            .sort((a, b) => a.date - b.date);
+
+        const aggregate = (items, labelFormatter, keyFormatter) => {
+            const grouped = new Map();
+            items.forEach(item => {
+                const key = keyFormatter(item.date);
+                if (!grouped.has(key)) {
+                    grouped.set(key, { total: 0, count: 0, label: labelFormatter(item.date) });
+                }
+                const bucket = grouped.get(key);
+                bucket.total += item.score;
+                bucket.count += 1;
+            });
+
+            const entries = Array.from(grouped.entries()).map(([key, bucket]) => ({
+                key,
+                label: bucket.label,
+                value: Math.round(bucket.total / Math.max(1, bucket.count))
+            }));
+
+            return {
+                labels: entries.map(entry => entry.label),
+                values: entries.map(entry => entry.value)
+            };
+        };
+
+        const fallback = {
+            weekly: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], values: [72, 74, 76, 75, 81, 84, 86] },
+            monthly: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], values: [71, 75, 79, 84] },
+            yearly: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], values: [68, 72, 76, 80, 83, 86] }
+        };
+
+        if (!normalized.length) return fallback;
+
+        const recentSeven = normalized.slice(-7);
+        const weekly = {
+            labels: recentSeven.map(item => item.date.toLocaleDateString(undefined, { weekday: 'short' })),
+            values: recentSeven.map(item => Math.round(item.score))
+        };
+
+        const recentThirty = normalized.filter(item => item.date >= new Date(Date.now() - 30 * 86400000));
+        const monthly = aggregate(
+            recentThirty.length ? recentThirty : normalized.slice(-12),
+            (date) => `Wk ${Math.ceil(date.getDate() / 7)}`,
+            (date) => `${date.getFullYear()}-${date.getMonth() + 1}-${Math.ceil(date.getDate() / 7)}`
+        );
+
+        const recentYear = normalized.filter(item => item.date >= new Date(Date.now() - 365 * 86400000));
+        const yearly = aggregate(
+            recentYear.length ? recentYear : normalized,
+            (date) => date.toLocaleDateString(undefined, { month: 'short' }),
+            (date) => `${date.getFullYear()}-${date.getMonth()}`
+        );
+
+        return {
+            weekly: weekly.values.length ? weekly : fallback.weekly,
+            monthly: monthly.values.length ? monthly : fallback.monthly,
+            yearly: yearly.values.length ? yearly : fallback.yearly
+        };
+    }
+
+    formatRelativeDate(dateInput) {
+        if (!dateInput) return 'Recently';
+        const date = new Date(dateInput);
+        if (Number.isNaN(date.getTime())) return 'Recently';
+        const diffMs = Date.now() - date.getTime();
+        const diffDays = Math.floor(diffMs / 86400000);
+        if (diffDays <= 0) return 'Today';
+        if (diffDays === 1) return 'Yesterday';
+        if (diffDays < 7) return `${diffDays} days ago`;
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     }
 
     createTestForCategory(categoryName) {
