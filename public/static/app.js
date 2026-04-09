@@ -770,18 +770,22 @@ class TestApp {
 
         try {
             // Create test configuration
-            const configResponse = await axios.post('/api/tests/config', {
-                test_type: category,
-                difficulty: difficulty,
-                num_questions: parseInt(numQuestions),
-                duration_minutes: timeLimit ? parseInt(timeLimit) : 30,
-                question_types: questionTypes
+            const configResponse = await axios.get('/api/tests/query-config', {
+                params: {
+                    test_type: category,
+                    difficulty: difficulty,
+                    num_questions: parseInt(numQuestions),
+                    duration_minutes: timeLimit ? parseInt(timeLimit) : 30,
+                    question_types: questionTypes.join(',')
+                }
             });
 
             if (configResponse.data.success) {
                 // Start the test
-                const startResponse = await axios.post('/api/tests/start', {
-                    config_id: configResponse.data.config_id
+                const startResponse = await axios.get('/api/tests/query-start', {
+                    params: {
+                        config_id: configResponse.data.config_id
+                    }
                 });
 
                 if (startResponse.data.success && this.testInterface) {

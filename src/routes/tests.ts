@@ -12,6 +12,141 @@ function envValue(c: any, key: 'DATABASE_URL' | 'OPENAI_API_KEY') {
 
 const tests = new Hono<{ Bindings: Env }>()
 
+function readQueryArray(value?: string): string[] {
+  if (!value) return []
+  return value.split(',').map(v => v.trim()).filter(Boolean)
+}
+
+// Query-param workaround for config creation
+tests.get('/query-config', authMiddleware, async (c) => {
+  try {
+    const auth = getAuthUser(c)
+    if (!auth) {
+      return c.json({ success: false, message: 'Authentication required' }, 401)
+    }
+
+    const test_type = c.req.query('test_type') || ''
+    const difficulty = c.req.query('difficulty') || 'Medium'
+    const num_questions = parseInt(c.req.query('num_questions') || '10')
+    const duration_minutes = parseInt(c.req.query('duration_minutes') || '30')
+    const question_types = readQueryArray(c.req.query('question_types'))
+
+    if (!test_type || !difficulty || !num_questions || !duration_minutes || question_types.length === 0) {
+      return c.json({ success: false, message: 'All fields are required' }, 400)
+    }
+
+    const validQuestionTypes = ['MCQ', 'TrueFalse', 'ShortAnswer']
+    if (!question_types.every(type => validQuestionTypes.includes(type))) {
+      return c.json({ success: false, message: 'Invalid question types' }, 400)
+    }
+
+    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const configId = await db.createTestConfiguration({
+      user_id: auth.user_id,
+      test_type,
+      difficulty,
+      num_questions,
+      duration_minutes,
+      question_types
+    })
+
+    return c.json({ success: true, message: 'Test configuration created', config_id: configId }, 201)
+  } catch (error) {
+    console.error('Error creating query test config:', error)
+    return c.json({ success: false, message: 'Failed to create test configuration' }, 500)
+  }
+})
+
+// Query-param workaround for starting tests
+tests.get('/query-start', authMiddleware, async (c) => {
+  try {
+    const auth = getAuthUser(c)
+    if (!auth) {
+      return c.json({ success: false, message: 'Authentication required' }, 401)
+    }
+
+    const config_id = c.req.query('config_id') || ''
+    if (!config_id) {
+      return c.json({ success: false, message: 'Configuration ID is required' }, 400)
+    }
+
+    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const config = await db.getTestConfiguration(config_id)
+    if (!config) {
+      return c.json({ success: false, message: 'Test configuration not found' }, 404)
+    }
+
+    if (config.user_id !== auth.user_id) {
+      return c.json({ success: false, message: 'Access denied' }, 403)
+    }
+
+    const category = await db.getTestCategoryByName(config.test_type)
+    const openaiKey = envValue(c, 'OPENAI_API_KEY')
+    if (!openaiKey) {
+      return c.json({ success: false, message: 'AI service not configured' }, 503)
+    }
+
+    const aiService = new AIService(openaiKey)
+    const questionTypes = JSON.parse(config.question_types)
+    const aiResponse = await aiService.generateQuestions({
+      test_type: config.test_type,
+      difficulty: config.difficulty,
+      num_questions: config.num_questions,
+      question_types: questionTypes
+    }, category || undefined)
+
+    if (!aiResponse.success || !aiResponse.questions) {
+      return c.json({ success: false, message: 'Failed to generate questions', error: aiResponse.error }, 500)
+    }
+
+    const attemptId = await db.createTestAttempt({
+      user_id: auth.user_id,
+      config_id,
+      total_questions: aiResponse.questions.length
+    })
+
+    for (let i = 0; i < aiResponse.questions.length; i++) {
+      const question = aiResponse.questions[i]
+      await db.createQuestion({
+        attempt_id: attemptId,
+        question_number: i + 1,
+        question_type: question.type,
+        question_text: question.question,
+        options: question.options,
+        correct_answer: question.correct_answer,
+        ai_explanation: question.explanation
+      })
+    }
+
+    const questions = await db.getTestQuestions(attemptId)
+    const questionsForClient = questions.map(q => ({
+      id: q.id,
+      question_number: q.question_number,
+      question_type: q.question_type,
+      question_text: q.question_text,
+      options: q.options ? JSON.parse(q.options) : undefined
+    }))
+
+    return c.json({
+      success: true,
+      message: 'Test started successfully',
+      attempt_id: attemptId,
+      questions: questionsForClient,
+      config: {
+        ...config,
+        question_types: questionTypes
+      },
+      ai_info: {
+        tokens_used: aiResponse.tokens_used,
+        cost_estimate: aiResponse.cost_estimate
+      }
+    }, 201)
+  } catch (error) {
+    console.error('Error starting query test:', error)
+    return c.json({ success: false, message: 'Failed to start test' }, 500)
+  }
+})
+
 // Get all available test categories
 tests.get('/categories', async (c) => {
   try {
