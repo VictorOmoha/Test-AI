@@ -377,11 +377,42 @@ button, input, select, textarea { font: inherit; }
   box-shadow: var(--shadow-sm);
 }
 
-.stat-card { padding: 1.2rem; }
-.stat-card-content { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
-.stat-card-label { font-size: 0.8rem; }
-.stat-card-value { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.04em; }
-.stat-card-change { font-size: 0.76rem; margin-top: 0.25rem; font-weight: 700; }
+.stat-card {
+  padding: 1.25rem;
+  min-height: 146px;
+}
+.stat-card-content {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  height: 100%;
+}
+.stat-card-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 96px;
+}
+.stat-card-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.stat-card-value {
+  font-size: 1.95rem;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  margin-top: 0.45rem;
+}
+.stat-card-change {
+  font-size: 0.76rem;
+  margin-top: auto;
+  padding-top: 0.55rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
 .stat-card-change.positive { color: var(--mint); }
 .stat-card-change.negative { color: var(--coral); }
 .stat-card-icon {
@@ -474,7 +505,9 @@ textarea:focus {
 .recent-test-item {
   display: flex;
   align-items: center;
-  padding: 0.85rem 0.95rem;
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding: 0.95rem 1rem;
   border-radius: 1rem;
   background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   transition: all var(--transition-fast);
@@ -647,6 +680,23 @@ textarea:focus {
   box-shadow: 0 0 0 4px rgba(37,99,235,0.1);
 }
 
+.analytics-panel {
+  background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.96) 100%);
+  border: 1px solid rgba(148,163,184,0.14);
+  box-shadow: 0 18px 40px rgba(15,23,42,0.08);
+}
+
+.analytics-mini-card {
+  min-height: 118px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.analytics-chart-shell {
+  border-radius: 1.75rem;
+}
+
 .modal-content {
   box-shadow: 0 30px 90px rgba(15,23,42,0.18);
 }
@@ -661,4 +711,7 @@ textarea:focus {
   .feature-card, .step-card { border-radius: 1.25rem; }
   .nav-tab { padding: 0.375rem 0.5rem; font-size: 0.75rem; }
   .hero-cta-primary, .hero-cta-secondary { padding: 0.78rem 1.3rem; font-size: 0.84rem; }
+  .stat-card { min-height: auto; }
+  .stat-card-info { min-height: auto; }
+  .analytics-mini-card { min-height: auto; }
 }

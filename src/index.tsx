@@ -511,7 +511,7 @@ app.get('/', async (c) => {
 
                         <!-- Chart + Recent Tests -->
                         <div class="grid lg:grid-cols-3 gap-6 mb-8">
-                            <div class="lg:col-span-2 glass-card rounded-3xl p-6 md:p-7 overflow-hidden relative">
+                            <div class="lg:col-span-2 glass-card analytics-panel rounded-3xl p-6 md:p-7 overflow-hidden relative">
                                 <div class="absolute inset-0 bg-gradient-to-br from-blue-50/80 via-white to-cyan-50/70 pointer-events-none"></div>
                                 <div class="relative">
                                     <div class="flex flex-col gap-5 mb-6 xl:flex-row xl:items-start xl:justify-between">
@@ -528,24 +528,24 @@ app.get('/', async (c) => {
                                     </div>
 
                                     <div class="grid md:grid-cols-3 gap-4 mb-6">
-                                        <div class="rounded-2xl bg-white/88 border border-slate-200/80 p-4 shadow-sm">
+                                        <div class="analytics-mini-card rounded-2xl bg-white/88 border border-slate-200/80 p-4 shadow-sm">
                                             <div class="text-xs uppercase tracking-[0.18em] text-slate-400 font-bold mb-2">Latest score</div>
                                             <div id="chartHeadlineScore" class="text-3xl font-extrabold text-slate-900">--%</div>
                                             <div id="chartHeadlineDelta" class="text-sm font-semibold text-emerald-600 mt-1">No data yet</div>
                                         </div>
-                                        <div class="rounded-2xl bg-white/88 border border-slate-200/80 p-4 shadow-sm">
+                                        <div class="analytics-mini-card rounded-2xl bg-white/88 border border-slate-200/80 p-4 shadow-sm">
                                             <div class="text-xs uppercase tracking-[0.18em] text-slate-400 font-bold mb-2">Consistency</div>
                                             <div id="chartConsistency" class="text-3xl font-extrabold text-slate-900">--%</div>
                                             <div class="text-sm text-slate-500 mt-1">Average score across selected period</div>
                                         </div>
-                                        <div class="rounded-2xl bg-slate-900 text-white p-4 shadow-lg shadow-slate-900/10">
+                                        <div class="analytics-mini-card rounded-2xl bg-slate-900 text-white p-4 shadow-lg shadow-slate-900/10">
                                             <div class="text-xs uppercase tracking-[0.18em] text-slate-400 font-bold mb-2">Volume</div>
                                             <div id="chartAttemptCount" class="text-3xl font-extrabold">0</div>
                                             <div id="chartAttemptLabel" class="text-sm text-slate-300 mt-1">Completed attempts in this view</div>
                                         </div>
                                     </div>
 
-                                    <div class="rounded-[28px] border border-slate-200/80 bg-white/92 shadow-inner shadow-slate-100 p-4 md:p-5">
+                                    <div class="analytics-chart-shell rounded-[28px] border border-slate-200/80 bg-white/92 shadow-inner shadow-slate-100 p-4 md:p-5">
                                         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                                             <div>
                                                 <div class="text-sm font-semibold text-slate-700">Score trajectory</div>
