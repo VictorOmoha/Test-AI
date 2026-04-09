@@ -396,39 +396,40 @@ app.get('/', async (c) => {
                         </div>
                     </div>
 
-                    <!-- Footer -->
-                    <footer class="site-footer">
-                        <div class="footer-grid">
-                            <div class="footer-col">
-                                <h4>Product</h4>
-                                <a href="#">Features</a>
-                                <a href="#">Pricing</a>
-                                <a href="#">API</a>
-                            </div>
-                            <div class="footer-col">
-                                <h4>Resources</h4>
-                                <a href="#">Documentation</a>
-                                <a href="#">Blog</a>
-                                <a href="#">Tutorials</a>
-                            </div>
-                            <div class="footer-col">
-                                <h4>Company</h4>
-                                <a href="#">About</a>
-                                <a href="#">Careers</a>
-                                <a href="#">Contact</a>
-                            </div>
-                            <div class="footer-col">
-                                <h4>Legal</h4>
-                                <a href="#">Privacy</a>
-                                <a href="#">Terms</a>
-                                <a href="#">Security</a>
-                            </div>
-                        </div>
-                        <div class="footer-bottom">
-                            <p>&copy; 2026 TestAI. Built with <i class="fas fa-heart text-rose-500 text-xs"></i> and AI.</p>
-                        </div>
-                    </footer>
                 </section>
+
+                <!-- Footer -->
+                <footer class="site-footer" data-guest-only="true">
+                    <div class="footer-grid">
+                        <div class="footer-col">
+                            <h4>Product</h4>
+                            <a href="#">Features</a>
+                            <a href="#">Pricing</a>
+                            <a href="#">API</a>
+                        </div>
+                        <div class="footer-col">
+                            <h4>Resources</h4>
+                            <a href="#">Documentation</a>
+                            <a href="#">Blog</a>
+                            <a href="#">Tutorials</a>
+                        </div>
+                        <div class="footer-col">
+                            <h4>Company</h4>
+                            <a href="#">About</a>
+                            <a href="#">Careers</a>
+                            <a href="#">Contact</a>
+                        </div>
+                        <div class="footer-col">
+                            <h4>Legal</h4>
+                            <a href="#">Privacy</a>
+                            <a href="#">Terms</a>
+                            <a href="#">Security</a>
+                        </div>
+                    </div>
+                    <div class="footer-bottom">
+                        <p>&copy; 2026 TestAI. Built with <i class="fas fa-heart text-rose-500 text-xs"></i> and AI.</p>
+                    </div>
+                </footer>
 
                 <!-- ======== DASHBOARD SECTION (hidden by default) ======== -->
                 <section id="dashboardSection" class="hidden flex-1 bg-[#F8FAFC]">
