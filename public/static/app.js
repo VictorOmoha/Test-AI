@@ -690,14 +690,14 @@ class TestApp {
 
         ctx.clearRect(0, 0, width, height);
 
-        const padding = { top: 28, right: 28, bottom: 42, left: 44 };
+        const padding = { top: 34, right: 24, bottom: 50, left: 48 };
         const chartWidth = width - padding.left - padding.right;
         const chartHeight = height - padding.top - padding.bottom;
 
         const rawMin = Math.min(...data.values);
         const rawMax = Math.max(...data.values);
-        const minValue = Math.max(0, Math.floor(rawMin - 8));
-        const maxValue = Math.min(100, Math.ceil(rawMax + 8));
+        const minValue = Math.max(0, Math.floor(rawMin - 10));
+        const maxValue = Math.min(100, Math.ceil(rawMax + 10));
         const range = Math.max(1, maxValue - minValue);
 
         const points = data.values.map((value, index) => ({
@@ -724,7 +724,14 @@ class TestApp {
         };
 
         ctx.save();
-        ctx.strokeStyle = '#E5EDF8';
+
+        const cardGradient = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartHeight);
+        cardGradient.addColorStop(0, 'rgba(255,255,255,0.96)');
+        cardGradient.addColorStop(1, 'rgba(248,250,252,0.92)');
+        ctx.fillStyle = cardGradient;
+        ctx.fillRect(padding.left, padding.top, chartWidth, chartHeight);
+
+        ctx.strokeStyle = '#E2E8F0';
         ctx.lineWidth = 1;
         ctx.setLineDash([4, 6]);
         for (let i = 0; i <= 4; i++) {
@@ -742,18 +749,19 @@ class TestApp {
         for (let i = 0; i <= 4; i++) {
             const value = Math.round(maxValue - (range * i) / 4);
             const y = padding.top + (chartHeight * i) / 4 + 4;
-            ctx.fillText(`${value}%`, padding.left - 10, y);
+            ctx.fillText(`${value}%`, padding.left - 12, y);
         }
 
         ctx.textAlign = 'center';
         data.labels.forEach((label, index) => {
             const x = padding.left + (chartWidth * index) / Math.max(1, data.labels.length - 1);
-            ctx.fillText(label, x, height - 14);
+            ctx.fillText(label, x, height - 16);
         });
 
         const areaGradient = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartHeight);
-        areaGradient.addColorStop(0, 'rgba(37, 99, 235, 0.24)');
-        areaGradient.addColorStop(1, 'rgba(37, 99, 235, 0.02)');
+        areaGradient.addColorStop(0, 'rgba(37, 99, 235, 0.28)');
+        areaGradient.addColorStop(0.65, 'rgba(59, 130, 246, 0.10)');
+        areaGradient.addColorStop(1, 'rgba(59, 130, 246, 0.01)');
 
         ctx.beginPath();
         ctx.moveTo(points[0].x, points[0].y);
@@ -775,38 +783,62 @@ class TestApp {
             const cpe = getControlPoint(points[i + 1], points[i], points[i + 2], true);
             ctx.bezierCurveTo(cps.x, cps.y, cpe.x, cpe.y, points[i + 1].x, points[i + 1].y);
         }
-        ctx.strokeStyle = '#2563EB';
+
+        const trendPositive = points[points.length - 1].value >= points[0].value;
+        const lineGradient = ctx.createLinearGradient(padding.left, 0, width - padding.right, 0);
+        lineGradient.addColorStop(0, '#2563EB');
+        lineGradient.addColorStop(1, trendPositive ? '#10B981' : '#F97316');
+        ctx.strokeStyle = lineGradient;
         ctx.lineWidth = 4;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.stroke();
 
         points.forEach((point, index) => {
-            const glow = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, 12);
-            glow.addColorStop(0, 'rgba(37, 99, 235, 0.28)');
+            const ringColor = index === points.length - 1 ? (trendPositive ? '#10B981' : '#F97316') : '#2563EB';
+            const glow = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, 14);
+            glow.addColorStop(0, 'rgba(37, 99, 235, 0.24)');
             glow.addColorStop(1, 'rgba(37, 99, 235, 0)');
             ctx.fillStyle = glow;
             ctx.beginPath();
-            ctx.arc(point.x, point.y, 12, 0, 2 * Math.PI);
+            ctx.arc(point.x, point.y, 14, 0, 2 * Math.PI);
             ctx.fill();
 
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.arc(point.x, point.y, 6.5, 0, 2 * Math.PI);
+            ctx.arc(point.x, point.y, index === points.length - 1 ? 8 : 6.5, 0, 2 * Math.PI);
             ctx.fill();
 
-            ctx.fillStyle = '#2563EB';
+            ctx.fillStyle = ringColor;
             ctx.beginPath();
-            ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
+            ctx.arc(point.x, point.y, index === points.length - 1 ? 5 : 4, 0, 2 * Math.PI);
             ctx.fill();
-
-            if (index === points.length - 1) {
-                ctx.fillStyle = '#0F172A';
-                ctx.font = '600 12px "Plus Jakarta Sans", sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(`${point.value}%`, point.x, point.y - 16);
-            }
         });
+
+        const avg = data.values.reduce((sum, value) => sum + value, 0) / Math.max(1, data.values.length);
+        const last = data.values[data.values.length - 1];
+        const first = data.values[0];
+        const delta = Math.round((last - first) * 10) / 10;
+        const headlineScore = document.getElementById('chartHeadlineScore');
+        const headlineDelta = document.getElementById('chartHeadlineDelta');
+        const consistency = document.getElementById('chartConsistency');
+        const attemptCount = document.getElementById('chartAttemptCount');
+        const attemptLabel = document.getElementById('chartAttemptLabel');
+        const summaryText = document.getElementById('chartSummaryText');
+
+        if (headlineScore) headlineScore.textContent = `${Math.round(last)}%`;
+        if (headlineDelta) {
+            const direction = delta > 0 ? 'Improving' : delta < 0 ? 'Cooling off' : 'Holding steady';
+            headlineDelta.textContent = `${direction} ${delta === 0 ? 'from your first point' : `${delta > 0 ? '+' : ''}${delta} pts vs start`}`;
+            headlineDelta.className = `text-sm font-semibold mt-1 ${delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-orange-500' : 'text-slate-500'}`;
+        }
+        if (consistency) consistency.textContent = `${Math.round(avg)}%`;
+        if (attemptCount) attemptCount.textContent = `${data.values.length}`;
+        if (attemptLabel) attemptLabel.textContent = `${data.values.length} scored checkpoints in this ${data.periodLabel || 'view'}`;
+        if (summaryText) {
+            const directionWord = delta > 0 ? 'upward momentum' : delta < 0 ? 'a recent dip' : 'stable output';
+            summaryText.textContent = `This ${data.periodLabel || 'period'} shows ${directionWord}, with ${Math.round(avg)}% average performance across ${data.values.length} scored checkpoints.`;
+        }
 
         ctx.restore();
         return { data, ctx };
@@ -912,9 +944,9 @@ class TestApp {
         };
 
         const fallback = {
-            weekly: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], values: [72, 74, 76, 75, 81, 84, 86] },
-            monthly: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], values: [71, 75, 79, 84] },
-            yearly: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], values: [68, 72, 76, 80, 83, 86] }
+            weekly: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], values: [72, 74, 76, 75, 81, 84, 86], periodLabel: 'week' },
+            monthly: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], values: [71, 75, 79, 84], periodLabel: 'month' },
+            yearly: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], values: [68, 72, 76, 80, 83, 86], periodLabel: 'year' }
         };
 
         if (!normalized.length) return fallback;
@@ -922,7 +954,8 @@ class TestApp {
         const recentSeven = normalized.slice(-7);
         const weekly = {
             labels: recentSeven.map(item => item.date.toLocaleDateString(undefined, { weekday: 'short' })),
-            values: recentSeven.map(item => Math.round(item.score))
+            values: recentSeven.map(item => Math.round(item.score)),
+            periodLabel: 'week'
         };
 
         const recentThirty = normalized.filter(item => item.date >= new Date(Date.now() - 30 * 86400000));
@@ -941,8 +974,8 @@ class TestApp {
 
         return {
             weekly: weekly.values.length ? weekly : fallback.weekly,
-            monthly: monthly.values.length ? monthly : fallback.monthly,
-            yearly: yearly.values.length ? yearly : fallback.yearly
+            monthly: monthly.values.length ? { ...monthly, periodLabel: 'month' } : fallback.monthly,
+            yearly: yearly.values.length ? { ...yearly, periodLabel: 'year' } : fallback.yearly
         };
     }
 

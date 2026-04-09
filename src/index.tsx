@@ -511,20 +511,55 @@ app.get('/', async (c) => {
 
                         <!-- Chart + Recent Tests -->
                         <div class="grid lg:grid-cols-3 gap-6 mb-8">
-                            <div class="lg:col-span-2 glass-card rounded-2xl p-6">
-                                <div class="flex justify-between items-center mb-6">
-                                    <div>
-                                    <div class="section-kicker">Learning analytics</div>
-                                    <h3 class="text-lg font-bold text-slate-900">Performance Trend</h3>
-                                </div>
-                                    <div class="flex gap-1.5">
-                                        <button class="chart-tab-btn active" data-period="weekly">Weekly</button>
-                                        <button class="chart-tab-btn" data-period="monthly">Monthly</button>
-                                        <button class="chart-tab-btn" data-period="yearly">Yearly</button>
+                            <div class="lg:col-span-2 glass-card rounded-3xl p-6 md:p-7 overflow-hidden relative">
+                                <div class="absolute inset-0 bg-gradient-to-br from-blue-50/80 via-white to-cyan-50/70 pointer-events-none"></div>
+                                <div class="relative">
+                                    <div class="flex flex-col gap-5 mb-6 xl:flex-row xl:items-start xl:justify-between">
+                                        <div>
+                                            <div class="section-kicker">Learning analytics</div>
+                                            <h3 class="text-xl font-bold text-slate-900">Performance command center</h3>
+                                            <p class="text-sm text-slate-500 mt-1">Track score momentum, consistency, and volume from real completed tests.</p>
+                                        </div>
+                                        <div class="flex gap-1.5 self-start bg-white/80 backdrop-blur-sm p-1 rounded-2xl border border-slate-200/80 shadow-sm">
+                                            <button class="chart-tab-btn active" data-period="weekly">Weekly</button>
+                                            <button class="chart-tab-btn" data-period="monthly">Monthly</button>
+                                            <button class="chart-tab-btn" data-period="yearly">Yearly</button>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="h-72">
-                                    <canvas id="performanceChart" class="w-full h-full"></canvas>
+
+                                    <div class="grid md:grid-cols-3 gap-4 mb-6">
+                                        <div class="rounded-2xl bg-white/88 border border-slate-200/80 p-4 shadow-sm">
+                                            <div class="text-xs uppercase tracking-[0.18em] text-slate-400 font-bold mb-2">Latest score</div>
+                                            <div id="chartHeadlineScore" class="text-3xl font-extrabold text-slate-900">--%</div>
+                                            <div id="chartHeadlineDelta" class="text-sm font-semibold text-emerald-600 mt-1">No data yet</div>
+                                        </div>
+                                        <div class="rounded-2xl bg-white/88 border border-slate-200/80 p-4 shadow-sm">
+                                            <div class="text-xs uppercase tracking-[0.18em] text-slate-400 font-bold mb-2">Consistency</div>
+                                            <div id="chartConsistency" class="text-3xl font-extrabold text-slate-900">--%</div>
+                                            <div class="text-sm text-slate-500 mt-1">Average score across selected period</div>
+                                        </div>
+                                        <div class="rounded-2xl bg-slate-900 text-white p-4 shadow-lg shadow-slate-900/10">
+                                            <div class="text-xs uppercase tracking-[0.18em] text-slate-400 font-bold mb-2">Volume</div>
+                                            <div id="chartAttemptCount" class="text-3xl font-extrabold">0</div>
+                                            <div id="chartAttemptLabel" class="text-sm text-slate-300 mt-1">Completed attempts in this view</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="rounded-[28px] border border-slate-200/80 bg-white/92 shadow-inner shadow-slate-100 p-4 md:p-5">
+                                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                            <div>
+                                                <div class="text-sm font-semibold text-slate-700">Score trajectory</div>
+                                                <div id="chartSummaryText" class="text-xs text-slate-500 mt-1">See how performance is changing over time.</div>
+                                            </div>
+                                            <div class="flex items-center gap-3 text-xs text-slate-500">
+                                                <span class="inline-flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>Average score</span>
+                                                <span class="inline-flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Trend insight</span>
+                                            </div>
+                                        </div>
+                                        <div class="h-72">
+                                            <canvas id="performanceChart" class="w-full h-full"></canvas>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
