@@ -86,8 +86,13 @@ auth.post('/probe-insert', async (c) => {
 // User Registration
 auth.post('/register', async (c) => {
   try {
+    const pool = getPool(c)
     const body = await readJsonBody<CreateUserRequest>(c)
-    const { email, password, name, age, education_level } = body
+    const email = typeof body?.email === 'string' ? body.email.trim() : ''
+    const password = typeof body?.password === 'string' ? body.password : ''
+    const name = typeof body?.name === 'string' ? body.name.trim() : ''
+    const age = typeof body?.age === 'number' ? body.age : null
+    const education_level = typeof body?.education_level === 'string' ? body.education_level : null
 
     if (!email || !password || !name) {
       return c.json({ success: false, message: 'Email, password, and name are required' }, 400)
@@ -106,7 +111,6 @@ auth.post('/register', async (c) => {
       return c.json({ success: false, message: 'Name must be between 1 and 100 characters' }, 400)
     }
 
-    const pool = getPool(c)
     const password_hash = await hashPassword(password)
     const userId = generateUUID()
     const now = new Date().toISOString()
@@ -116,7 +120,7 @@ auth.post('/register', async (c) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT (email) DO NOTHING
        RETURNING id, email, name, age, education_level, created_at, updated_at`,
-      [userId, email, password_hash, name, age || null, education_level || null, now, now]
+      [userId, email, password_hash, name, age, education_level, now, now]
     )
 
     const user = insertResult.rows[0]
@@ -127,13 +131,7 @@ auth.post('/register', async (c) => {
     const jwtSecret = envValue(c, 'JWT_SECRET') || 'default-jwt-secret-change-in-production'
     const token = await generateJWT(user.id, user.email, jwtSecret)
 
-    return c.json({
-      success: true,
-      message: 'User registered successfully',
-      user,
-      token
-    }, 201)
-
+    return c.json({ success: true, message: 'User registered successfully', user, token }, 201)
   } catch (error: any) {
     console.error('Registration error:', error)
 
@@ -148,8 +146,10 @@ auth.post('/register', async (c) => {
 // User Login
 auth.post('/login', async (c) => {
   try {
+    const pool = getPool(c)
     const body = await readJsonBody<LoginRequest>(c)
-    const { email, password } = body
+    const email = typeof body?.email === 'string' ? body.email.trim() : ''
+    const password = typeof body?.password === 'string' ? body.password : ''
 
     if (!email || !password) {
       return c.json({ success: false, message: 'Email and password are required' }, 400)
@@ -159,7 +159,6 @@ auth.post('/login', async (c) => {
       return c.json({ success: false, message: 'Invalid email format' }, 400)
     }
 
-    const pool = getPool(c)
     const result = await pool.query(
       `SELECT id, email, password_hash, name, age, education_level, created_at, updated_at
        FROM users
@@ -183,13 +182,7 @@ auth.post('/login', async (c) => {
 
     const { password_hash: _, ...userWithoutPassword } = user
 
-    return c.json({
-      success: true,
-      message: 'Login successful',
-      user: userWithoutPassword,
-      token
-    })
-
+    return c.json({ success: true, message: 'Login successful', user: userWithoutPassword, token })
   } catch (error: any) {
     console.error('Login error:', error)
 
