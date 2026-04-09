@@ -8,12 +8,18 @@ function envValue(c: any, key: 'DATABASE_URL' | 'JWT_SECRET') {
   return c?.env?.[key] || process.env[key]
 }
 
+async function readJsonBody<T>(c: any): Promise<T> {
+  const raw = await c.req.text()
+  if (!raw) throw new Error('Request body is empty')
+  return JSON.parse(raw) as T
+}
+
 const auth = new Hono<{ Bindings: Env }>()
 
 // User Registration
 auth.post('/register', async (c) => {
   try {
-    const body: CreateUserRequest = await c.req.json()
+    const body = await readJsonBody<CreateUserRequest>(c)
     const { email, password, name, age, education_level } = body
 
     if (!email || !password || !name) {
@@ -75,6 +81,10 @@ auth.post('/register', async (c) => {
       return c.json({ success: false, message: 'Email already registered' }, 409)
     }
 
+    if (String(error?.message || '').includes('empty') || String(error?.message || '').includes('JSON')) {
+      return c.json({ success: false, message: 'Invalid JSON body' }, 400)
+    }
+
     return c.json({ success: false, message: 'Internal server error' }, 500)
   }
 })
@@ -82,7 +92,7 @@ auth.post('/register', async (c) => {
 // User Login
 auth.post('/login', async (c) => {
   try {
-    const body: LoginRequest = await c.req.json()
+    const body = await readJsonBody<LoginRequest>(c)
     const { email, password } = body
 
     if (!email || !password) {
@@ -118,8 +128,13 @@ auth.post('/login', async (c) => {
       token
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error)
+
+    if (String(error?.message || '').includes('empty') || String(error?.message || '').includes('JSON')) {
+      return c.json({ success: false, message: 'Invalid JSON body' }, 400)
+    }
+
     return c.json({ success: false, message: 'Internal server error' }, 500)
   }
 })
