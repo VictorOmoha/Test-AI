@@ -1,7 +1,7 @@
 // Authentication routes for AI Test Application
 import { Hono } from 'hono'
+import { Pool } from '@neondatabase/serverless'
 import { Env, CreateUserRequest, LoginRequest } from '../types/database'
-import { DatabaseService } from '../utils/database'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT, isValidEmail, isValidPassword, generateUUID } from '../utils/auth'
 
 function envValue(c: any, key: 'DATABASE_URL' | 'JWT_SECRET') {
@@ -12,6 +12,12 @@ async function readJsonBody<T>(c: any): Promise<T> {
   const raw = await c.req.text()
   if (!raw) throw new Error('Request body is empty')
   return JSON.parse(raw) as T
+}
+
+function getPool(c: any) {
+  const connectionString = envValue(c, 'DATABASE_URL')
+  if (!connectionString) throw new Error('DATABASE_URL is not configured')
+  return new Pool({ connectionString })
 }
 
 const auth = new Hono<{ Bindings: Env }>()
@@ -39,47 +45,36 @@ auth.post('/register', async (c) => {
       return c.json({ success: false, message: 'Name must be between 1 and 100 characters' }, 400)
     }
 
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
-    const existingUser = await db.getUserByEmail(email)
-
-    if (existingUser) {
-      return c.json({ success: false, message: 'Email already registered' }, 409)
-    }
-
+    const pool = getPool(c)
     const password_hash = await hashPassword(password)
     const userId = generateUUID()
     const now = new Date().toISOString()
 
-    await db.rawQuery(
+    const insertResult = await pool.query(
       `INSERT INTO users (id, email, password_hash, name, age, education_level, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (email) DO NOTHING
+       RETURNING id, email, name, age, education_level, created_at, updated_at`,
       [userId, email, password_hash, name, age || null, education_level || null, now, now]
     )
 
+    const user = insertResult.rows[0]
+    if (!user) {
+      return c.json({ success: false, message: 'Email already registered' }, 409)
+    }
+
     const jwtSecret = envValue(c, 'JWT_SECRET') || 'default-jwt-secret-change-in-production'
-    const token = await generateJWT(userId, email, jwtSecret)
+    const token = await generateJWT(user.id, user.email, jwtSecret)
 
     return c.json({
       success: true,
       message: 'User registered successfully',
-      user: {
-        id: userId,
-        email,
-        name,
-        age: age || null,
-        education_level: education_level || null,
-        created_at: now,
-        updated_at: now
-      },
+      user,
       token
     }, 201)
 
   } catch (error: any) {
     console.error('Registration error:', error)
-
-    if (error?.code === '23505' || String(error?.message || '').toLowerCase().includes('duplicate')) {
-      return c.json({ success: false, message: 'Email already registered' }, 409)
-    }
 
     if (String(error?.message || '').includes('empty') || String(error?.message || '').includes('JSON')) {
       return c.json({ success: false, message: 'Invalid JSON body' }, 400)
@@ -103,15 +98,21 @@ auth.post('/login', async (c) => {
       return c.json({ success: false, message: 'Invalid email format' }, 400)
     }
 
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
-    const user = await db.getUserByEmail(email)
+    const pool = getPool(c)
+    const result = await pool.query(
+      `SELECT id, email, password_hash, name, age, education_level, created_at, updated_at
+       FROM users
+       WHERE email = $1
+       LIMIT 1`,
+      [email]
+    )
 
+    const user = result.rows[0]
     if (!user) {
       return c.json({ success: false, message: 'Invalid credentials' }, 401)
     }
 
     const isPasswordValid = await verifyPassword(password, user.password_hash)
-
     if (!isPasswordValid) {
       return c.json({ success: false, message: 'Invalid credentials' }, 401)
     }
@@ -156,19 +157,24 @@ auth.post('/verify', async (c) => {
       return c.json({ success: false, message: 'Invalid or expired token' }, 401)
     }
 
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
-    const user = await db.getUserById(payload.user_id)
+    const pool = getPool(c)
+    const result = await pool.query(
+      `SELECT id, email, name, age, education_level, created_at, updated_at
+       FROM users
+       WHERE id = $1
+       LIMIT 1`,
+      [payload.user_id]
+    )
 
+    const user = result.rows[0]
     if (!user) {
       return c.json({ success: false, message: 'User not found' }, 404)
     }
 
-    const { password_hash: _, ...userWithoutPassword } = user
-
     return c.json({
       success: true,
       valid: true,
-      user: userWithoutPassword
+      user
     })
 
   } catch (error) {
