@@ -676,60 +676,127 @@ class TestApp {
         const width = canvas.width;
         const height = canvas.height;
 
-        // Clear canvas
         ctx.clearRect(0, 0, width, height);
 
-        // Set up chart area
-        const padding = 40;
-        const chartWidth = width - 2 * padding;
-        const chartHeight = height - 2 * padding;
+        const padding = { top: 28, right: 28, bottom: 42, left: 44 };
+        const chartWidth = width - padding.left - padding.right;
+        const chartHeight = height - padding.top - padding.bottom;
 
-        // Find min/max values
-        const minValue = Math.min(...data.values) - 10;
-        const maxValue = Math.max(...data.values) + 10;
-        const range = maxValue - minValue;
+        const rawMin = Math.min(...data.values);
+        const rawMax = Math.max(...data.values);
+        const minValue = Math.max(0, Math.floor(rawMin - 8));
+        const maxValue = Math.min(100, Math.ceil(rawMax + 8));
+        const range = Math.max(1, maxValue - minValue);
 
-        // Draw grid lines
-        ctx.strokeStyle = '#E2E8F0';
+        const points = data.values.map((value, index) => ({
+            x: padding.left + (chartWidth * index) / Math.max(1, data.values.length - 1),
+            y: padding.top + chartHeight - ((value - minValue) / range) * chartHeight,
+            value,
+            label: data.labels[index]
+        }));
+
+        const getControlPoint = (current, previous, next, reverse = false) => {
+            const p = previous || current;
+            const n = next || current;
+            const smoothing = 0.18;
+            const o = {
+                length: Math.hypot(n.x - p.x, n.y - p.y),
+                angle: Math.atan2(n.y - p.y, n.x - p.x)
+            };
+            const angle = o.angle + (reverse ? Math.PI : 0);
+            const length = o.length * smoothing;
+            return {
+                x: current.x + Math.cos(angle) * length,
+                y: current.y + Math.sin(angle) * length
+            };
+        };
+
+        ctx.save();
+        ctx.strokeStyle = '#E5EDF8';
         ctx.lineWidth = 1;
-
-        for (let i = 0; i <= 5; i++) {
-            const y = padding + (chartHeight * i) / 5;
+        ctx.setLineDash([4, 6]);
+        for (let i = 0; i <= 4; i++) {
+            const y = padding.top + (chartHeight * i) / 4;
             ctx.beginPath();
-            ctx.moveTo(padding, y);
-            ctx.lineTo(width - padding, y);
+            ctx.moveTo(padding.left, y);
+            ctx.lineTo(width - padding.right, y);
             ctx.stroke();
         }
+        ctx.setLineDash([]);
 
-        // Draw data line
-        ctx.strokeStyle = '#2563EB';
-        ctx.lineWidth = 3;
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '12px "Plus Jakarta Sans", sans-serif';
+        ctx.textAlign = 'right';
+        for (let i = 0; i <= 4; i++) {
+            const value = Math.round(maxValue - (range * i) / 4);
+            const y = padding.top + (chartHeight * i) / 4 + 4;
+            ctx.fillText(`${value}%`, padding.left - 10, y);
+        }
+
+        ctx.textAlign = 'center';
+        data.labels.forEach((label, index) => {
+            const x = padding.left + (chartWidth * index) / Math.max(1, data.labels.length - 1);
+            ctx.fillText(label, x, height - 14);
+        });
+
+        const areaGradient = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartHeight);
+        areaGradient.addColorStop(0, 'rgba(37, 99, 235, 0.24)');
+        areaGradient.addColorStop(1, 'rgba(37, 99, 235, 0.02)');
+
         ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 0; i < points.length - 1; i++) {
+            const cps = getControlPoint(points[i], points[i - 1], points[i + 1]);
+            const cpe = getControlPoint(points[i + 1], points[i], points[i + 2], true);
+            ctx.bezierCurveTo(cps.x, cps.y, cpe.x, cpe.y, points[i + 1].x, points[i + 1].y);
+        }
+        ctx.lineTo(points[points.length - 1].x, padding.top + chartHeight);
+        ctx.lineTo(points[0].x, padding.top + chartHeight);
+        ctx.closePath();
+        ctx.fillStyle = areaGradient;
+        ctx.fill();
 
-        data.values.forEach((value, index) => {
-            const x = padding + (chartWidth * index) / (data.values.length - 1);
-            const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 0; i < points.length - 1; i++) {
+            const cps = getControlPoint(points[i], points[i - 1], points[i + 1]);
+            const cpe = getControlPoint(points[i + 1], points[i], points[i + 2], true);
+            ctx.bezierCurveTo(cps.x, cps.y, cpe.x, cpe.y, points[i + 1].x, points[i + 1].y);
+        }
+        ctx.strokeStyle = '#2563EB';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
 
-            if (index === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
+        points.forEach((point, index) => {
+            const glow = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, 12);
+            glow.addColorStop(0, 'rgba(37, 99, 235, 0.28)');
+            glow.addColorStop(1, 'rgba(37, 99, 235, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 12, 0, 2 * Math.PI);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 6.5, 0, 2 * Math.PI);
+            ctx.fill();
+
+            ctx.fillStyle = '#2563EB';
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
+            ctx.fill();
+
+            if (index === points.length - 1) {
+                ctx.fillStyle = '#0F172A';
+                ctx.font = '600 12px "Plus Jakarta Sans", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${point.value}%`, point.x, point.y - 16);
             }
         });
 
-        ctx.stroke();
-
-        // Draw data points
-        ctx.fillStyle = '#2563EB';
-        data.values.forEach((value, index) => {
-            const x = padding + (chartWidth * index) / (data.values.length - 1);
-            const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
-
-            ctx.beginPath();
-            ctx.arc(x, y, 4, 0, 2 * Math.PI);
-            ctx.fill();
-        });
-
+        ctx.restore();
         return { data, ctx };
     }
 
