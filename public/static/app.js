@@ -18,14 +18,12 @@ class TestApp {
         this.checkAuthState();
         this.setupAxiosInterceptors();
         this.initializeModules();
-        // Ensure categories populate regardless of auth timing
         try {
             this.loadTestCategories();
         } catch (e) {}
     }
 
     initializeModules() {
-        // Initialize modules once available
         if (typeof TestInterface !== 'undefined') {
             this.testInterface = new TestInterface(this);
         }
@@ -38,7 +36,6 @@ class TestApp {
     }
 
     setupAxiosInterceptors() {
-        // Add token to all requests
         axios.interceptors.request.use(
             config => {
                 config.headers = config.headers || {};
@@ -52,7 +49,6 @@ class TestApp {
             error => Promise.reject(error)
         );
 
-        // Handle auth errors
         axios.interceptors.response.use(
             response => response,
             error => {
@@ -69,16 +65,13 @@ class TestApp {
     }
 
     setupEventListeners() {
-        // Modal controls
         document.getElementById('loginBtn').addEventListener('click', () => this.showLoginModal());
         document.getElementById('registerBtn').addEventListener('click', () => this.showRegisterModal());
         document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
 
-        // Modal close buttons
         document.getElementById('closeLoginModal').addEventListener('click', () => this.hideLoginModal());
         document.getElementById('closeRegisterModal').addEventListener('click', () => this.hideRegisterModal());
 
-        // Modal switch buttons
         document.getElementById('switchToRegister').addEventListener('click', () => {
             this.hideLoginModal();
             this.showRegisterModal();
@@ -88,11 +81,9 @@ class TestApp {
             this.showLoginModal();
         });
 
-        // Form submissions
         document.getElementById('loginForm').addEventListener('submit', (e) => this.handleLogin(e));
         document.getElementById('registerForm').addEventListener('submit', (e) => this.handleRegister(e));
 
-        // Navigation tabs (top)
         document.querySelectorAll('.nav-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -101,7 +92,6 @@ class TestApp {
             });
         });
 
-        // Sidebar navigation
         document.querySelectorAll('.sidebar-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -112,10 +102,8 @@ class TestApp {
             });
         });
 
-        // Dashboard functionality
         this.setupDashboardEventListeners();
 
-        // Close modals on outside click
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal-overlay')) {
                 this.hideAllModals();
@@ -124,7 +112,6 @@ class TestApp {
     }
 
     setupDashboardEventListeners() {
-        // Chart period buttons
         document.querySelectorAll('.chart-tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.chart-tab-btn').forEach(b => b.classList.remove('active'));
@@ -134,7 +121,6 @@ class TestApp {
             });
         });
 
-        // Difficulty buttons
         document.querySelectorAll('.difficulty-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
@@ -142,7 +128,6 @@ class TestApp {
             });
         });
 
-        // Question slider
         const questionSlider = document.getElementById('questionSlider');
         const questionCount = document.getElementById('questionCount');
         if (questionSlider && questionCount) {
@@ -151,13 +136,11 @@ class TestApp {
             });
         }
 
-        // Quick test form
         const quickTestForm = document.getElementById('quickTestForm');
         if (quickTestForm) {
             quickTestForm.addEventListener('submit', (e) => this.handleQuickTest(e));
         }
 
-        // Take new test button
         const takeNewTestBtn = document.getElementById('takeNewTestBtn');
         if (takeNewTestBtn) {
             takeNewTestBtn.addEventListener('click', () => this.showTestCreation());
@@ -279,7 +262,6 @@ class TestApp {
     updateUI() {
         const isLoggedIn = this.user !== null;
 
-        // Toggle navigation elements
         const loginBtn = document.getElementById('loginBtn');
         const registerBtn = document.getElementById('registerBtn');
         const userMenu = document.getElementById('userMenu');
@@ -288,7 +270,6 @@ class TestApp {
         if (registerBtn) registerBtn.style.display = isLoggedIn ? 'none' : 'inline-flex';
         if (userMenu) userMenu.style.display = isLoggedIn ? 'flex' : 'none';
 
-        // Toggle sidebar
         const sidebar = document.getElementById('sidebar');
         if (sidebar) {
             if (isLoggedIn) {
@@ -300,7 +281,6 @@ class TestApp {
             }
         }
 
-        // Toggle main nav tabs
         const mainNavTabs = document.getElementById('mainNavTabs');
         if (mainNavTabs) {
             if (isLoggedIn) {
@@ -312,7 +292,6 @@ class TestApp {
             }
         }
 
-        // Update user name and initials
         if (isLoggedIn) {
             const userName = document.getElementById('userName');
             const userInitials = document.getElementById('userInitials');
@@ -328,7 +307,6 @@ class TestApp {
             }
         }
 
-        // Toggle landing/marketing content
         const welcomeSection = document.getElementById('welcomeSection');
         if (welcomeSection) {
             welcomeSection.style.display = isLoggedIn ? 'none' : 'block';
@@ -340,7 +318,6 @@ class TestApp {
             element.classList.toggle('hidden', isLoggedIn);
         });
 
-        // Hide all sections initially
         const sections = ['dashboardSection', 'testsSection', 'historySection', 'analyticsSection', 'profileSection', 'settingsSection'];
         sections.forEach(sectionId => {
             const element = document.getElementById(sectionId);
@@ -350,7 +327,6 @@ class TestApp {
             }
         });
 
-        // Show dashboard by default when logged in
         if (isLoggedIn) {
             this.switchSection('dashboard');
         }
@@ -362,9 +338,6 @@ class TestApp {
             return;
         }
 
-        console.log('switchSection called with:', section);
-
-        // Update navigation active states
         document.querySelectorAll('.nav-tab').forEach(tab => {
             tab.classList.toggle('active', tab.getAttribute('data-tab') === section);
         });
@@ -375,7 +348,6 @@ class TestApp {
 
         this.currentSection = section;
 
-        // Hide all sections first
         const sections = ['dashboardSection', 'testsSection', 'historySection', 'analyticsSection', 'profileSection', 'settingsSection'];
         sections.forEach(sectionId => {
             const element = document.getElementById(sectionId);
@@ -384,17 +356,13 @@ class TestApp {
             }
         });
 
-        // Show the selected section
         const targetSection = `${section}Section`;
         const element = document.getElementById(targetSection);
-        console.log('Target section:', targetSection, 'Element found:', !!element);
         if (element) {
             element.classList.remove('hidden');
             element.style.display = 'block';
-            console.log('Removed hidden class from', targetSection);
         }
 
-        // Handle section-specific logic
         switch(section) {
             case 'dashboard':
                 this.showDashboard();
@@ -420,46 +388,36 @@ class TestApp {
     }
 
     showDashboard() {
-        // Dashboard is already visible, just refresh data
-        console.log('showDashboard called');
         this.loadUserData();
     }
 
     showTests() {
-        // Initialize test creation functionality
         this.setupTestCreationForm();
     }
 
     showHistory() {
-        // Load test history
         this.loadTestHistory();
     }
 
     showAnalytics() {
-        // Load analytics data
         this.loadAnalytics();
     }
 
     showProfile() {
-        // Load user profile data
         this.loadProfile();
     }
 
     showSettings() {
-        // Initialize settings
         this.loadSettings();
     }
 
     async loadUserData() {
         try {
-            console.log('loadUserData called, user:', this.user);
-
-            // Load user statistics (with fallback data)
             let stats = {
                 tests_taken: 24,
                 average_score: 78,
                 categories_count: 5,
-                total_time: 750 // in minutes
+                total_time: 750
             };
 
             if (this.user) {
@@ -473,19 +431,10 @@ class TestApp {
                 }
             }
 
-            console.log('Displaying dashboard stats:', stats);
             this.displayDashboardStats(stats);
-
-            // Load test categories
             await this.loadTestCategories();
-
-            // Load recent tests
             await this.loadRecentTests();
-
-            // Initialize performance chart
             this.initializePerformanceChart();
-
-            // Load improvement areas and AI recommendations
             this.loadTestInProgress();
             this.loadImprovementAreas();
             this.loadAIRecommendations();
@@ -496,7 +445,6 @@ class TestApp {
     }
 
     displayDashboardStats(stats) {
-        // Update main statistics cards
         const testsTaken = document.getElementById('testsTaken');
         const averageScore = document.getElementById('averageScore');
         const testCategories = document.getElementById('testCategories');
@@ -514,7 +462,6 @@ class TestApp {
     }
 
     async loadTestCategories() {
-        // Fallback categories data
         const fallbackCategories = [
             { id: 'cat_math', name: 'Mathematics', description: 'Algebra, Calculus, Geometry, Statistics' },
             { id: 'cat_programming', name: 'Programming', description: 'Python, JavaScript, Java, Algorithms' },
@@ -525,14 +472,11 @@ class TestApp {
         let categories = fallbackCategories;
 
         try {
-            // Use SSR-provided categories first if present
             if (typeof window !== 'undefined' && Array.isArray(window.__CATEGORIES__) && window.__CATEGORIES__.length > 0) {
                 categories = window.__CATEGORIES__;
-                console.log('Using SSR categories', categories.length);
             }
         } catch (e) {}
 
-        // Always try API fetch to ensure latest
         try {
             const response = await axios.get('/api/tests/categories');
             if (response.data?.success && Array.isArray(response.data.categories) && response.data.categories.length > 0) {
@@ -551,7 +495,6 @@ class TestApp {
         const grid = document.getElementById('testCategoriesGrid');
         if (!grid) return;
 
-        // Sample progress data (would come from API in real app)
         const progressData = {
             'cat_math': 92,
             'cat_programming': 75,
@@ -576,20 +519,34 @@ class TestApp {
             const progress = progressData[category.id] || Math.floor(Math.random() * 40 + 60);
             const icon = categoryIcons[category.id] || 'fas fa-book';
             const colorClass = colors[index % colors.length];
+            const testsTaken = Math.floor(Math.random() * 10 + 5);
+            const safeName = String(category.name || 'Category').replace(/'/g, "\\'");
 
             return `
-                <div class="test-category-card cursor-pointer" onclick="testApp.createTestForCategory('${category.name}')">
-                    <div class="flex items-center justify-between mb-3">
-                        <i class="${icon} text-xl text-primary"></i>
-                        <span class="text-right text-sm font-medium">${progress}%</span>
+                <button type="button" class="test-category-card category-card-clean cursor-pointer text-left w-full" onclick="testApp.createTestForCategory('${safeName}')">
+                    <div class="category-card-top">
+                        <div class="category-card-icon ${colorClass}">
+                            <i class="${icon}"></i>
+                        </div>
+                        <div class="category-card-score-wrap">
+                            <div class="category-card-score">${progress}%</div>
+                            <div class="category-card-score-label">mastery</div>
+                        </div>
                     </div>
-                    <h4 class="font-medium text-slate-900 mb-1">${category.name}</h4>
-                    <p class="text-xs text-slate-400 mb-3 line-clamp-2">${category.description}</p>
-                    <div class="progress-bar">
-                        <div class="progress-fill ${colorClass}" style="width: ${progress}%"></div>
+                    <div class="category-card-body">
+                        <h4 class="category-card-title">${category.name}</h4>
+                        <p class="category-card-desc">${category.description}</p>
                     </div>
-                    <p class="text-xs text-gray-500 mt-2">${Math.floor(Math.random() * 10 + 5)} tests taken</p>
-                </div>
+                    <div class="category-card-footer">
+                        <div class="progress-bar">
+                            <div class="progress-fill ${colorClass}" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="category-card-meta">
+                            <span>${testsTaken} tests taken</span>
+                            <span>Tap to practice</span>
+                        </div>
+                    </div>
+                </button>
             `;
         }).join('');
     }
@@ -600,7 +557,6 @@ class TestApp {
 
         const opts = categories.map(category => `<option value="${category.name}">${category.name}</option>`).join('');
         select.innerHTML = '<option value="">Select category...</option>' + opts;
-        console.log('Populated quickTestCategory with', categories.length, 'categories');
     }
 
     populateTestCreationCategories(categories) {
@@ -608,7 +564,6 @@ class TestApp {
         if (!select) return;
         const opts2 = categories.map(category => `<option value="${category.name}">${category.name}</option>`).join('');
         select.innerHTML = '<option value="">Select category...</option>' + opts2;
-        console.log('Populated testCategory with', categories.length, 'categories');
     }
 
     async loadRecentTests() {
@@ -662,8 +617,8 @@ class TestApp {
 
             return `
                 <div class="recent-test-item">
-                    <div class="flex-1">
-                        <h4 class="font-medium text-slate-900 text-sm">${test.subject}</h4>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-medium text-slate-900 text-sm truncate">${test.subject}</h4>
                         <p class="text-xs text-gray-500">${test.questions} questions • ${test.timestamp}</p>
                     </div>
                     <div class="score-badge ${scoreClass}">${test.score}%</div>
@@ -701,8 +656,8 @@ class TestApp {
 
     createSimpleLineChart(ctx, data) {
         const canvas = ctx.canvas;
-        const width = canvas.width;
-        const height = canvas.height;
+        const width = canvas.width / Math.max(window.devicePixelRatio || 1, 1);
+        const height = canvas.height / Math.max(window.devicePixelRatio || 1, 1);
 
         ctx.clearRect(0, 0, width, height);
 
@@ -860,73 +815,6 @@ class TestApp {
         return { data, ctx };
     }
 
-    updatePerformanceChart(period) {
-        if (!this.performanceChart) return;
-
-        const canvas = this.performanceChart.ctx.canvas;
-        const ctx = this.prepareHiDPICanvas(canvas);
-        const datasets = this.performanceData || this.buildPerformanceDatasets(this.testHistoryData || []);
-        const selected = datasets[period] || datasets.weekly;
-        this.performanceChart = this.createSimpleLineChart(ctx, selected);
-    }
-
-    async handleQuickTest(e) {
-        e.preventDefault();
-
-        const category = document.getElementById('quickTestCategory').value;
-        const difficulty = document.querySelector('.difficulty-btn.active')?.getAttribute('data-difficulty') || 'Medium';
-        const numQuestions = document.getElementById('questionSlider').value;
-        const timeLimit = document.getElementById('timeLimitSelect').value;
-
-        if (!category) {
-            this.showError('Please select a test category');
-            return;
-        }
-
-        const questionTypes = [];
-        document.querySelectorAll('#quickTestForm input[type="checkbox"]:checked').forEach(cb => {
-            questionTypes.push(cb.value);
-        });
-
-        if (questionTypes.length === 0) {
-            this.showError('Please select at least one question type');
-            return;
-        }
-
-        try {
-            // Create test configuration
-            const configResponse = await axios.get('/api/tests/query-config', {
-                params: {
-                    test_type: category,
-                    difficulty: difficulty,
-                    num_questions: parseInt(numQuestions),
-                    duration_minutes: timeLimit ? parseInt(timeLimit) : 30,
-                    question_types: questionTypes.join(',')
-                }
-            });
-
-            if (configResponse.data.success) {
-                // Start the test
-                const startResponse = await axios.get('/api/tests/query-start', {
-                    params: {
-                        config_id: configResponse.data.config_id
-                    }
-                });
-
-                if (startResponse.data.success && this.testInterface) {
-                    this.testInterface.startTest(startResponse.data);
-                } else {
-                    this.showError('Failed to start test');
-                }
-            } else {
-                this.showError(configResponse.data.message || 'Failed to create test');
-            }
-        } catch (error) {
-            console.error('Quick test error:', error);
-            this.showError(error.response?.data?.message || 'Failed to create test');
-        }
-    }
-
     buildPerformanceDatasets(attempts = []) {
         const normalized = (attempts || [])
             .filter(item => item && (item.end_time || item.start_time || item.created_at))
@@ -1009,6 +897,71 @@ class TestApp {
         return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     }
 
+    updatePerformanceChart(period) {
+        if (!this.performanceChart) return;
+
+        const canvas = this.performanceChart.ctx.canvas;
+        const ctx = this.prepareHiDPICanvas(canvas);
+        const datasets = this.performanceData || this.buildPerformanceDatasets(this.testHistoryData || []);
+        const selected = datasets[period] || datasets.weekly;
+        this.performanceChart = this.createSimpleLineChart(ctx, selected);
+    }
+
+    async handleQuickTest(e) {
+        e.preventDefault();
+
+        const category = document.getElementById('quickTestCategory').value;
+        const difficulty = document.querySelector('.difficulty-btn.active')?.getAttribute('data-difficulty') || 'Medium';
+        const numQuestions = document.getElementById('questionSlider').value;
+        const timeLimit = document.getElementById('timeLimitSelect').value;
+
+        if (!category) {
+            this.showError('Please select a test category');
+            return;
+        }
+
+        const questionTypes = [];
+        document.querySelectorAll('#quickTestForm input[type="checkbox"]:checked').forEach(cb => {
+            questionTypes.push(cb.value);
+        });
+
+        if (questionTypes.length === 0) {
+            this.showError('Please select at least one question type');
+            return;
+        }
+
+        try {
+            const configResponse = await axios.get('/api/tests/query-config', {
+                params: {
+                    test_type: category,
+                    difficulty: difficulty,
+                    num_questions: parseInt(numQuestions),
+                    duration_minutes: timeLimit ? parseInt(timeLimit) : 30,
+                    question_types: questionTypes.join(',')
+                }
+            });
+
+            if (configResponse.data.success) {
+                const startResponse = await axios.get('/api/tests/query-start', {
+                    params: {
+                        config_id: configResponse.data.config_id
+                    }
+                });
+
+                if (startResponse.data.success && this.testInterface) {
+                    this.testInterface.startTest(startResponse.data);
+                } else {
+                    this.showError('Failed to start test');
+                }
+            } else {
+                this.showError(configResponse.data.message || 'Failed to create test');
+            }
+        } catch (error) {
+            console.error('Quick test error:', error);
+            this.showError(error.response?.data?.message || 'Failed to create test');
+        }
+    }
+
     createTestForCategory(categoryName) {
         const select = document.getElementById('quickTestCategory');
         if (select) {
@@ -1018,14 +971,12 @@ class TestApp {
         if (testSelect) {
             testSelect.value = categoryName;
         }
-        // Could scroll to or highlight the quick test form
     }
 
     loadImprovementAreas() {
         const container = document.getElementById('improvementAreas');
         if (!container) return;
 
-        // Mock improvement data based on performance analysis
         const improvementAreas = [
             { subject: 'Calculus - Derivatives', percentage: 45, level: 'critical' },
             { subject: 'Physics - Thermodynamics', percentage: 62, level: 'needs-work' },
@@ -1038,9 +989,9 @@ class TestApp {
                 <div class="improvement-subject">${area.subject}</div>
                 <div class="improvement-progress-container">
                     <div class="improvement-progress-bar">
-                        <div class="improvement-progress-fill ${area.level}" style="width: ${area.percentage}%"></div>
+                        <div class="improvement-progress-fill" style="width: ${area.percentage}%"></div>
                     </div>
-                    <div class="improvement-percentage ${area.level}">${area.percentage}%</div>
+                    <span class="improvement-percentage">${area.percentage}%</span>
                 </div>
             </div>
         `).join('');
@@ -1050,40 +1001,25 @@ class TestApp {
         const container = document.getElementById('aiRecommendations');
         if (!container) return;
 
-        // Mock AI recommendations based on performance analysis
         const recommendations = [
             {
-                icon: 'fas fa-calculator',
-                title: 'Focus on Calculus Fundamentals',
-                text: 'Your performance in derivatives suggests reviewing basic differentiation rules would help improve your scores.',
-                actions: ['Select', 'Move', 'Notes']
+                title: 'Focus on weak areas',
+                description: 'Spend 15 extra minutes daily on the topics with your lowest scores.'
             },
             {
-                icon: 'fas fa-code',
-                title: 'Practice More Algorithm Questions',
-                text: 'Spend 20 minutes daily on algorithm practice to improve your problem-solving skills.',
-                actions: ['Select', 'Move', 'Notes']
+                title: 'Practice consistently',
+                description: 'Short daily sessions beat occasional cramming for long-term retention.'
+            },
+            {
+                title: 'Mix question types',
+                description: 'Combining MCQ, True/False, and short answer builds stronger recall.'
             }
         ];
 
         container.innerHTML = recommendations.map(rec => `
-            <div class="ai-recommendation">
-                <div class="ai-recommendation-header">
-                    <div class="ai-recommendation-icon">
-                        <i class="${rec.icon}"></i>
-                    </div>
-                    <div class="ai-recommendation-content">
-                        <div class="ai-recommendation-title">${rec.title}</div>
-                        <div class="ai-recommendation-text">${rec.text}</div>
-                        <div class="ai-recommendation-actions">
-                            ${rec.actions.map(action => `
-                                <span class="ai-action-btn ${action.toLowerCase()}">
-                                    ${action}
-                                </span>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
+            <div class="ai-recommendation p-4">
+                <h4 class="font-semibold text-slate-900 mb-1">${rec.title}</h4>
+                <p class="text-sm text-slate-500 leading-6">${rec.description}</p>
             </div>
         `).join('');
     }
@@ -1092,7 +1028,6 @@ class TestApp {
         const container = document.getElementById('testInProgress');
         if (!container) return;
 
-        // Mock test in progress data
         const testInProgress = {
             title: 'Programming - JavaScript Basics',
             difficulty: 'Medium',
@@ -1102,29 +1037,36 @@ class TestApp {
         };
 
         container.innerHTML = `
-            <div class="test-progress-card">
-                <div class="test-progress-icon">
-                    <i class="fas fa-code text-blue-600"></i>
-                </div>
-                <div class="test-progress-info">
-                    <div class="test-progress-title">${testInProgress.title}</div>
-                    <div class="test-progress-meta">${testInProgress.difficulty} • ${testInProgress.answered}/${testInProgress.questions} questions • 45 Minutes</div>
-                    <div class="test-progress-bar">
-                        <div class="test-progress-fill" style="width: ${testInProgress.progress}%"></div>
+            <div class="test-progress-card progress-card-clean">
+                <div class="progress-card-main">
+                    <div class="progress-card-icon-wrap">
+                        <div class="test-progress-icon">
+                            <i class="fas fa-code text-blue-600"></i>
+                        </div>
                     </div>
-                    <div class="test-progress-text">Progress: ${testInProgress.answered}/${testInProgress.questions} questions</div>
+                    <div class="test-progress-info">
+                        <div class="progress-card-header-row">
+                            <div>
+                                <div class="test-progress-title">${testInProgress.title}</div>
+                                <div class="test-progress-meta">${testInProgress.difficulty} • ${testInProgress.answered}/${testInProgress.questions} questions answered • 45 min target</div>
+                            </div>
+                            <div class="progress-chip">${testInProgress.progress}% complete</div>
+                        </div>
+                        <div class="test-progress-bar">
+                            <div class="test-progress-fill" style="width: ${testInProgress.progress}%"></div>
+                        </div>
+                        <div class="test-progress-text">You are ${testInProgress.questions - testInProgress.answered} questions away from finishing this session.</div>
+                    </div>
                 </div>
-                <div class="test-progress-actions">
-                    <button class="continue-btn">Continue</button>
-                    <div class="resume-link">Resume Test</div>
+                <div class="test-progress-actions clean-actions">
+                    <button class="continue-btn">Continue Test</button>
+                    <button type="button" class="resume-link">Review Setup</button>
                 </div>
             </div>
         `;
     }
 
-    // Section-specific functionality
     setupTestCreationForm() {
-        // Setup test creation form interactions
         const slider = document.getElementById('questionCountSlider');
         const display = document.getElementById('questionCountDisplay');
         const createBtn = document.getElementById('createTestBtn');
@@ -1135,7 +1077,6 @@ class TestApp {
             });
         }
 
-        // Setup difficulty buttons
         document.querySelectorAll('.difficulty-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
@@ -1233,14 +1174,6 @@ class TestApp {
         }
     }
 
-    showProfileSection() {
-        this.loadProfile();
-    }
-
-    showAnalyticsSection() {
-        this.loadAnalytics();
-    }
-
     getScoreBadgeClass(score) {
         if (score >= 90) return 'excellent';
         if (score >= 75) return 'good';
@@ -1261,13 +1194,11 @@ class TestApp {
         const educationField = document.getElementById('profileEducation');
         const updateBtn = document.getElementById('updateProfileBtn');
 
-        // Populate current user data
         if (nameField) nameField.value = this.user.name || '';
         if (emailField) emailField.value = this.user.email || '';
         if (ageField) ageField.value = this.user.age || '';
-        if (educationField) educationField.value = this.user.education || '';
+        if (educationField) educationField.value = this.user.education_level || '';
 
-        // Setup update functionality
         if (updateBtn) {
             updateBtn.addEventListener('click', () => this.handleUpdateProfile());
         }
@@ -1296,11 +1227,9 @@ class TestApp {
     }
 
     loadSettings() {
-        // Placeholder for settings functionality
         console.log('Settings section loaded');
     }
 
-    // Dashboard Features
     showTestCreation() {
         if (!this.user) {
             this.showRegisterModal();
@@ -1318,7 +1247,6 @@ class TestApp {
 
     showTestHistory() {
         this.showInfo('Loading your test history...');
-        // TODO: Implement comprehensive test history interface
         this.showInfo('Test history feature coming soon!');
     }
 
@@ -1338,7 +1266,6 @@ class TestApp {
         }
     }
 
-    // Modal Management
     showLoginModal() {
         if (this.user) {
             this.switchSection('dashboard');
@@ -1370,7 +1297,6 @@ class TestApp {
         this.hideRegisterModal();
     }
 
-    // Notification Methods
     showSuccess(message) {
         this.showNotification(message, 'success');
     }
@@ -1384,55 +1310,25 @@ class TestApp {
     }
 
     showNotification(message, type = 'info') {
-        // Create notification element
         const notification = document.createElement('div');
         notification.className = `fixed top-4 right-4 z-50 p-4 rounded-xl shadow-2xl transition-all duration-300 transform translate-x-full border`;
-
-        const colors = {
-            success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-            error: 'bg-red-50 text-red-700 border-red-200',
-            info: 'bg-blue-50 text-blue-700 border-blue-200'
-        };
-
-        notification.classList.add(...colors[type].split(' '));
-        notification.style.backdropFilter = 'blur(8px)';
-        notification.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation' : 'info'}-circle mr-2"></i>
-                <span class="font-medium">${message}</span>
-                <button class="ml-4 opacity-60 hover:opacity-100 transition-opacity" onclick="this.parentElement.parentElement.remove()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `;
+        notification.style.background = type === 'success' ? '#ecfdf5' : type === 'error' ? '#fff1f2' : '#eff6ff';
+        notification.style.borderColor = type === 'success' ? '#a7f3d0' : type === 'error' ? '#fecdd3' : '#bfdbfe';
+        notification.style.color = type === 'success' ? '#065f46' : type === 'error' ? '#9f1239' : '#1d4ed8';
+        notification.textContent = message;
 
         document.body.appendChild(notification);
-
-        // Animate in
-        setTimeout(() => {
+        requestAnimationFrame(() => {
             notification.classList.remove('translate-x-full');
-        }, 10);
+        });
 
-        // Auto remove after 5 seconds
         setTimeout(() => {
             notification.classList.add('translate-x-full');
             setTimeout(() => notification.remove(), 300);
-        }, 5000);
+        }, 2800);
     }
 }
 
-// Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     window.testApp = new TestApp();
-
-    // Initialize modules if they exist
-    if (window.testApp.testInterface === null && typeof TestInterface !== 'undefined') {
-        window.testApp.testInterface = new TestInterface(window.testApp);
-    }
-    if (window.testApp.resultsDashboard === null && typeof ResultsDashboard !== 'undefined') {
-        window.testApp.resultsDashboard = new ResultsDashboard(window.testApp);
-    }
-    if (window.testApp.socialFeatures === null && typeof SocialFeatures !== 'undefined') {
-        window.testApp.socialFeatures = new SocialFeatures(window.testApp);
-    }
 });
