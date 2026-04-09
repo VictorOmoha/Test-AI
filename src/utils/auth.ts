@@ -1,6 +1,5 @@
 // Authentication utilities for AI Test Application
-import { sign, verify } from 'hono/jwt'
-import { v4 as uuidv4 } from 'uuid'
+import { createHash, randomUUID, createHmac, timingSafeEqual } from 'node:crypto'
 
 export interface JWTPayload {
   user_id: string;
@@ -9,39 +8,65 @@ export interface JWTPayload {
   iat: number;
 }
 
-// Simple password hashing using Web Crypto API (Cloudflare Workers compatible)
+function base64Url(input: Buffer | string): string {
+  const buf = Buffer.isBuffer(input) ? input : Buffer.from(input)
+  return buf.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
+}
+
+function decodeBase64Url(input: string): string {
+  const normalized = input.replace(/-/g, '+').replace(/_/g, '/')
+  const padding = (4 - (normalized.length % 4)) % 4
+  return Buffer.from(normalized + '='.repeat(padding), 'base64').toString('utf8')
+}
+
 export async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password + 'ai-test-salt-2024') // Add salt
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  return createHash('sha256').update(password + 'ai-test-salt-2024').digest('hex')
 }
 
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
   const hashedInput = await hashPassword(password)
-  return hashedInput === hashedPassword
+  const left = Buffer.from(hashedInput)
+  const right = Buffer.from(hashedPassword)
+  if (left.length !== right.length) return false
+  return timingSafeEqual(left, right)
 }
 
 export async function generateJWT(user_id: string, email: string, secret: string): Promise<string> {
+  const header = { alg: 'HS256', typ: 'JWT' }
   const payload: JWTPayload = {
     user_id,
     email,
-    exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
+    exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60),
     iat: Math.floor(Date.now() / 1000)
   }
-  return await sign(payload, secret)
+
+  const encodedHeader = base64Url(JSON.stringify(header))
+  const encodedPayload = base64Url(JSON.stringify(payload))
+  const data = `${encodedHeader}.${encodedPayload}`
+  const signature = createHmac('sha256', secret).update(data).digest()
+
+  return `${data}.${base64Url(signature)}`
 }
 
 export async function verifyJWT(token: string, secret: string): Promise<JWTPayload | null> {
   try {
-    const payload = await verify(token, secret) as JWTPayload
-    
-    // Check if token is expired
-    if (payload.exp < Math.floor(Date.now() / 1000)) {
-      return null
-    }
-    
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+
+    const [encodedHeader, encodedPayload, encodedSignature] = parts
+    const data = `${encodedHeader}.${encodedPayload}`
+    const expectedSignature = base64Url(createHmac('sha256', secret).update(data).digest())
+
+    const left = Buffer.from(expectedSignature)
+    const right = Buffer.from(encodedSignature)
+    if (left.length !== right.length || !timingSafeEqual(left, right)) return null
+
+    const header = JSON.parse(decodeBase64Url(encodedHeader))
+    if (header.alg !== 'HS256') return null
+
+    const payload = JSON.parse(decodeBase64Url(encodedPayload)) as JWTPayload
+    if (payload.exp < Math.floor(Date.now() / 1000)) return null
+
     return payload
   } catch (error) {
     console.error('JWT verification failed:', error)
@@ -50,11 +75,11 @@ export async function verifyJWT(token: string, secret: string): Promise<JWTPaylo
 }
 
 export function generateUUID(): string {
-  return uuidv4()
+  return randomUUID()
 }
 
 export function generateSessionToken(): string {
-  return uuidv4() + '-' + Date.now().toString()
+  return `${randomUUID()}-${Date.now()}`
 }
 
 // Extract Bearer token from Authorization header
