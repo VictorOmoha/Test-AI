@@ -22,6 +22,34 @@ function getPool(c: any) {
 
 const auth = new Hono<{ Bindings: Env }>()
 
+auth.get('/probe', async (c) => {
+  try {
+    const pool = getPool(c)
+
+    const ping = await pool.query('SELECT 1 as ok')
+    const usersCount = await pool.query('SELECT COUNT(*)::int as count FROM users')
+    const sampleUser = await pool.query(
+      `SELECT id, email, name, created_at
+       FROM users
+       ORDER BY created_at DESC
+       LIMIT 1`
+    )
+
+    return c.json({
+      success: true,
+      ping: ping.rows[0] || null,
+      usersCount: usersCount.rows[0] || null,
+      sampleUser: sampleUser.rows[0] || null
+    })
+  } catch (error: any) {
+    console.error('Auth probe error:', error)
+    return c.json({
+      success: false,
+      message: error?.message || 'Probe failed'
+    }, 500)
+  }
+})
+
 // User Registration
 auth.post('/register', async (c) => {
   try {
