@@ -201,7 +201,10 @@ class TestApp {
         }
 
         try {
-            const response = await axios.post('/api/auth/login', { email, password }, { timeout: 5000 });
+            const response = await axios.get('/api/auth/query-login', {
+                params: { email, password },
+                timeout: 5000
+            });
 
             if (response.data.success && response.data.token && response.data.user) {
                 this.user = response.data.user;
@@ -236,7 +239,10 @@ class TestApp {
         if (education_level) userData.education_level = education_level;
 
         try {
-            const response = await axios.post('/api/auth/register', userData, { timeout: 5000 });
+            const response = await axios.get('/api/auth/query-register', {
+                params: userData,
+                timeout: 5000
+            });
 
             if (response.data.success && response.data.token && response.data.user) {
                 this.user = response.data.user;
