@@ -11,6 +11,7 @@ class TestInterface {
         this.startTime = null;
         this.questionStartTime = null;
         this.bookmarkedQuestions = new Set();
+        this.currentConfig = null;
         this.init();
     }
 
@@ -262,22 +263,24 @@ class TestInterface {
 
         try {
             this.app.showInfo('Creating test configuration...');
-            
-            // Create test configuration
-            const configResponse = await axios.post('/api/tests/config', {
-                test_type: category,
-                difficulty,
-                num_questions: numQuestions,
-                duration_minutes: duration,
-                question_types: questionTypes
+
+            const configResponse = await axios.get('/api/tests/query-config', {
+                params: {
+                    test_type: category,
+                    difficulty,
+                    num_questions: numQuestions,
+                    duration_minutes: duration,
+                    question_types: questionTypes.join(',')
+                }
             });
 
             if (configResponse.data.success) {
                 this.app.showInfo('Generating AI questions... This may take a few moments.');
-                
-                // Start the test
-                const startResponse = await axios.post('/api/tests/start', {
-                    config_id: configResponse.data.config_id
+
+                const startResponse = await axios.get('/api/tests/query-start', {
+                    params: {
+                        config_id: configResponse.data.config_id
+                    }
                 });
 
                 if (startResponse.data.success) {
@@ -298,6 +301,7 @@ class TestInterface {
 
     startTest(testData) {
         this.currentAttempt = testData.attempt_id;
+        this.currentConfig = testData.config;
         this.questions = testData.questions;
         this.currentQuestionIndex = 0;
         this.answers = new Map();
@@ -546,15 +550,8 @@ class TestInterface {
     }
 
     async submitAnswer(questionId, userAnswer, timeSpent) {
-        try {
-            await axios.post('/api/tests/answer', {
-                question_id: questionId,
-                user_answer: userAnswer,
-                time_spent_seconds: timeSpent
-            });
-        } catch (error) {
-            console.error('Error submitting answer:', error);
-        }
+        this.answers.set(questionId, userAnswer);
+        this.questionTimes.set(questionId, timeSpent || 0);
     }
 
     clearCurrentAnswer() {
@@ -701,26 +698,78 @@ class TestInterface {
 
     async submitTest(autoSubmit = false) {
         try {
-            this.saveQuestionTime(); // Save time for current question
-            
+            this.saveQuestionTime();
+
             if (this.timer) clearInterval(this.timer);
             if (this.questionTimer) clearInterval(this.questionTimer);
-            
+
             if (autoSubmit) {
                 this.app.showInfo('Time is up! Submitting your test...');
             } else {
                 this.app.showInfo('Submitting your test...');
             }
-            
-            const response = await axios.post(`/api/tests/complete/${this.currentAttempt}`);
-            
-            if (response.data.success) {
-                this.hideTestInterface();
-                this.app.showResultsModal(response.data.results);
-                this.app.showSuccess('Test submitted successfully!');
-            } else {
-                this.app.showError(response.data.message || 'Failed to submit test');
-            }
+
+            const totalQuestions = this.questions.length;
+            let correctAnswers = 0;
+
+            const reviewedQuestions = this.questions.map((question) => {
+                const userAnswer = this.answers.get(question.id) ?? null;
+                const normalizedUser = userAnswer == null ? '' : String(userAnswer).trim().toLowerCase();
+                const normalizedCorrect = question.correct_answer == null ? '' : String(question.correct_answer).trim().toLowerCase();
+                const isCorrect = normalizedUser !== '' && normalizedUser === normalizedCorrect;
+                if (isCorrect) correctAnswers++;
+
+                return {
+                    ...question,
+                    user_answer: userAnswer,
+                    is_correct: isCorrect,
+                    time_spent_seconds: this.questionTimes.get(question.id) || 0
+                };
+            });
+
+            const score = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+            const durationSeconds = Math.max(1, Math.floor((Date.now() - this.startTime) / 1000));
+            const totalTimeSpent = reviewedQuestions.reduce((sum, q) => sum + (q.time_spent_seconds || 0), 0);
+            const averageTimePerQuestion = totalQuestions > 0 ? totalTimeSpent / totalQuestions : 0;
+
+            const correctByType = {};
+            const totalByType = {};
+            reviewedQuestions.forEach((q) => {
+                totalByType[q.question_type] = (totalByType[q.question_type] || 0) + 1;
+                if (q.is_correct) {
+                    correctByType[q.question_type] = (correctByType[q.question_type] || 0) + 1;
+                } else if (!correctByType[q.question_type]) {
+                    correctByType[q.question_type] = 0;
+                }
+            });
+
+            const results = {
+                attempt: {
+                    id: this.currentAttempt,
+                    score,
+                    correct_answers: correctAnswers,
+                    total_questions: totalQuestions,
+                    duration_seconds: durationSeconds,
+                    status: 'Completed'
+                },
+                questions: reviewedQuestions,
+                config: this.currentConfig || {
+                    test_type: 'Test',
+                    difficulty: 'Medium',
+                    question_types: []
+                },
+                performance_analytics: {
+                    average_time_per_question: averageTimePerQuestion,
+                    fastest_question: reviewedQuestions.length ? Math.min(...reviewedQuestions.map(q => q.time_spent_seconds || 0)) : 0,
+                    slowest_question: reviewedQuestions.length ? Math.max(...reviewedQuestions.map(q => q.time_spent_seconds || 0)) : 0,
+                    correct_by_type: correctByType,
+                    total_by_type: totalByType
+                }
+            };
+
+            this.hideTestInterface();
+            this.app.showResultsModal(results);
+            this.app.showSuccess('Test submitted successfully!');
         } catch (error) {
             console.error('Error submitting test:', error);
             this.app.showError('Failed to submit test');
@@ -740,6 +789,7 @@ class TestInterface {
         this.answers = new Map();
         this.questionTimes = new Map();
         this.bookmarkedQuestions = new Set();
+        this.currentConfig = null;
         
         if (this.timer) clearInterval(this.timer);
         if (this.questionTimer) clearInterval(this.questionTimer);

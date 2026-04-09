@@ -455,28 +455,8 @@ class ResultsDashboard {
 
     async generateAIRecommendations(resultsData) {
         try {
-            // Analyze weak areas
             const weakAreas = this.analyzeWeakAreas(resultsData);
-            
-            // If no OpenAI API key is available, show generic recommendations
-            if (!weakAreas.length) {
-                this.showGenericRecommendations(resultsData);
-                return;
-            }
-            
-            // Generate AI recommendations (this would call the backend AI service)
-            const response = await axios.post('/api/tests/recommendations', {
-                attempt_id: resultsData.attempt.id,
-                weak_areas: weakAreas,
-                test_type: resultsData.config.test_type,
-                score: resultsData.attempt.score
-            });
-            
-            if (response.data.success && response.data.recommendations) {
-                this.displayAIRecommendations(response.data.recommendations);
-            } else {
-                this.showGenericRecommendations(resultsData);
-            }
+            this.showGenericRecommendations(resultsData, weakAreas);
         } catch (error) {
             console.error('Error generating AI recommendations:', error);
             this.showGenericRecommendations(resultsData);
@@ -506,7 +486,7 @@ class ResultsDashboard {
         return weakAreas;
     }
 
-    showGenericRecommendations(resultsData) {
+    showGenericRecommendations(resultsData, weakAreas = []) {
         const score = resultsData.attempt.score;
         const testType = resultsData.config.test_type;
         
