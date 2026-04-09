@@ -61,6 +61,16 @@ auth.post('/probe-token', async (c) => {
   }
 })
 
+auth.post('/probe-body', async (c) => {
+  try {
+    const raw = await c.req.text()
+    return c.json({ success: true, raw, length: raw.length })
+  } catch (error: any) {
+    console.error('Auth body probe error:', error)
+    return c.json({ success: false, message: error?.message || 'Body probe failed' }, 500)
+  }
+})
+
 auth.post('/probe-insert', async (c) => {
   try {
     const pool = getPool(c)
