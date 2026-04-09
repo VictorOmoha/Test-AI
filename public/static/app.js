@@ -953,21 +953,36 @@ class TestApp {
         }
 
         try {
-            const response = await axios.post('/api/tests/config', {
-                test_type: category,
-                difficulty: difficulty,
-                num_questions: parseInt(questionCount),
-                duration_minutes: timeLimit ? parseInt(timeLimit) : 30,
-                question_types: ['MCQ']
+            const configResponse = await axios.get('/api/tests/query-config', {
+                params: {
+                    test_type: category,
+                    difficulty,
+                    num_questions: parseInt(questionCount),
+                    duration_minutes: timeLimit ? parseInt(timeLimit) : 30,
+                    question_types: 'MCQ'
+                }
             });
 
-            if (response.data.success) {
-                this.showSuccess('Test created successfully! Starting test...');
-                // Could start the test or show test interface
+            if (!configResponse.data.success) {
+                this.showError(configResponse.data.message || 'Failed to create test');
+                return;
+            }
+
+            const startResponse = await axios.get('/api/tests/query-start', {
+                params: {
+                    config_id: configResponse.data.config_id
+                }
+            });
+
+            if (startResponse.data.success && this.testInterface) {
+                this.showSuccess('Test created successfully!');
+                this.testInterface.startTest(startResponse.data);
+            } else {
+                this.showError(startResponse.data?.message || 'Failed to start test');
             }
         } catch (error) {
             console.error('Test creation error:', error);
-            this.showError('Failed to create test. Please try again.');
+            this.showError(error.response?.data?.message || 'Failed to create test. Please try again.');
         }
     }
 
@@ -1056,21 +1071,21 @@ class TestApp {
         const age = document.getElementById('profileAge')?.value;
         const education = document.getElementById('profileEducation')?.value;
 
-        try {
-            const response = await axios.put('/api/auth/profile', {
-                name,
-                age: age ? parseInt(age) : null,
-                education
-            });
+        this.user = {
+            ...this.user,
+            name: name || this.user?.name,
+            age: age ? parseInt(age) : null,
+            education_level: education || null
+        };
 
-            if (response.data.success) {
-                this.user = { ...this.user, ...response.data.user };
-                this.showSuccess('Profile updated successfully!');
-            }
-        } catch (error) {
-            console.error('Profile update error:', error);
-            this.showError('Failed to update profile. Please try again.');
-        }
+        localStorage.setItem('ai_test_user_draft', JSON.stringify({
+            name: this.user.name,
+            age: this.user.age,
+            education_level: this.user.education_level
+        }));
+
+        this.updateUI();
+        this.showSuccess('Profile updated locally. Server sync is not enabled yet.');
     }
 
     loadSettings() {
