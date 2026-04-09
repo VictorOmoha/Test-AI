@@ -52,6 +52,7 @@ app.use('/api/social/*', async (c, next) => {
 
 // API Routes
 app.route('/api/auth', auth)
+app.route('/api/auth2', auth)
 app.route('/api/tests', tests)
 app.route('/api/social', social)
 
