@@ -676,11 +676,27 @@ class TestApp {
         const canvas = document.getElementById('performanceChart');
         if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
+        const ctx = this.prepareHiDPICanvas(canvas);
         const datasets = this.performanceData || this.buildPerformanceDatasets(this.testHistoryData || []);
         this.performanceData = datasets;
 
         this.performanceChart = this.createSimpleLineChart(ctx, datasets.weekly);
+    }
+
+    prepareHiDPICanvas(canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        const displayWidth = Math.max(320, Math.floor(rect.width || canvas.clientWidth || 800));
+        const displayHeight = Math.max(220, Math.floor(rect.height || canvas.clientHeight || 320));
+
+        canvas.width = Math.floor(displayWidth * ratio);
+        canvas.height = Math.floor(displayHeight * ratio);
+        canvas.style.width = `${displayWidth}px`;
+        canvas.style.height = `${displayHeight}px`;
+
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        return ctx;
     }
 
     createSimpleLineChart(ctx, data) {
@@ -847,9 +863,11 @@ class TestApp {
     updatePerformanceChart(period) {
         if (!this.performanceChart) return;
 
+        const canvas = this.performanceChart.ctx.canvas;
+        const ctx = this.prepareHiDPICanvas(canvas);
         const datasets = this.performanceData || this.buildPerformanceDatasets(this.testHistoryData || []);
         const selected = datasets[period] || datasets.weekly;
-        this.createSimpleLineChart(this.performanceChart.ctx, selected);
+        this.performanceChart = this.createSimpleLineChart(ctx, selected);
     }
 
     async handleQuickTest(e) {
