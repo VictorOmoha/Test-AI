@@ -4,6 +4,10 @@ import { Env, CreateUserRequest, LoginRequest } from '../types/database'
 import { DatabaseService } from '../utils/database'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT, isValidEmail, isValidPassword, generateUUID } from '../utils/auth'
 
+function envValue(c: any, key: 'DATABASE_URL' | 'JWT_SECRET') {
+  return c?.env?.[key] || process.env[key]
+}
+
 const auth = new Hono<{ Bindings: Env }>()
 
 // User Registration
@@ -31,7 +35,7 @@ auth.post('/register', async (c) => {
     }
 
     // Check if user already exists
-    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
+    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
     const existingUser = await db.getUserByEmail(email)
     
     if (existingUser) {
@@ -49,7 +53,7 @@ auth.post('/register', async (c) => {
     })
 
     // Generate JWT token
-    const jwtSecret = c.env.JWT_SECRET || 'default-jwt-secret-change-in-production'
+    const jwtSecret = envValue(c, 'JWT_SECRET') || 'default-jwt-secret-change-in-production'
     const token = await generateJWT(userId, email, jwtSecret)
 
     // Get created user (without password)
@@ -89,7 +93,7 @@ auth.post('/login', async (c) => {
     }
 
     // Find user
-    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
+    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
     const user = await db.getUserByEmail(email)
     
     if (!user) {
@@ -104,7 +108,7 @@ auth.post('/login', async (c) => {
     }
 
     // Generate JWT token
-    const jwtSecret = c.env.JWT_SECRET || 'default-jwt-secret-change-in-production'
+    const jwtSecret = envValue(c, 'JWT_SECRET') || 'default-jwt-secret-change-in-production'
     const token = await generateJWT(user.id, user.email, jwtSecret)
 
     // Return user info (without password)
@@ -133,7 +137,7 @@ auth.post('/verify', async (c) => {
       return c.json({ success: false, message: 'No token provided' }, 400)
     }
 
-    const jwtSecret = c.env.JWT_SECRET || 'default-jwt-secret-change-in-production'
+    const jwtSecret = envValue(c, 'JWT_SECRET') || 'default-jwt-secret-change-in-production'
     const payload = await verifyJWT(token, jwtSecret)
     
     if (!payload) {
@@ -141,7 +145,7 @@ auth.post('/verify', async (c) => {
     }
 
     // Get current user info
-    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
+    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
     const user = await db.getUserById(payload.user_id)
     
     if (!user) {

@@ -4,13 +4,17 @@ import { DatabaseService } from '../utils/database'
 import { AIService } from '../services/ai'
 import { authMiddleware, getAuthUser } from '../middleware/auth'
 
+function envValue(c: any, key: 'DATABASE_URL' | 'OPENAI_API_KEY') {
+  return c?.env?.[key] || process.env[key]
+}
+
 const social = new Hono<{ Bindings: Env }>()
 
 social.get('/leaderboard', async (c) => {
   try {
     const category = c.req.query('category') || 'all'
     const period = c.req.query('period') || 'all'
-    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
+    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
 
     let query = `
       SELECT 
@@ -84,7 +88,7 @@ social.get('/achievements', authMiddleware, async (c) => {
     const auth = getAuthUser(c)
     if (!auth) return c.json({ success: false, message: 'Authentication required' }, 401)
 
-    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
+    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
     const userStats = await db.getTestStatistics(auth.user_id)
     const attempts = await db.getUserTestAttempts(auth.user_id, 1000)
     const achievements = calculateAchievements(userStats, attempts)
@@ -108,7 +112,7 @@ social.get('/statistics', authMiddleware, async (c) => {
     const auth = getAuthUser(c)
     if (!auth) return c.json({ success: false, message: 'Authentication required' }, 401)
 
-    const db = DatabaseService.fromDatabaseUrl(c.env.DATABASE_URL)
+    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
     const userStats = await db.getTestStatistics(auth.user_id)
 
     const [globalStats] = await db.rawQuery<any>(`
@@ -199,7 +203,7 @@ social.post('/recommendations', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Missing required parameters' }, 400)
     }
 
-    const openaiKey = c.env.OPENAI_API_KEY
+    const openaiKey = envValue(c, 'OPENAI_API_KEY')
     if (!openaiKey) {
       return c.json({
         success: true,
