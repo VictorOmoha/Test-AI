@@ -326,8 +326,17 @@ class TestApp {
             }
         }
 
-        // Toggle main sections
-        document.getElementById('welcomeSection').style.display = isLoggedIn ? 'none' : 'block';
+        // Toggle landing/marketing content
+        const welcomeSection = document.getElementById('welcomeSection');
+        if (welcomeSection) {
+            welcomeSection.style.display = isLoggedIn ? 'none' : 'block';
+            welcomeSection.classList.toggle('hidden', isLoggedIn);
+        }
+
+        document.querySelectorAll('[data-guest-only="true"]').forEach(element => {
+            element.style.display = isLoggedIn ? 'none' : '';
+            element.classList.toggle('hidden', isLoggedIn);
+        });
 
         // Hide all sections initially
         const sections = ['dashboardSection', 'testsSection', 'historySection', 'analyticsSection', 'profileSection', 'settingsSection'];

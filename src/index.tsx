@@ -307,7 +307,7 @@ app.get('/', async (c) => {
         </div>
     </div>
 </section>
-                    <div class="relative max-w-6xl mx-auto px-6 -mt-20 mb-24">
+                    <div data-guest-only="true" class="relative max-w-6xl mx-auto px-6 -mt-20 mb-24">
                         <div class="grid md:grid-cols-3 gap-6 stagger-children">
                             <div class="feature-card">
                                 <div class="icon-wrap relative z-10">
@@ -334,7 +334,7 @@ app.get('/', async (c) => {
                     </div>
 
                     <!-- Stats Bar -->
-                    <div class="max-w-5xl mx-auto px-6 mb-28">
+                    <div data-guest-only="true" class="max-w-5xl mx-auto px-6 mb-28">
                         <div class="glass-card rounded-2xl p-8 md:p-12 relative overflow-hidden">
                             <div class="absolute inset-0 bg-gradient-to-r from-primary/5 via-purple/5 to-cyan/5"></div>
                             <div class="relative stats-bar">
@@ -359,7 +359,7 @@ app.get('/', async (c) => {
                     </div>
 
                     <!-- How It Works -->
-                    <div class="max-w-5xl mx-auto px-6 mb-28">
+                    <div data-guest-only="true" class="max-w-5xl mx-auto px-6 mb-28">
                         <div class="text-center mb-14">
                             <p class="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">How It Works</p>
                             <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900">Three steps to mastery</h2>
@@ -384,7 +384,7 @@ app.get('/', async (c) => {
                     </div>
 
                     <!-- CTA Banner -->
-                    <div class="max-w-5xl mx-auto px-6 pb-28">
+                    <div data-guest-only="true" class="max-w-5xl mx-auto px-6 pb-28">
                         <div class="rounded-2xl p-10 md:p-14 text-center relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700">
                             <div class="relative">
                                 <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-4">Ready to test yourself?</h2>
