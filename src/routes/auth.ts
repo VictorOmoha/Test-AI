@@ -50,6 +50,39 @@ auth.get('/probe', async (c) => {
   }
 })
 
+auth.post('/probe-token', async (c) => {
+  try {
+    const jwtSecret = envValue(c, 'JWT_SECRET') || 'default-jwt-secret-change-in-production'
+    const token = await generateJWT('probe-user-id', 'probe@example.com', jwtSecret)
+    return c.json({ success: true, tokenLength: token.length })
+  } catch (error: any) {
+    console.error('Auth token probe error:', error)
+    return c.json({ success: false, message: error?.message || 'Token probe failed' }, 500)
+  }
+})
+
+auth.post('/probe-insert', async (c) => {
+  try {
+    const pool = getPool(c)
+    const id = generateUUID()
+    const email = `probe-${Date.now()}@example.com`
+    const now = new Date().toISOString()
+    const password_hash = await hashPassword('ProbePass123!')
+
+    const result = await pool.query(
+      `INSERT INTO users (id, email, password_hash, name, age, education_level, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id, email, name, created_at`,
+      [id, email, password_hash, 'Probe User', null, null, now, now]
+    )
+
+    return c.json({ success: true, inserted: result.rows[0] || null })
+  } catch (error: any) {
+    console.error('Auth insert probe error:', error)
+    return c.json({ success: false, message: error?.message || 'Insert probe failed' }, 500)
+  }
+})
+
 // User Registration
 auth.post('/register', async (c) => {
   try {
