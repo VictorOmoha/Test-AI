@@ -254,60 +254,62 @@ app.get('/', async (c) => {
             <main class="flex-1">
 
                 <!-- ======== HERO / LANDING SECTION ======== -->
-<section id="welcomeSection" class="relative overflow-hidden">
-    <!-- Hero BG -->
-    <div class="gradient-bg-hero relative pt-24 pb-36 px-6">
-        <!-- Orbs -->
-        <div class="hero-glow-orb" style="top: -10%; left: -15%; width: 500px; height: 500px; background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);"></div>
-        <div class="hero-glow-orb" style="bottom: -15%; right: -10%; width: 600px; height: 600px; animation-delay: -7s; background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);"></div>
+                <div data-guest-only="true">
+                    <section id="welcomeSection" class="relative overflow-hidden">
+                        <!-- Hero BG -->
+                        <div class="gradient-bg-hero relative pt-24 pb-36 px-6">
+                            <!-- Orbs -->
+                            <div class="hero-glow-orb" style="top: -10%; left: -15%; width: 500px; height: 500px; background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);"></div>
+                            <div class="hero-glow-orb" style="bottom: -15%; right: -10%; width: 600px; height: 600px; animation-delay: -7s; background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);"></div>
 
-        <div class="relative max-w-4xl mx-auto text-center">
-            <!-- Badge -->
-            <div class="hero-badge mb-8 animate-fade-up">
-                <i class="fas fa-bolt"></i>
-                AI-Powered Testing
-            </div>
+                            <div class="relative max-w-4xl mx-auto text-center">
+                                <!-- Badge -->
+                                <div class="hero-badge mb-8 animate-fade-up">
+                                    <i class="fas fa-bolt"></i>
+                                    AI-Powered Testing
+                                </div>
 
-            <!-- Headline -->
-            <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[1.1] mb-6 text-white animate-fade-up" style="animation-delay: 0.08s;">
-                Test Smarter.<br>
-                <span class="gradient-text-white">Learn Faster.</span>
-            </h1>
+                                <!-- Headline -->
+                                <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[1.1] mb-6 text-white animate-fade-up" style="animation-delay: 0.08s;">
+                                    Test Smarter.<br>
+                                    <span class="gradient-text-white">Learn Faster.</span>
+                                </h1>
 
-            <!-- Subheadline -->
-            <p class="text-base md:text-lg max-w-xl mx-auto mb-10 leading-relaxed animate-fade-up text-blue-100/70" style="animation-delay: 0.16s;">
-                AI generates fresh questions every time. Get instant scores,
-                detailed explanations, and track your progress across any subject.
-            </p>
+                                <!-- Subheadline -->
+                                <p class="text-base md:text-lg max-w-xl mx-auto mb-10 leading-relaxed animate-fade-up text-blue-100/70" style="animation-delay: 0.16s;">
+                                    AI generates fresh questions every time. Get instant scores,
+                                    detailed explanations, and track your progress across any subject.
+                                </p>
 
-            <!-- CTA Buttons -->
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-up" style="animation-delay: 0.24s">
-                <button onclick="window.testApp ? window.testApp.showTestCreation() : document.getElementById('registerModal').classList.add('show')" class="hero-cta-primary">
-                    Start Testing Free <i class="fas fa-arrow-right text-sm"></i>
-                </button>
-                <button class="hero-cta-secondary">
-                    <i class="fas fa-play-circle"></i> Watch Demo
-                </button>
-            </div>
+                                <!-- CTA Buttons -->
+                                <div class="flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-up" style="animation-delay: 0.24s">
+                                    <button onclick="window.testApp ? window.testApp.showTestCreation() : document.getElementById('registerModal').classList.add('show')" class="hero-cta-primary">
+                                        Start Testing Free <i class="fas fa-arrow-right text-sm"></i>
+                                    </button>
+                                    <button class="hero-cta-secondary">
+                                        <i class="fas fa-play-circle"></i> Watch Demo
+                                    </button>
+                                </div>
 
-            <div class="hero-proof-grid mt-10 animate-fade-up" style="animation-delay: 0.32s">
-                <div class="hero-proof-card">
-                    <div class="hero-proof-label">Personalized mastery</div>
-                    <div class="hero-proof-value">Adaptive test creation</div>
-                </div>
-                <div class="hero-proof-card">
-                    <div class="hero-proof-label">Actionable review</div>
-                    <div class="hero-proof-value">Instant performance feedback</div>
-                </div>
-                <div class="hero-proof-card">
-                    <div class="hero-proof-label">Built for consistency</div>
-                    <div class="hero-proof-value">Progress you can actually track</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-                    <div data-guest-only="true" class="relative max-w-6xl mx-auto px-6 -mt-20 mb-24">
+                                <div class="hero-proof-grid mt-10 animate-fade-up" style="animation-delay: 0.32s">
+                                    <div class="hero-proof-card">
+                                        <div class="hero-proof-label">Personalized mastery</div>
+                                        <div class="hero-proof-value">Adaptive test creation</div>
+                                    </div>
+                                    <div class="hero-proof-card">
+                                        <div class="hero-proof-label">Actionable review</div>
+                                        <div class="hero-proof-value">Instant performance feedback</div>
+                                    </div>
+                                    <div class="hero-proof-card">
+                                        <div class="hero-proof-label">Built for consistency</div>
+                                        <div class="hero-proof-value">Progress you can actually track</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="relative max-w-6xl mx-auto px-6 -mt-20 mb-24">
                         <div class="grid md:grid-cols-3 gap-6 stagger-children">
                             <div class="feature-card">
                                 <div class="icon-wrap relative z-10">
@@ -395,8 +397,7 @@ app.get('/', async (c) => {
                             </div>
                         </div>
                     </div>
-
-                </section>
+                </div>
 
                 <!-- Footer -->
                 <footer class="site-footer" data-guest-only="true">
