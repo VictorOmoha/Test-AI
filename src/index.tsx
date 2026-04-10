@@ -385,23 +385,6 @@ app.get('/', async (c) => {
                         </div>
                     </div>
 
-                    <!-- See It In Action -->
-                    <div data-guest-only="true" class="max-w-6xl mx-auto px-6 mb-28">
-                        <div class="text-center mb-10">
-                            <p class="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">See It In Action</p>
-                            <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Watch SaveMe.Space in motion</h2>
-                            <p class="text-slate-500 text-base max-w-2xl mx-auto">A quick product walkthrough so visitors can immediately understand the flow, feel, and value of the experience.</p>
-                        </div>
-                        <div class="demo-video-shell">
-                            <div class="demo-video-frame">
-                                <video class="demo-video-player" controls playsinline preload="metadata" poster="/static/favicon.svg">
-                                    <source src="/static/Demo1.mp4" type="video/mp4">
-                                    Your browser does not support the demo video.
-                                </video>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- CTA Banner -->
                     <div data-guest-only="true" class="max-w-5xl mx-auto px-6 pb-28">
                         <div class="rounded-2xl p-10 md:p-14 text-center relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700">
