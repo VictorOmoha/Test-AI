@@ -9,6 +9,7 @@ class TestApp {
         this.performanceChart = null;
         this.performanceData = null;
         this.testHistoryData = [];
+        this.studyMaterials = [];
         this.currentSection = 'dashboard';
         this.init();
     }
@@ -318,7 +319,7 @@ class TestApp {
             element.classList.toggle('hidden', isLoggedIn);
         });
 
-        const sections = ['dashboardSection', 'testsSection', 'historySection', 'analyticsSection', 'profileSection', 'settingsSection'];
+        const sections = ['dashboardSection', 'testsSection', 'historySection', 'analyticsSection', 'materialsSection', 'profileSection', 'settingsSection'];
         sections.forEach(sectionId => {
             const element = document.getElementById(sectionId);
             if (element) {
@@ -333,7 +334,7 @@ class TestApp {
     }
 
     switchSection(section) {
-        if (!this.user && ['dashboard', 'tests', 'history', 'analytics', 'profile', 'settings'].includes(section)) {
+        if (!this.user && ['dashboard', 'tests', 'history', 'analytics', 'materials', 'profile', 'settings'].includes(section)) {
             this.showRegisterModal();
             return;
         }
@@ -348,7 +349,7 @@ class TestApp {
 
         this.currentSection = section;
 
-        const sections = ['dashboardSection', 'testsSection', 'historySection', 'analyticsSection', 'profileSection', 'settingsSection'];
+        const sections = ['dashboardSection', 'testsSection', 'historySection', 'analyticsSection', 'materialsSection', 'profileSection', 'settingsSection'];
         sections.forEach(sectionId => {
             const element = document.getElementById(sectionId);
             if (element) {
@@ -376,6 +377,9 @@ class TestApp {
             case 'analytics':
                 this.showAnalytics();
                 break;
+            case 'materials':
+                this.showMaterials();
+                break;
             case 'profile':
                 this.showProfile();
                 break;
@@ -401,6 +405,11 @@ class TestApp {
 
     showAnalytics() {
         this.loadAnalytics();
+    }
+
+    showMaterials() {
+        this.setupMaterialsSection();
+        this.loadStudyMaterials();
     }
 
     showProfile() {
@@ -1132,6 +1141,188 @@ class TestApp {
             console.error('Test creation error:', error);
             this.showError(error.response?.data?.message || 'Failed to create test. Please try again.');
         }
+    }
+
+    setupMaterialsSection() {
+        const importBtn = document.getElementById('importMaterialBtn');
+        const generateBtn = document.getElementById('generateStudyTestBtn');
+        const askBtn = document.getElementById('askMaterialBtn');
+
+        if (importBtn && !importBtn.dataset.bound) {
+            importBtn.dataset.bound = '1';
+            importBtn.addEventListener('click', () => this.handleImportMaterial());
+        }
+        if (generateBtn && !generateBtn.dataset.bound) {
+            generateBtn.dataset.bound = '1';
+            generateBtn.addEventListener('click', () => this.handleGenerateStudyTest());
+        }
+        if (askBtn && !askBtn.dataset.bound) {
+            askBtn.dataset.bound = '1';
+            askBtn.addEventListener('click', () => this.handleAskMaterial());
+        }
+    }
+
+    async handleImportMaterial() {
+        const fileInput = document.getElementById('materialFile');
+        const titleInput = document.getElementById('materialTitle');
+        const file = fileInput?.files?.[0];
+
+        if (!file) {
+            this.showError('Choose a file to import first.');
+            return;
+        }
+
+        try {
+            const base64 = await this.readFileAsBase64(file);
+            const response = await axios.post('/api/tests/materials/import', {
+                title: titleInput?.value || undefined,
+                file_name: file.name,
+                mime_type: file.type,
+                file_content_base64: base64
+            });
+
+            if (response.data?.success) {
+                this.showSuccess('Study material imported.');
+                if (fileInput) fileInput.value = '';
+                if (titleInput) titleInput.value = '';
+                await this.loadStudyMaterials();
+            } else {
+                this.showError(response.data?.message || 'Import failed.');
+            }
+        } catch (error) {
+            console.error('Material import failed:', error);
+            this.showError(error.response?.data?.message || 'Failed to import file.');
+        }
+    }
+
+    async loadStudyMaterials() {
+        try {
+            const response = await axios.get('/api/tests/materials');
+            if (response.data?.success) {
+                this.studyMaterials = response.data.materials || [];
+                this.renderStudyMaterials();
+                this.populateStudyMaterialSelects();
+            }
+        } catch (error) {
+            console.error('Failed to load study materials:', error);
+        }
+    }
+
+    renderStudyMaterials() {
+        const list = document.getElementById('materialsList');
+        if (!list) return;
+
+        if (!this.studyMaterials.length) {
+            list.innerHTML = '<div class="text-sm text-slate-400">No materials imported yet.</div>';
+            return;
+        }
+
+        list.innerHTML = this.studyMaterials.map(material => `
+            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="font-semibold text-slate-900">${material.title}</div>
+                        <div class="text-xs text-slate-400 mt-1">${material.file_name} • ${material.file_type.toUpperCase()}</div>
+                    </div>
+                    <div class="text-xs text-slate-400">${this.formatRelativeDate(material.created_at)}</div>
+                </div>
+                <p class="text-sm text-slate-500 mt-3 leading-6">${material.text_preview || ''}...</p>
+            </div>
+        `).join('');
+    }
+
+    populateStudyMaterialSelects() {
+        const selects = [document.getElementById('studyMaterialSelect'), document.getElementById('askMaterialSelect')];
+        selects.forEach(select => {
+            if (!select) return;
+            const current = select.value;
+            select.innerHTML = '<option value="">Choose imported material...</option>' + this.studyMaterials.map(material => `<option value="${material.id}">${material.title}</option>`).join('');
+            if (current) select.value = current;
+        });
+    }
+
+    async handleGenerateStudyTest() {
+        const materialId = document.getElementById('studyMaterialSelect')?.value;
+        const difficulty = document.getElementById('studyDifficulty')?.value || 'Medium';
+        const numQuestions = parseInt(document.getElementById('studyQuestionCount')?.value || '10');
+        const topicFocus = document.getElementById('studyTopicFocus')?.value || '';
+        const useWebSources = Boolean(document.getElementById('studyUseWebSources')?.checked);
+
+        if (!materialId) {
+            this.showError('Choose a material first.');
+            return;
+        }
+
+        try {
+            const response = await axios.post('/api/tests/materials/generate-test', {
+                material_id: materialId,
+                difficulty,
+                num_questions: numQuestions,
+                question_types: ['MCQ', 'TrueFalse', 'ShortAnswer'],
+                topic_focus: topicFocus || undefined,
+                use_web_sources: useWebSources
+            });
+
+            if (response.data?.success && this.testInterface) {
+                this.showSuccess('Material-based test ready.');
+                this.testInterface.startTest(response.data);
+            } else {
+                this.showError(response.data?.message || 'Failed to generate study test.');
+            }
+        } catch (error) {
+            console.error('Generate study test failed:', error);
+            this.showError(error.response?.data?.message || 'Failed to generate study test.');
+        }
+    }
+
+    async handleAskMaterial() {
+        const materialId = document.getElementById('askMaterialSelect')?.value;
+        const question = document.getElementById('materialQuestion')?.value;
+        const answerBox = document.getElementById('materialAnswer');
+        const useWebSources = Boolean(document.getElementById('studyUseWebSources')?.checked);
+
+        if (!materialId || !question) {
+            this.showError('Choose a material and enter a question.');
+            return;
+        }
+
+        if (answerBox) {
+            answerBox.innerHTML = '<div class="text-slate-400">Thinking...</div>';
+        }
+
+        try {
+            const response = await axios.post('/api/tests/materials/ask', {
+                material_id: materialId,
+                question,
+                use_web_sources: useWebSources
+            });
+
+            if (response.data?.success) {
+                if (answerBox) {
+                    answerBox.innerHTML = `<div class="p-4 rounded-xl bg-slate-50 border border-slate-200 whitespace-pre-wrap">${response.data.answer}</div>`;
+                }
+            } else {
+                this.showError(response.data?.message || 'Failed to answer from study material.');
+                if (answerBox) answerBox.innerHTML = '';
+            }
+        } catch (error) {
+            console.error('Ask material failed:', error);
+            this.showError(error.response?.data?.message || 'Failed to answer from study material.');
+            if (answerBox) answerBox.innerHTML = '';
+        }
+    }
+
+    readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = reader.result || '';
+                const base64 = String(result).split(',')[1];
+                resolve(base64);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
     }
 
     async loadTestHistory() {

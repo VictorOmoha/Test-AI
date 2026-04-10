@@ -135,6 +135,34 @@ export interface Env {
   JWT_SECRET?: string;
 }
 
+export interface StudyMaterial {
+  id: string;
+  user_id: string;
+  title: string;
+  file_name: string;
+  file_type: string;
+  extracted_text: string;
+  summary?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateStudyMaterialRequest {
+  title?: string;
+  file_name: string;
+  mime_type?: string;
+  file_content_base64: string;
+}
+
+export interface GenerateStudyTestRequest {
+  material_id: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  num_questions: number;
+  question_types: ('MCQ' | 'TrueFalse' | 'ShortAnswer')[];
+  topic_focus?: string;
+  use_web_sources?: boolean;
+}
+
 // AI Question Generation types
 export interface AIQuestionRequest {
   test_type: string;

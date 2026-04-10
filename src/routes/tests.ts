@@ -1,16 +1,18 @@
 // Test management routes for AI Test Application
 import { Hono } from 'hono'
-import { Env, CreateTestConfigRequest, StartTestRequest, SubmitAnswerRequest } from '../types/database'
+import { Env, CreateTestConfigRequest, StartTestRequest, SubmitAnswerRequest, CreateStudyMaterialRequest, GenerateStudyTestRequest } from '../types/database'
 import { DatabaseService } from '../utils/database'
 import { AIService } from '../services/ai'
 import { authMiddleware, getAuthUser } from '../middleware/auth'
 import { generateUUID } from '../utils/auth'
+import { StudyMaterialService } from '../services/study-material'
 
 function envValue(c: any, key: 'DATABASE_URL' | 'OPENAI_API_KEY') {
   return c?.env?.[key] || process.env[key]
 }
 
 const tests = new Hono<{ Bindings: Env }>()
+const studyMaterialService = new StudyMaterialService()
 
 function readQueryArray(value?: string): string[] {
   if (!value) return []
@@ -144,6 +146,219 @@ tests.get('/query-start', authMiddleware, async (c) => {
   } catch (error) {
     console.error('Error starting query test:', error)
     return c.json({ success: false, message: 'Failed to start test' }, 500)
+  }
+})
+
+tests.get('/materials', authMiddleware, async (c) => {
+  try {
+    const auth = getAuthUser(c)
+    if (!auth) {
+      return c.json({ success: false, message: 'Authentication required' }, 401)
+    }
+
+    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const materials = await db.getUserStudyMaterials(auth.user_id)
+
+    return c.json({
+      success: true,
+      materials: materials.map(item => ({
+        id: item.id,
+        title: item.title,
+        file_name: item.file_name,
+        file_type: item.file_type,
+        summary: item.summary,
+        created_at: item.created_at,
+        text_preview: item.extracted_text.slice(0, 280)
+      }))
+    })
+  } catch (error) {
+    console.error('Error fetching study materials:', error)
+    return c.json({ success: false, message: 'Failed to fetch study materials' }, 500)
+  }
+})
+
+tests.post('/materials/import', authMiddleware, async (c) => {
+  try {
+    const auth = getAuthUser(c)
+    if (!auth) {
+      return c.json({ success: false, message: 'Authentication required' }, 401)
+    }
+
+    const body: CreateStudyMaterialRequest = await c.req.json()
+    if (!body?.file_name || !body?.file_content_base64) {
+      return c.json({ success: false, message: 'File name and file content are required' }, 400)
+    }
+
+    const parsed = studyMaterialService.parseBase64File(body.file_name, body.mime_type || '', body.file_content_base64)
+    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const materialId = await db.createStudyMaterial({
+      user_id: auth.user_id,
+      title: body.title || parsed.title,
+      file_name: body.file_name,
+      file_type: parsed.fileType,
+      extracted_text: parsed.text,
+      summary: parsed.text.slice(0, 500)
+    })
+
+    return c.json({
+      success: true,
+      message: 'Study material imported successfully',
+      material: {
+        id: materialId,
+        title: body.title || parsed.title,
+        file_name: body.file_name,
+        file_type: parsed.fileType,
+        stats: parsed.stats,
+        text_preview: parsed.text.slice(0, 500)
+      }
+    }, 201)
+  } catch (error) {
+    console.error('Error importing study material:', error)
+    return c.json({ success: false, message: error instanceof Error ? error.message : 'Failed to import study material' }, 500)
+  }
+})
+
+tests.post('/materials/generate-test', authMiddleware, async (c) => {
+  try {
+    const auth = getAuthUser(c)
+    if (!auth) {
+      return c.json({ success: false, message: 'Authentication required' }, 401)
+    }
+
+    const body: GenerateStudyTestRequest = await c.req.json()
+    if (!body?.material_id) {
+      return c.json({ success: false, message: 'Material ID is required' }, 400)
+    }
+
+    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const material = await db.getStudyMaterialById(body.material_id)
+    if (!material) {
+      return c.json({ success: false, message: 'Study material not found' }, 404)
+    }
+    if (material.user_id !== auth.user_id) {
+      return c.json({ success: false, message: 'Access denied' }, 403)
+    }
+
+    const openaiKey = envValue(c, 'OPENAI_API_KEY')
+    if (!openaiKey) {
+      return c.json({ success: false, message: 'AI service not configured' }, 503)
+    }
+
+    const aiService = new AIService(openaiKey)
+    const aiResponse = await aiService.generateQuestionsFromMaterial({
+      test_type: `Study Material: ${material.title}`,
+      difficulty: body.difficulty,
+      num_questions: body.num_questions,
+      question_types: body.question_types,
+      topic_focus: body.topic_focus,
+      sourceText: material.extracted_text,
+      sourceTitle: material.title,
+      useWebSources: body.use_web_sources
+    })
+
+    if (!aiResponse.success || !aiResponse.questions) {
+      return c.json({ success: false, message: 'Failed to generate material-based questions', error: aiResponse.error }, 500)
+    }
+
+    const configId = await db.createTestConfiguration({
+      user_id: auth.user_id,
+      test_type: `Study Material: ${material.title}`,
+      difficulty: body.difficulty,
+      num_questions: body.num_questions,
+      duration_minutes: Math.max(15, body.num_questions * 2),
+      question_types: body.question_types
+    })
+
+    const attemptId = await db.createTestAttempt({
+      user_id: auth.user_id,
+      config_id: configId,
+      total_questions: aiResponse.questions.length
+    })
+
+    for (let i = 0; i < aiResponse.questions.length; i++) {
+      const question = aiResponse.questions[i]
+      await db.createQuestion({
+        attempt_id: attemptId,
+        question_number: i + 1,
+        question_type: question.type,
+        question_text: question.question,
+        options: question.options,
+        correct_answer: question.correct_answer,
+        ai_explanation: question.explanation
+      })
+    }
+
+    const questions = await db.getTestQuestions(attemptId)
+    return c.json({
+      success: true,
+      message: 'Material-based test generated successfully',
+      attempt_id: attemptId,
+      material: {
+        id: material.id,
+        title: material.title,
+        file_name: material.file_name
+      },
+      questions: questions.map(q => ({
+        id: q.id,
+        question_number: q.question_number,
+        question_type: q.question_type,
+        question_text: q.question_text,
+        options: q.options ? JSON.parse(q.options) : undefined
+      }))
+    }, 201)
+  } catch (error) {
+    console.error('Error generating material test:', error)
+    return c.json({ success: false, message: 'Failed to generate material test' }, 500)
+  }
+})
+
+tests.post('/materials/ask', authMiddleware, async (c) => {
+  try {
+    const auth = getAuthUser(c)
+    if (!auth) {
+      return c.json({ success: false, message: 'Authentication required' }, 401)
+    }
+
+    const body = await c.req.json()
+    const materialId = body?.material_id
+    const question = body?.question
+    const useWebSources = Boolean(body?.use_web_sources)
+
+    if (!materialId || !question) {
+      return c.json({ success: false, message: 'Material ID and question are required' }, 400)
+    }
+
+    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const material = await db.getStudyMaterialById(materialId)
+    if (!material) return c.json({ success: false, message: 'Study material not found' }, 404)
+    if (material.user_id !== auth.user_id) return c.json({ success: false, message: 'Access denied' }, 403)
+
+    const openaiKey = envValue(c, 'OPENAI_API_KEY')
+    if (!openaiKey) {
+      return c.json({ success: false, message: 'AI service not configured' }, 503)
+    }
+
+    const aiService = new AIService(openaiKey)
+    const answer = await aiService.answerFromMaterial({
+      sourceText: material.extracted_text,
+      sourceTitle: material.title,
+      question,
+      useWebSources
+    })
+
+    return c.json({
+      success: answer.success,
+      answer: answer.answer,
+      source: {
+        material_id: material.id,
+        title: material.title,
+        used_web_sources: useWebSources
+      },
+      error: answer.error
+    })
+  } catch (error) {
+    console.error('Error answering from study material:', error)
+    return c.json({ success: false, message: 'Failed to answer from study material' }, 500)
   }
 })
 

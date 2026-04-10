@@ -1,5 +1,5 @@
 import { Pool } from '@neondatabase/serverless'
-import { User, TestConfiguration, TestAttempt, Question, TestCategory } from '../types/database'
+import { User, TestConfiguration, TestAttempt, Question, TestCategory, StudyMaterial } from '../types/database'
 import { generateUUID } from './auth'
 
 export interface SqlLike {
@@ -237,6 +237,39 @@ export class DatabaseService {
     }
 
     return correct === user
+  }
+
+  async createStudyMaterial(material: {
+    user_id: string;
+    title: string;
+    file_name: string;
+    file_type: string;
+    extracted_text: string;
+    summary?: string;
+  }): Promise<string> {
+    const id = generateUUID()
+    const now = new Date().toISOString()
+
+    await this.db.query(
+      `INSERT INTO study_materials (id, user_id, title, file_name, file_type, extracted_text, summary, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [id, material.user_id, material.title, material.file_name, material.file_type, material.extracted_text, material.summary || null, now, now]
+    )
+
+    return id
+  }
+
+  async getStudyMaterialById(id: string): Promise<StudyMaterial | null> {
+    const result = await this.db.query('SELECT * FROM study_materials WHERE id = $1 LIMIT 1', [id])
+    return (result.rows[0] as StudyMaterial) || null
+  }
+
+  async getUserStudyMaterials(user_id: string, limit: number = 20): Promise<StudyMaterial[]> {
+    const result = await this.db.query(
+      'SELECT * FROM study_materials WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2',
+      [user_id, limit]
+    )
+    return result.rows as StudyMaterial[]
   }
 
   async getTestStatistics(user_id: string): Promise<{

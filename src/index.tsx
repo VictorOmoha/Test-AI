@@ -1,7 +1,6 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
-import { serveStatic } from 'hono/cloudflare-workers'
 import { Env } from './types/database'
 import { auth } from './routes/auth'
 import { tests } from './routes/tests'
@@ -26,9 +25,6 @@ app.use('/api/*', cors({
   allowHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }))
-
-// Serve static files
-app.use('/static/*', serveStatic({ root: './public' }))
 
 // Fail-fast middleware: reject API calls immediately if DB is unavailable
 app.use('/api/auth/*', async (c, next) => {
@@ -164,6 +160,9 @@ app.get('/', async (c) => {
                         <button class="nav-tab" data-tab="analytics">
                             <i class="fas fa-chart-line mr-1.5"></i>Analytics
                         </button>
+                        <button class="nav-tab" data-tab="materials">
+                            <i class="fas fa-file-import mr-1.5"></i>Materials
+                        </button>
                     </div>
 
                     <!-- Auth Buttons / User Menu -->
@@ -224,6 +223,10 @@ app.get('/', async (c) => {
                             <a href="#" class="sidebar-item" data-section="analytics">
                                 <i class="fas fa-chart-simple"></i>
                                 <span>Analytics</span>
+                            </a>
+                            <a href="#" class="sidebar-item" data-section="materials">
+                                <i class="fas fa-file-import"></i>
+                                <span>Materials</span>
                             </a>
                             <a href="#" class="sidebar-item" data-section="profile">
                                 <i class="fas fa-user-circle"></i>
@@ -781,6 +784,101 @@ app.get('/', async (c) => {
                                         </div>
                                         <p class="font-medium">Subject performance breakdown</p>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ======== MATERIALS SECTION ======== -->
+                <section id="materialsSection" class="hidden flex-1 bg-[#F8FAFC]">
+                    <header class="bg-white/80 backdrop-blur-sm border-b border-slate-200 px-6 lg:px-8 py-6">
+                        <div>
+                            <h1 class="text-2xl font-extrabold text-slate-900">Study Materials</h1>
+                            <p class="text-slate-500 text-sm mt-1.5">Import files, generate tests from them, and ask TestAI questions grounded in your study docs.</p>
+                        </div>
+                    </header>
+                    <div class="p-6 lg:p-8 space-y-6">
+                        <div class="grid lg:grid-cols-2 gap-6">
+                            <div class="glass-card rounded-2xl p-7">
+                                <h3 class="text-lg font-bold text-slate-900 mb-5">Import a file</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="form-label">Title (optional)</label>
+                                        <input type="text" id="materialTitle" class="form-input" placeholder="e.g. Biology Chapter 3 Notes">
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Choose file</label>
+                                        <input type="file" id="materialFile" class="form-input" accept=".txt,.md,.markdown,.pdf,.docx">
+                                        <p class="text-xs text-slate-400 mt-2">Best supported right now: TXT and Markdown. PDF/DOCX use lightweight text extraction.</p>
+                                    </div>
+                                    <button id="importMaterialBtn" class="btn-primary">
+                                        <i class="fas fa-upload mr-2"></i>Import Material
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="glass-card rounded-2xl p-7">
+                                <h3 class="text-lg font-bold text-slate-900 mb-5">Generate a study test</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="form-label">Material</label>
+                                        <select id="studyMaterialSelect" class="form-select">
+                                            <option value="">Choose imported material...</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Focus area (optional)</label>
+                                        <input type="text" id="studyTopicFocus" class="form-input" placeholder="chapter 2, enzymes, constitutional law...">
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Difficulty</label>
+                                        <select id="studyDifficulty" class="form-select">
+                                            <option value="Easy">Easy</option>
+                                            <option value="Medium" selected>Medium</option>
+                                            <option value="Hard">Hard</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Questions</label>
+                                        <input type="number" id="studyQuestionCount" class="form-input" min="5" max="30" value="10">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <input type="checkbox" id="studyUseWebSources" class="w-4 h-4 accent-primary rounded">
+                                        <label for="studyUseWebSources" class="text-sm text-slate-600">Allow web-supported explanations when helpful</label>
+                                    </div>
+                                    <button id="generateStudyTestBtn" class="btn-primary">
+                                        <i class="fas fa-wand-magic-sparkles mr-2"></i>Generate From Material
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid lg:grid-cols-2 gap-6">
+                            <div class="glass-card rounded-2xl p-7">
+                                <h3 class="text-lg font-bold text-slate-900 mb-5">Ask TestAI about a file</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="form-label">Material</label>
+                                        <select id="askMaterialSelect" class="form-select">
+                                            <option value="">Choose imported material...</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Question</label>
+                                        <textarea id="materialQuestion" class="form-input min-h-[120px]" placeholder="Ask about the uploaded file, request a summary, or ask for supporting sources..."></textarea>
+                                    </div>
+                                    <button id="askMaterialBtn" class="btn-primary">
+                                        <i class="fas fa-comments mr-2"></i>Ask TestAI
+                                    </button>
+                                </div>
+                                <div id="materialAnswer" class="mt-5 text-sm text-slate-600 leading-7"></div>
+                            </div>
+                            <div class="glass-card rounded-2xl p-7">
+                                <div class="flex justify-between items-center mb-5">
+                                    <h3 class="text-lg font-bold text-slate-900">Imported materials</h3>
+                                    <span class="text-xs text-slate-400">Recent first</span>
+                                </div>
+                                <div id="materialsList" class="space-y-3">
+                                    <div class="text-sm text-slate-400">No materials imported yet.</div>
                                 </div>
                             </div>
                         </div>

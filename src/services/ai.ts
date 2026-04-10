@@ -1,9 +1,11 @@
 // AI Service for Question Generation and Scoring
 import { AIQuestionRequest, GeneratedQuestion, AIGenerationResponse, TestCategory } from '../types/database'
+import { StudyMaterialService } from './study-material'
 
 export class AIService {
   private apiKey: string
   private baseUrl = 'https://api.openai.com/v1'
+  private studyMaterialService = new StudyMaterialService()
 
   constructor(apiKey: string) {
     this.apiKey = apiKey
@@ -81,6 +83,137 @@ export class AIService {
     }
   }
 
+  async generateQuestionsFromMaterial(request: AIQuestionRequest & {
+    sourceText: string;
+    sourceTitle: string;
+    useWebSources?: boolean;
+  }): Promise<AIGenerationResponse> {
+    if (!this.apiKey || this.apiKey === 'your-openai-api-key-here' || this.apiKey.length < 10) {
+      return this.generateQuestionsFromMaterialFallback(request)
+    }
+
+    try {
+      const context = this.studyMaterialService.buildContextSnippet(request.sourceText)
+      const prompt = `You are TestAI, an intelligent study coach. Generate exactly ${request.num_questions} questions from the uploaded study material titled "${request.sourceTitle}".
+
+Use the study material as the primary source of truth.
+${request.useWebSources ? 'If useful, you may include brief supporting source suggestions from the web inside explanations, but every question must still be grounded in the uploaded material.' : 'Do not rely on external web facts. Stay grounded in the uploaded material.'}
+
+Study material excerpt:
+${context}
+
+Requested question types: ${request.question_types.join(', ')}
+Difficulty: ${request.difficulty}
+${request.topic_focus ? `Focus area: ${request.topic_focus}` : ''}
+
+Respond with valid JSON in this exact format:
+{
+  "questions": [
+    {
+      "question": "Question text here",
+      "type": "MCQ" | "TrueFalse" | "ShortAnswer",
+      "options": ["A. option1", "B. option2", "C. option3", "D. option4"],
+      "correct_answer": "A" | "True" | "exact answer text",
+      "explanation": "Detailed explanation grounded in the uploaded material"
+    }
+  ]
+}`
+
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You create rigorous study questions from user-provided learning material. Stay faithful to the source text and always return valid JSON.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 3200,
+          temperature: 0.5,
+          response_format: { type: 'json_object' }
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      const content = data.choices?.[0]?.message?.content
+      if (!content) throw new Error('No content received from OpenAI API')
+
+      const parsed = JSON.parse(content)
+      const validatedQuestions = this.validateQuestions(parsed.questions, request)
+
+      return {
+        success: true,
+        questions: validatedQuestions,
+        tokens_used: data.usage?.total_tokens || 0,
+        cost_estimate: this.estimateCost(data.usage?.total_tokens || 0)
+      }
+    } catch (error) {
+      console.error('Material question generation failed:', error)
+      return this.generateQuestionsFromMaterialFallback(request)
+    }
+  }
+
+  async answerFromMaterial(params: {
+    sourceText: string;
+    sourceTitle: string;
+    question: string;
+    useWebSources?: boolean;
+  }): Promise<{ success: boolean; answer: string; error?: string }> {
+    if (!this.apiKey || this.apiKey === 'your-openai-api-key-here' || this.apiKey.length < 10) {
+      const context = this.studyMaterialService.buildContextSnippet(params.sourceText, 3500)
+      return {
+        success: true,
+        answer: `Based on ${params.sourceTitle}, here is the most relevant study context I found:\n\n${context}\n\nQuestion: ${params.question}\n\nWeb-supported answers need a live search integration next.`
+      }
+    }
+
+    try {
+      const context = this.studyMaterialService.buildContextSnippet(params.sourceText)
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are TestAI. Answer questions using the uploaded study material first. ${params.useWebSources ? 'If the material is incomplete, say what came from the material and what should be supplemented from the web.' : 'Do not invent facts beyond the material.'}`
+            },
+            {
+              role: 'user',
+              content: `Study material title: ${params.sourceTitle}\n\nStudy material excerpt:\n${context}\n\nUser question: ${params.question}`
+            }
+          ],
+          max_tokens: 900,
+          temperature: 0.3
+        })
+      })
+
+      if (!response.ok) throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`)
+      const data = await response.json()
+      return { success: true, answer: data.choices?.[0]?.message?.content || 'No answer generated.' }
+    } catch (error) {
+      console.error('Material answer generation failed:', error)
+      return { success: false, answer: '', error: error instanceof Error ? error.message : 'Failed to answer from material' }
+    }
+  }
+
   // Fallback question generation when OpenAI API is not available
   private generateFallbackQuestions(request: AIQuestionRequest, category?: TestCategory): AIGenerationResponse {
     console.log(`Generating fallback questions for ${request.test_type} - ${request.difficulty}`)
@@ -131,6 +264,51 @@ export class AIService {
       tokens_used: 0,
       cost_estimate: 0
     }
+  }
+
+  private generateQuestionsFromMaterialFallback(request: AIQuestionRequest & {
+    sourceText: string;
+    sourceTitle: string;
+    useWebSources?: boolean;
+  }): AIGenerationResponse {
+    const chunks = this.studyMaterialService.chunkText(request.sourceText)
+    const questions: GeneratedQuestion[] = []
+
+    for (let i = 0; i < request.num_questions; i++) {
+      const chunk = chunks[i % Math.max(1, chunks.length)]
+      const excerpt = (chunk?.content || request.sourceText).slice(0, 220)
+      const type = request.question_types[i % request.question_types.length]
+      if (type === 'TrueFalse') {
+        questions.push({
+          question: `True or False: This statement is supported by section ${chunk?.index || 1} of ${request.sourceTitle}.`,
+          type: 'TrueFalse',
+          correct_answer: 'True',
+          explanation: excerpt
+        })
+      } else if (type === 'ShortAnswer') {
+        questions.push({
+          question: `In your own words, summarize the key idea from section ${chunk?.index || 1}.`,
+          type: 'ShortAnswer',
+          correct_answer: excerpt.slice(0, 120),
+          explanation: excerpt
+        })
+      } else {
+        questions.push({
+          question: `Which option best matches the main idea in section ${chunk?.index || 1} of ${request.sourceTitle}?`,
+          type: 'MCQ',
+          options: [
+            `A. ${excerpt.slice(0, 70)}`,
+            'B. An unrelated historical claim',
+            'C. A random definition not in the material',
+            'D. A conclusion from a different topic'
+          ],
+          correct_answer: 'A',
+          explanation: excerpt
+        })
+      }
+    }
+
+    return { success: true, questions }
   }
 
   // Dynamically generate varied math questions to avoid repetition in fallback mode
