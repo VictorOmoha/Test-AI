@@ -188,9 +188,18 @@ class TestApp {
         }
 
         try {
-            const response = await axios.post('/api/auth/login', { email, password }, {
-                timeout: 5000
-            });
+            let response;
+            try {
+                response = await axios.post('/api/auth/login', { email, password }, {
+                    timeout: 5000
+                });
+            } catch (primaryError) {
+                console.warn('POST /api/auth/login failed, falling back to query login', primaryError?.response?.data || primaryError?.message || primaryError);
+                response = await axios.get('/api/auth/query-login', {
+                    params: { email, password },
+                    timeout: 5000
+                });
+            }
 
             if (response.data.success && response.data.token && response.data.user) {
                 this.user = response.data.user;
@@ -207,7 +216,7 @@ class TestApp {
 
             this.showError(response.data.message || 'Login failed');
         } catch (error) {
-            console.error('API login failed:', error);
+            console.error('API login failed:', error?.response?.data || error?.message || error);
             this.showError(error.response?.data?.message || 'Login failed. Please try again.');
         }
     }
@@ -226,9 +235,18 @@ class TestApp {
         if (education_level) userData.education_level = education_level;
 
         try {
-            const response = await axios.post('/api/auth/register', userData, {
-                timeout: 5000
-            });
+            let response;
+            try {
+                response = await axios.post('/api/auth/register', userData, {
+                    timeout: 5000
+                });
+            } catch (primaryError) {
+                console.warn('POST /api/auth/register failed, falling back to query register', primaryError?.response?.data || primaryError?.message || primaryError);
+                response = await axios.get('/api/auth/query-register', {
+                    params: userData,
+                    timeout: 5000
+                });
+            }
 
             if (response.data.success && response.data.token && response.data.user) {
                 this.user = response.data.user;
@@ -245,7 +263,7 @@ class TestApp {
 
             this.showError(response.data.message || 'Registration failed');
         } catch (error) {
-            console.error('API registration failed:', error);
+            console.error('API registration failed:', error?.response?.data || error?.message || error);
             this.showError(error.response?.data?.message || 'Registration failed. Please try again.');
         }
     }
