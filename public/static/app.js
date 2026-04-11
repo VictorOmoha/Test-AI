@@ -11,6 +11,7 @@ class TestApp {
         this.testHistoryData = [];
         this.studyMaterials = [];
         this.currentSection = 'dashboard';
+        this.hasCompletedOnboarding = localStorage.getItem('ai_test_onboarding_done') === '1';
         this.init();
     }
 
@@ -187,8 +188,7 @@ class TestApp {
         }
 
         try {
-            const response = await axios.get('/api/auth/query-login', {
-                params: { email, password },
+            const response = await axios.post('/api/auth/login', { email, password }, {
                 timeout: 5000
             });
 
@@ -200,6 +200,7 @@ class TestApp {
                 this.hideLoginModal();
                 this.updateUI();
                 await this.loadUserData();
+                this.handlePostAuthRouting();
                 this.showSuccess('Login successful!');
                 return;
             }
@@ -225,8 +226,7 @@ class TestApp {
         if (education_level) userData.education_level = education_level;
 
         try {
-            const response = await axios.get('/api/auth/query-register', {
-                params: userData,
+            const response = await axios.post('/api/auth/register', userData, {
                 timeout: 5000
             });
 
@@ -238,6 +238,7 @@ class TestApp {
                 this.hideRegisterModal();
                 this.updateUI();
                 await this.loadUserData();
+                this.handlePostAuthRouting(true);
                 this.showSuccess('Registration successful! Welcome to TestAI!');
                 return;
             }
@@ -395,6 +396,22 @@ class TestApp {
         this.loadUserData();
     }
 
+    handlePostAuthRouting(isNewUser = false) {
+        const hasMaterials = Array.isArray(this.studyMaterials) && this.studyMaterials.length > 0;
+
+        if (isNewUser || !this.hasCompletedOnboarding || !hasMaterials) {
+            this.hasCompletedOnboarding = true;
+            localStorage.setItem('ai_test_onboarding_done', '1');
+            this.switchSection('materials');
+            this.showInfo(hasMaterials
+                ? 'You are ready to generate a test from your materials.'
+                : 'Start by uploading a study file, then generate your first AI test.');
+            return;
+        }
+
+        this.switchSection('dashboard');
+    }
+
     showTests() {
         this.setupTestCreationForm();
     }
@@ -443,6 +460,7 @@ class TestApp {
             this.displayDashboardStats(stats);
             await this.loadTestCategories();
             await this.loadRecentTests();
+            await this.loadStudyMaterials();
             this.initializePerformanceChart();
             this.loadTestInProgress();
             this.loadImprovementAreas();
@@ -940,21 +958,17 @@ class TestApp {
         }
 
         try {
-            const configResponse = await axios.get('/api/tests/query-config', {
-                params: {
-                    test_type: category,
-                    difficulty: difficulty,
-                    num_questions: parseInt(numQuestions),
-                    duration_minutes: timeLimit ? parseInt(timeLimit) : 30,
-                    question_types: questionTypes.join(',')
-                }
+            const configResponse = await axios.post('/api/tests/config', {
+                test_type: category,
+                difficulty: difficulty,
+                num_questions: parseInt(numQuestions),
+                duration_minutes: timeLimit ? parseInt(timeLimit) : 30,
+                question_types: questionTypes
             });
 
             if (configResponse.data.success) {
-                const startResponse = await axios.get('/api/tests/query-start', {
-                    params: {
-                        config_id: configResponse.data.config_id
-                    }
+                const startResponse = await axios.post('/api/tests/start', {
+                    config_id: configResponse.data.config_id
                 });
 
                 if (startResponse.data.success && this.testInterface) {
@@ -986,12 +1000,32 @@ class TestApp {
         const container = document.getElementById('improvementAreas');
         if (!container) return;
 
-        const improvementAreas = [
-            { subject: 'Calculus - Derivatives', percentage: 45, level: 'critical' },
-            { subject: 'Physics - Thermodynamics', percentage: 62, level: 'needs-work' },
-            { subject: 'Programming - Algorithms', percentage: 74, level: 'good' },
-            { subject: 'History - Ancient Civilizations', percentage: 58, level: 'needs-work' }
-        ];
+        if (!this.testHistoryData.length) {
+            container.innerHTML = `
+                <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-500 leading-6">
+                    Take a few tests and TestAI will surface your weakest areas here so you know what to review next.
+                </div>
+            `;
+            return;
+        }
+
+        const categoryMap = new Map();
+        this.testHistoryData.forEach(test => {
+            const subject = test.test_type || 'General';
+            const score = Math.round(Number(test.score || 0));
+            const existing = categoryMap.get(subject) || { total: 0, count: 0 };
+            existing.total += score;
+            existing.count += 1;
+            categoryMap.set(subject, existing);
+        });
+
+        const improvementAreas = Array.from(categoryMap.entries())
+            .map(([subject, data]) => ({
+                subject,
+                percentage: Math.round(data.total / Math.max(1, data.count))
+            }))
+            .sort((a, b) => a.percentage - b.percentage)
+            .slice(0, 4);
 
         container.innerHTML = improvementAreas.map(area => `
             <div class="improvement-item">
@@ -1010,20 +1044,35 @@ class TestApp {
         const container = document.getElementById('aiRecommendations');
         if (!container) return;
 
-        const recommendations = [
-            {
-                title: 'Focus on weak areas',
-                description: 'Spend 15 extra minutes daily on the topics with your lowest scores.'
-            },
-            {
-                title: 'Practice consistently',
-                description: 'Short daily sessions beat occasional cramming for long-term retention.'
-            },
-            {
-                title: 'Mix question types',
-                description: 'Combining MCQ, True/False, and short answer builds stronger recall.'
-            }
-        ];
+        const recommendations = this.studyMaterials.length
+            ? [
+                {
+                    title: 'Generate a test from your latest material',
+                    description: 'You already have study material imported. Turn it into a focused test to measure retention immediately.'
+                },
+                {
+                    title: 'Use focus areas for tougher subjects',
+                    description: 'Narrowing the topic, like a chapter or concept, creates sharper questions and better review loops.'
+                },
+                {
+                    title: 'Ask follow-up questions after each test',
+                    description: 'Use the material Q&A flow to clarify concepts you missed instead of guessing what to study next.'
+                }
+            ]
+            : [
+                {
+                    title: 'Start with your real study material',
+                    description: 'Upload notes, slides, or a PDF first. That gives TestAI something real to generate high-value questions from.'
+                },
+                {
+                    title: 'Use generic tests for warm-up only',
+                    description: 'Category tests are useful, but the strongest workflow is material-based practice built from what you are actually studying.'
+                },
+                {
+                    title: 'Build a feedback loop',
+                    description: 'Import material, generate a test, review mistakes, then ask TestAI follow-up questions until the topic clicks.'
+                }
+            ];
 
         container.innerHTML = recommendations.map(rec => `
             <div class="ai-recommendation p-4">
@@ -1037,39 +1086,46 @@ class TestApp {
         const container = document.getElementById('testInProgress');
         if (!container) return;
 
-        const testInProgress = {
-            title: 'Programming - JavaScript Basics',
-            difficulty: 'Medium',
-            questions: 30,
-            answered: 12,
-            progress: 40
-        };
+        if (!this.studyMaterials.length) {
+            container.innerHTML = `
+                <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <div class="font-semibold text-slate-900">No study workflow started yet</div>
+                            <div class="text-sm text-slate-500 mt-1">Import a file to create your first material-based test. That is the fastest path to a meaningful result.</div>
+                        </div>
+                        <button type="button" class="btn-primary" onclick="testApp.switchSection('materials')">
+                            <i class="fas fa-upload mr-2"></i>Upload Material
+                        </button>
+                    </div>
+                </div>
+            `;
+            return;
+        }
 
+        const latestMaterial = this.studyMaterials[0];
         container.innerHTML = `
             <div class="test-progress-card progress-card-clean">
                 <div class="progress-card-main">
                     <div class="progress-card-icon-wrap">
                         <div class="test-progress-icon">
-                            <i class="fas fa-code text-blue-600"></i>
+                            <i class="fas fa-file-lines text-blue-600"></i>
                         </div>
                     </div>
                     <div class="test-progress-info">
                         <div class="progress-card-header-row">
                             <div>
-                                <div class="test-progress-title">${testInProgress.title}</div>
-                                <div class="test-progress-meta">${testInProgress.difficulty} • ${testInProgress.answered}/${testInProgress.questions} questions answered • 45 min target</div>
+                                <div class="test-progress-title">${latestMaterial.title}</div>
+                                <div class="test-progress-meta">${latestMaterial.file_type.toUpperCase()} imported ${this.formatRelativeDate(latestMaterial.created_at)} • Ready for a custom test</div>
                             </div>
-                            <div class="progress-chip">${testInProgress.progress}% complete</div>
+                            <div class="progress-chip">Ready</div>
                         </div>
-                        <div class="test-progress-bar">
-                            <div class="test-progress-fill" style="width: ${testInProgress.progress}%"></div>
-                        </div>
-                        <div class="test-progress-text">You are ${testInProgress.questions - testInProgress.answered} questions away from finishing this session.</div>
+                        <div class="test-progress-text">Generate a focused test from this material or ask TestAI questions directly from the source text.</div>
                     </div>
                 </div>
                 <div class="test-progress-actions clean-actions">
-                    <button class="continue-btn">Continue Test</button>
-                    <button type="button" class="resume-link">Review Setup</button>
+                    <button class="continue-btn" type="button" onclick="testApp.switchSection('materials')">Generate Test</button>
+                    <button type="button" class="resume-link" onclick="testApp.switchSection('materials')">Open Materials</button>
                 </div>
             </div>
         `;
@@ -1110,14 +1166,12 @@ class TestApp {
         }
 
         try {
-            const configResponse = await axios.get('/api/tests/query-config', {
-                params: {
-                    test_type: category,
-                    difficulty,
-                    num_questions: parseInt(questionCount),
-                    duration_minutes: timeLimit ? parseInt(timeLimit) : 30,
-                    question_types: 'MCQ'
-                }
+            const configResponse = await axios.post('/api/tests/config', {
+                test_type: category,
+                difficulty,
+                num_questions: parseInt(questionCount),
+                duration_minutes: timeLimit ? parseInt(timeLimit) : 30,
+                question_types: ['MCQ']
             });
 
             if (!configResponse.data.success) {
@@ -1125,10 +1179,8 @@ class TestApp {
                 return;
             }
 
-            const startResponse = await axios.get('/api/tests/query-start', {
-                params: {
-                    config_id: configResponse.data.config_id
-                }
+            const startResponse = await axios.post('/api/tests/start', {
+                config_id: configResponse.data.config_id
             });
 
             if (startResponse.data.success && this.testInterface) {
@@ -1472,7 +1524,7 @@ class TestApp {
 
     showRegisterModal() {
         if (this.user) {
-            this.switchSection('tests');
+            this.switchSection('materials');
             return;
         }
 

@@ -280,8 +280,8 @@ app.get('/', async (c) => {
 
                                 <!-- Subheadline -->
                                 <p class="text-base md:text-lg max-w-xl mx-auto mb-10 leading-relaxed animate-fade-up text-blue-100/70" style="animation-delay: 0.16s;">
-                                    AI generates fresh questions every time. Get instant scores,
-                                    detailed explanations, and track your progress across any subject.
+                                    Turn your notes, PDFs, and study materials into custom AI tests with instant scoring,
+                                    explanations, and progress tracking that actually helps you improve.
                                 </p>
 
                                 <!-- CTA Buttons -->
@@ -296,16 +296,16 @@ app.get('/', async (c) => {
 
                                 <div class="hero-proof-grid mt-10 animate-fade-up" style="animation-delay: 0.32s">
                                     <div class="hero-proof-card">
-                                        <div class="hero-proof-label">Personalized mastery</div>
-                                        <div class="hero-proof-value">Adaptive test creation</div>
+                                        <div class="hero-proof-label">From your own material</div>
+                                        <div class="hero-proof-value">Generate tests from notes and PDFs</div>
                                     </div>
                                     <div class="hero-proof-card">
                                         <div class="hero-proof-label">Actionable review</div>
-                                        <div class="hero-proof-value">Instant performance feedback</div>
+                                        <div class="hero-proof-value">Instant scoring with explanations</div>
                                     </div>
                                     <div class="hero-proof-card">
-                                        <div class="hero-proof-label">Built for consistency</div>
-                                        <div class="hero-proof-value">Progress you can actually track</div>
+                                        <div class="hero-proof-label">Built for real studying</div>
+                                        <div class="hero-proof-value">Track progress across every practice run</div>
                                     </div>
                                 </div>
                             </div>
@@ -318,22 +318,22 @@ app.get('/', async (c) => {
                                 <div class="icon-wrap relative z-10">
                                     <i class="fas fa-sliders"></i>
                                 </div>
-                                <h3 class="relative z-10">Fully Customizable</h3>
-                                <p class="relative z-10">Pick subjects, difficulty, question types — build tests that match your exact needs.</p>
+                                <h3 class="relative z-10">Study From Your Own Content</h3>
+                                <p class="relative z-10">Upload notes, handouts, or PDFs and turn them into focused tests in seconds.</p>
                             </div>
                             <div class="feature-card">
                                 <div class="icon-wrap relative z-10">
                                     <i class="fas fa-wand-magic-sparkles"></i>
                                 </div>
                                 <h3 class="relative z-10">AI Question Engine</h3>
-                                <p class="relative z-10">Fresh, context-aware questions every time with smart explanations.</p>
+                                <p class="relative z-10">Generate fresh, context-aware questions with explanations tailored to what you are studying.</p>
                             </div>
                             <div class="feature-card">
                                 <div class="icon-wrap relative z-10">
                                     <i class="fas fa-chart-line"></i>
                                 </div>
                                 <h3 class="relative z-10">Deep Analytics</h3>
-                                <p class="relative z-10">Track progress, spot weaknesses, get AI-driven recommendations.</p>
+                                <p class="relative z-10">See weak areas, measure improvement, and know exactly what to review next.</p>
                             </div>
                         </div>
                     </div>
@@ -367,23 +367,23 @@ app.get('/', async (c) => {
                     <div data-guest-only="true" class="max-w-5xl mx-auto px-6 mb-28">
                         <div class="text-center mb-14">
                             <p class="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">How It Works</p>
-                            <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900">Three steps to mastery</h2>
+                            <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900">Three steps to smarter studying</h2>
                         </div>
                         <div class="grid md:grid-cols-3 gap-10">
                             <div class="step-card">
                                 <div class="step-number">1</div>
-                                <div class="step-title">Create Your Test</div>
-                                <div class="step-desc">Choose a subject, set difficulty, pick question types. Takes 30 seconds.</div>
+                                <div class="step-title">Upload or choose material</div>
+                                <div class="step-desc">Start from your own notes, PDFs, or a subject you want to practice.</div>
                             </div>
                             <div class="step-card">
                                 <div class="step-number">2</div>
-                                <div class="step-title">Take It Anywhere</div>
-                                <div class="step-desc">Answer AI-generated questions at your own pace, on any device.</div>
+                                <div class="step-title">Take the AI-generated test</div>
+                                <div class="step-desc">Practice with custom questions tailored to your selected material and difficulty.</div>
                             </div>
                             <div class="step-card">
                                 <div class="step-number">3</div>
-                                <div class="step-title">Get Smart Insights</div>
-                                <div class="step-desc">Review results, see analytics, and get personalized improvement tips.</div>
+                                <div class="step-title">Review and improve</div>
+                                <div class="step-desc">Get instant feedback, explanations, and clear insight into what needs work.</div>
                             </div>
                         </div>
                     </div>
@@ -392,8 +392,8 @@ app.get('/', async (c) => {
                     <div data-guest-only="true" class="max-w-5xl mx-auto px-6 pb-28">
                         <div class="rounded-2xl p-10 md:p-14 text-center relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700">
                             <div class="relative">
-                                <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-4">Ready to test yourself?</h2>
-                                <p class="text-blue-100/80 text-base mb-8 max-w-lg mx-auto">Join thousands of learners using AI to master any subject.</p>
+                                <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-4">Ready to study smarter?</h2>
+                                <p class="text-blue-100/80 text-base mb-8 max-w-lg mx-auto">Turn study materials into AI-powered practice tests and improve faster with every session.</p>
                                 <button onclick="window.testApp ? window.testApp.showTestCreation() : document.getElementById('registerModal').classList.add('show')" class="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-blue-700 font-bold rounded-xl hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]">
                                     Get Started Free <i class="fas fa-arrow-right"></i>
                                 </button>
@@ -650,23 +650,34 @@ app.get('/', async (c) => {
                             </div>
                         </div>
 
-                        <!-- Test In Progress -->
+                        <!-- Study Workflow -->
                         <div class="glass-card rounded-2xl p-6 mb-8">
-                            <h3 class="text-lg font-bold text-slate-900 mb-4">In Progress</h3>
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-900">Study workflow</h3>
+                                    <p class="text-sm text-slate-500 mt-1">Use real material, generate a test, then review what needs work.</p>
+                                </div>
+                                <button type="button" onclick="window.testApp && window.testApp.switchSection('materials')" class="btn-primary-sm">
+                                    <i class="fas fa-file-import mr-1.5"></i>Open Materials
+                                </button>
+                            </div>
                             <div id="testInProgress"></div>
                         </div>
 
                         <!-- Improvement + AI Recs -->
                         <div class="grid lg:grid-cols-2 gap-6">
                             <div class="glass-card rounded-2xl p-6">
-                                <h3 class="text-lg font-bold text-slate-900 mb-6">Areas for Improvement</h3>
+                                <h3 class="text-lg font-bold text-slate-900 mb-6">What needs work</h3>
                                 <div class="space-y-4" id="improvementAreas"></div>
                             </div>
                             <div class="glass-card rounded-2xl p-6">
-                                <div class="flex justify-between items-center mb-6">
-                                    <h3 class="text-lg font-bold text-slate-900">AI Recommendations</h3>
-                                    <span class="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
-                                        <i class="fas fa-sparkles mr-1"></i>Powered by AI
+                                <div class="flex justify-between items-center mb-6 gap-3">
+                                    <div>
+                                        <h3 class="text-lg font-bold text-slate-900">Recommended next move</h3>
+                                        <p class="text-xs text-slate-400 mt-1">Guidance based on your actual workflow</p>
+                                    </div>
+                                    <span class="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200 whitespace-nowrap">
+                                        <i class="fas fa-sparkles mr-1"></i>AI Workflow
                                     </span>
                                 </div>
                                 <div class="space-y-4" id="aiRecommendations"></div>
@@ -684,8 +695,16 @@ app.get('/', async (c) => {
                         </div>
                     </header>
                     <div class="p-6 lg:p-8">
-                        <div class="glass-card rounded-2xl p-7 mb-6">
-                            <h3 class="text-lg font-bold text-slate-900 mb-5">Create New Test</h3>
+                        <div class="glass-card rounded-2xl p-7 mb-6 border border-blue-100 bg-gradient-to-br from-blue-50/70 to-white">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-900">Quick category test</h3>
+                                    <p class="text-sm text-slate-500 mt-1">Good for warm-ups. For the strongest results, use the Materials tab to generate tests from your own notes and PDFs.</p>
+                                </div>
+                                <button type="button" onclick="window.testApp && window.testApp.switchSection('materials')" class="btn-ghost px-4 py-2">
+                                    <i class="fas fa-file-import mr-1.5"></i>Use Study Materials Instead
+                                </button>
+                            </div>
                             <div id="testCreationForm">
                                 <div class="grid md:grid-cols-2 gap-6">
                                     <div>
@@ -797,6 +816,15 @@ app.get('/', async (c) => {
                             <h1 class="text-2xl font-extrabold text-slate-900">Study Materials</h1>
                             <p class="text-slate-500 text-sm mt-1.5">Import files, generate tests from them, and ask TestAI questions grounded in your study docs.</p>
                         </div>
+                        <div class="mt-4 rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-900">Recommended first step</div>
+                                    <div class="text-sm text-slate-500 mt-1">Upload a note, handout, or PDF, then generate a test from it. This is the fastest way to get real value from TestAI.</div>
+                                </div>
+                                <span class="text-xs font-bold px-3 py-1 rounded-full bg-white text-blue-600 border border-blue-200 whitespace-nowrap">Best workflow</span>
+                            </div>
+                        </div>
                     </header>
                     <div class="p-6 lg:p-8 space-y-6">
                         <div class="grid lg:grid-cols-2 gap-6">
@@ -873,8 +901,11 @@ app.get('/', async (c) => {
                                 <div id="materialAnswer" class="mt-5 text-sm text-slate-600 leading-7"></div>
                             </div>
                             <div class="glass-card rounded-2xl p-7">
-                                <div class="flex justify-between items-center mb-5">
-                                    <h3 class="text-lg font-bold text-slate-900">Imported materials</h3>
+                                <div class="flex justify-between items-center mb-5 gap-3">
+                                    <div>
+                                        <h3 class="text-lg font-bold text-slate-900">Imported materials</h3>
+                                        <p class="text-sm text-slate-500 mt-1">This is your source library for grounded test generation.</p>
+                                    </div>
                                     <span class="text-xs text-slate-400">Recent first</span>
                                 </div>
                                 <div id="materialsList" class="space-y-3">
