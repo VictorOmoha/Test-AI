@@ -173,6 +173,14 @@ tests.get('/materials', authMiddleware, async (c) => {
     })
   } catch (error) {
     console.error('Error fetching study materials:', error)
+    const message = error instanceof Error ? error.message : ''
+    if (message.includes('study_materials')) {
+      return c.json({
+        success: true,
+        materials: [],
+        warning: 'Study materials table is not available yet. Run the study materials migration in Neon to enable this feature.'
+      })
+    }
     return c.json({ success: false, message: 'Failed to fetch study materials' }, 500)
   }
 })
@@ -214,7 +222,14 @@ tests.post('/materials/import', authMiddleware, async (c) => {
     }, 201)
   } catch (error) {
     console.error('Error importing study material:', error)
-    return c.json({ success: false, message: error instanceof Error ? error.message : 'Failed to import study material' }, 500)
+    const message = error instanceof Error ? error.message : 'Failed to import study material'
+    if (message.includes('study_materials')) {
+      return c.json({
+        success: false,
+        message: 'Study materials are not enabled in the database yet. Run the Neon study_materials migration first.'
+      }, 503)
+    }
+    return c.json({ success: false, message }, 500)
   }
 })
 
@@ -308,6 +323,13 @@ tests.post('/materials/generate-test', authMiddleware, async (c) => {
     }, 201)
   } catch (error) {
     console.error('Error generating material test:', error)
+    const message = error instanceof Error ? error.message : 'Failed to generate material test'
+    if (message.includes('study_materials')) {
+      return c.json({
+        success: false,
+        message: 'Study materials are not enabled in the database yet. Run the Neon study_materials migration first.'
+      }, 503)
+    }
     return c.json({ success: false, message: 'Failed to generate material test' }, 500)
   }
 })
@@ -358,6 +380,13 @@ tests.post('/materials/ask', authMiddleware, async (c) => {
     })
   } catch (error) {
     console.error('Error answering from study material:', error)
+    const message = error instanceof Error ? error.message : 'Failed to answer from study material'
+    if (message.includes('study_materials')) {
+      return c.json({
+        success: false,
+        message: 'Study materials are not enabled in the database yet. Run the Neon study_materials migration first.'
+      }, 503)
+    }
     return c.json({ success: false, message: 'Failed to answer from study material' }, 500)
   }
 })

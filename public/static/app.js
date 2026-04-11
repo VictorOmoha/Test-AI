@@ -460,7 +460,6 @@ class TestApp {
             this.displayDashboardStats(stats);
             await this.loadTestCategories();
             await this.loadRecentTests();
-            await this.loadStudyMaterials();
             this.initializePerformanceChart();
             this.loadTestInProgress();
             this.loadImprovementAreas();
@@ -1274,9 +1273,15 @@ class TestApp {
                 this.renderStudyMaterials();
                 this.populateStudyMaterialSelects();
                 this.setupMaterialsSection();
+                if (response.data.warning) {
+                    this.showInfo(response.data.warning);
+                }
             }
         } catch (error) {
             console.error('Failed to load study materials:', error);
+            if (error.response?.status === 401) {
+                return;
+            }
         }
     }
 
