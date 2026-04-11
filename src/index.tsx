@@ -1023,7 +1023,7 @@ app.get('/', async (c) => {
                     </form>
                     <p class="mt-6 text-center text-sm text-slate-400">
                         Don't have an account? 
-                        <button id="switchToRegister" class="font-bold text-blue-600 hover:text-cyan transition-colors">Create one</button>
+                        <button type="button" id="switchToRegister" class="font-bold text-blue-600 hover:text-cyan transition-colors">Create one</button>
                     </p>
                 </div>
             </div>
@@ -1077,7 +1077,7 @@ app.get('/', async (c) => {
                     </form>
                     <p class="mt-6 text-center text-sm text-slate-400">
                         Already have an account? 
-                        <button id="switchToLogin" class="font-bold text-blue-600 hover:text-cyan transition-colors">Sign in</button>
+                        <button type="button" id="switchToLogin" class="font-bold text-blue-600 hover:text-cyan transition-colors">Sign in</button>
                     </p>
                 </div>
             </div>
