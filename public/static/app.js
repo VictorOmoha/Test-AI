@@ -1199,6 +1199,9 @@ class TestApp {
         const importBtn = document.getElementById('importMaterialBtn');
         const generateBtn = document.getElementById('generateStudyTestBtn');
         const askBtn = document.getElementById('askMaterialBtn');
+        const fileInput = document.getElementById('materialFile');
+        const materialSelect = document.getElementById('studyMaterialSelect');
+        const askMaterialSelect = document.getElementById('askMaterialSelect');
 
         if (importBtn && !importBtn.dataset.bound) {
             importBtn.dataset.bound = '1';
@@ -1211,6 +1214,22 @@ class TestApp {
         if (askBtn && !askBtn.dataset.bound) {
             askBtn.dataset.bound = '1';
             askBtn.addEventListener('click', () => this.handleAskMaterial());
+        }
+        if (fileInput && !fileInput.dataset.bound) {
+            fileInput.dataset.bound = '1';
+            fileInput.addEventListener('change', () => {
+                const file = fileInput.files?.[0];
+                const titleInput = document.getElementById('materialTitle');
+                if (file && titleInput && !titleInput.value) {
+                    titleInput.value = file.name.replace(/\.[^.]+$/, '');
+                }
+            });
+        }
+        if (materialSelect && this.studyMaterials.length && !materialSelect.value) {
+            materialSelect.value = this.studyMaterials[0].id;
+        }
+        if (askMaterialSelect && this.studyMaterials.length && !askMaterialSelect.value) {
+            askMaterialSelect.value = this.studyMaterials[0].id;
         }
     }
 
@@ -1254,6 +1273,7 @@ class TestApp {
                 this.studyMaterials = response.data.materials || [];
                 this.renderStudyMaterials();
                 this.populateStudyMaterialSelects();
+                this.setupMaterialsSection();
             }
         } catch (error) {
             console.error('Failed to load study materials:', error);
