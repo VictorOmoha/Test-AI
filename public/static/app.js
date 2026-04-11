@@ -12,6 +12,12 @@ class TestApp {
         this.studyMaterials = [];
         this.currentSection = 'dashboard';
         this.hasCompletedOnboarding = localStorage.getItem('ai_test_onboarding_done') === '1';
+        this.materialsState = {
+            loading: false,
+            importing: false,
+            warning: '',
+            error: ''
+        };
         this.init();
     }
 
@@ -1219,6 +1225,7 @@ class TestApp {
         const fileInput = document.getElementById('materialFile');
         const materialSelect = document.getElementById('studyMaterialSelect');
         const askMaterialSelect = document.getElementById('askMaterialSelect');
+        const statusBox = document.getElementById('materialsStatus');
 
         if (importBtn && !importBtn.dataset.bound) {
             importBtn.dataset.bound = '1';
@@ -1242,11 +1249,47 @@ class TestApp {
                 }
             });
         }
+
         if (materialSelect && this.studyMaterials.length && !materialSelect.value) {
             materialSelect.value = this.studyMaterials[0].id;
         }
         if (askMaterialSelect && this.studyMaterials.length && !askMaterialSelect.value) {
             askMaterialSelect.value = this.studyMaterials[0].id;
+        }
+
+        if (generateBtn) {
+            generateBtn.disabled = !this.studyMaterials.length || this.materialsState.loading;
+            generateBtn.classList.toggle('opacity-60', generateBtn.disabled);
+            generateBtn.classList.toggle('cursor-not-allowed', generateBtn.disabled);
+        }
+        if (askBtn) {
+            askBtn.disabled = !this.studyMaterials.length || this.materialsState.loading;
+            askBtn.classList.toggle('opacity-60', askBtn.disabled);
+            askBtn.classList.toggle('cursor-not-allowed', askBtn.disabled);
+        }
+        if (importBtn) {
+            importBtn.disabled = this.materialsState.importing;
+            importBtn.classList.toggle('opacity-60', importBtn.disabled);
+            importBtn.classList.toggle('cursor-not-allowed', importBtn.disabled);
+            importBtn.innerHTML = this.materialsState.importing
+                ? '<i class="fas fa-spinner fa-spin mr-2"></i>Importing...'
+                : '<i class="fas fa-upload mr-2"></i>Import Material';
+        }
+
+        if (statusBox) {
+            if (this.materialsState.error) {
+                statusBox.className = 'rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700';
+                statusBox.textContent = this.materialsState.error;
+            } else if (this.materialsState.warning) {
+                statusBox.className = 'rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700';
+                statusBox.textContent = this.materialsState.warning;
+            } else if (this.materialsState.loading) {
+                statusBox.className = 'rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500';
+                statusBox.textContent = 'Loading study materials...';
+            } else {
+                statusBox.className = 'hidden';
+                statusBox.textContent = '';
+            }
         }
     }
 
@@ -1259,6 +1302,10 @@ class TestApp {
             this.showError('Choose a file to import first.');
             return;
         }
+
+        this.materialsState.importing = true;
+        this.materialsState.error = '';
+        this.setupMaterialsSection();
 
         try {
             const base64 = await this.readFileAsBase64(file);
@@ -1273,23 +1320,34 @@ class TestApp {
                 this.showSuccess('Study material imported.');
                 if (fileInput) fileInput.value = '';
                 if (titleInput) titleInput.value = '';
-                await this.loadStudyMaterials();
+                await this.loadStudyMaterials(response.data?.material?.id);
             } else {
-                this.showError(response.data?.message || 'Import failed.');
+                this.materialsState.error = response.data?.message || 'Import failed.';
+                this.showError(this.materialsState.error);
             }
         } catch (error) {
             console.error('Material import failed:', error);
-            this.showError(error.response?.data?.message || 'Failed to import file.');
+            this.materialsState.error = error.response?.data?.message || 'Failed to import file.';
+            this.showError(this.materialsState.error);
+        } finally {
+            this.materialsState.importing = false;
+            this.setupMaterialsSection();
         }
     }
 
-    async loadStudyMaterials() {
+    async loadStudyMaterials(selectMaterialId = '') {
+        this.materialsState.loading = true;
+        this.materialsState.error = '';
+        this.materialsState.warning = '';
+        this.setupMaterialsSection();
+
         try {
             const response = await axios.get('/api/tests/materials');
             if (response.data?.success) {
                 this.studyMaterials = response.data.materials || [];
+                this.materialsState.warning = response.data.warning || '';
                 this.renderStudyMaterials();
-                this.populateStudyMaterialSelects();
+                this.populateStudyMaterialSelects(selectMaterialId);
                 this.setupMaterialsSection();
                 if (response.data.warning) {
                     this.showInfo(response.data.warning);
@@ -1300,6 +1358,10 @@ class TestApp {
             if (error.response?.status === 401) {
                 return;
             }
+            this.materialsState.error = error.response?.data?.message || 'Failed to load study materials.';
+        } finally {
+            this.materialsState.loading = false;
+            this.setupMaterialsSection();
         }
     }
 
@@ -1308,7 +1370,11 @@ class TestApp {
         if (!list) return;
 
         if (!this.studyMaterials.length) {
-            list.innerHTML = '<div class="text-sm text-slate-400">No materials imported yet.</div>';
+            list.innerHTML = `
+                <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-500 leading-6">
+                    No materials imported yet. Import a TXT, Markdown, PDF, or DOCX file to unlock material-based test generation.
+                </div>
+            `;
             return;
         }
 
@@ -1326,13 +1392,18 @@ class TestApp {
         `).join('');
     }
 
-    populateStudyMaterialSelects() {
+    populateStudyMaterialSelects(preferredId = '') {
         const selects = [document.getElementById('studyMaterialSelect'), document.getElementById('askMaterialSelect')];
         selects.forEach(select => {
             if (!select) return;
             const current = select.value;
-            select.innerHTML = '<option value="">Choose imported material...</option>' + this.studyMaterials.map(material => `<option value="${material.id}">${material.title}</option>`).join('');
-            if (current) select.value = current;
+            const placeholder = this.studyMaterials.length
+                ? 'Choose imported material...'
+                : 'No imported materials yet';
+            select.innerHTML = `<option value="">${placeholder}</option>` + this.studyMaterials.map(material => `<option value="${material.id}">${material.title}</option>`).join('');
+            const targetValue = preferredId || current || this.studyMaterials[0]?.id || '';
+            if (targetValue) select.value = targetValue;
+            select.disabled = !this.studyMaterials.length;
         });
     }
 

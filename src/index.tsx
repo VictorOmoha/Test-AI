@@ -830,7 +830,8 @@ app.get('/', async (c) => {
                         <div class="grid lg:grid-cols-2 gap-6">
                             <div class="glass-card rounded-2xl p-7">
                                 <h3 class="text-lg font-bold text-slate-900 mb-5">Import a file</h3>
-                                <div class="space-y-4">
+                                <div id="materialsStatus" class="hidden"></div>
+                                <div class="space-y-4 mt-4">
                                     <div>
                                         <label class="form-label">Title (optional)</label>
                                         <input type="text" id="materialTitle" class="form-input" placeholder="e.g. Biology Chapter 3 Notes">
