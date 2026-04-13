@@ -284,6 +284,22 @@ export class DatabaseService {
     return id
   }
 
+  async updateStudyMaterialReady(id: string, data: { extracted_text: string; summary: string; file_type: string }): Promise<void> {
+    const now = new Date().toISOString()
+    await this.db.query(
+      `UPDATE study_materials SET processing_status = 'ready', extracted_text = $1, summary = $2, file_type = $3, updated_at = $4 WHERE id = $5`,
+      [data.extracted_text, data.summary, data.file_type, now, id]
+    )
+  }
+
+  async updateStudyMaterialFailed(id: string, errorMessage: string): Promise<void> {
+    const now = new Date().toISOString()
+    await this.db.query(
+      `UPDATE study_materials SET processing_status = 'failed', error_message = $1, updated_at = $2 WHERE id = $3`,
+      [errorMessage, now, id]
+    )
+  }
+
   async createStudyMaterialChunks(material_id: string, chunks: Array<{ content: string; token_count?: number }>): Promise<void> {
     if (!chunks.length) return
 

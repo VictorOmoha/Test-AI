@@ -212,45 +212,63 @@ tests.post('/materials/import', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'File name and file content are required' }, 400)
     }
 
-    const parsed = await studyMaterialService.parseBase64File(body.file_name, body.mime_type || '', body.file_content_base64)
+    const fileBytes = Buffer.from(body.file_content_base64, 'base64').length
+    const titleGuess = body.title || body.file_name.replace(/\.[^.]+$/, '')
+    const fileExt = body.file_name.split('.').pop()?.toLowerCase() || 'txt'
+    const materialType = fileExt === 'docx' ? 'doc' : ['md', 'markdown', 'txt'].includes(fileExt) ? 'notes' : 'other'
+
     const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
-    const chunks = studyMaterialService.chunkText(parsed.text)
+
+    // Create material immediately as pending so the response is fast
     const materialId = await db.createStudyMaterial({
       user_id: auth.user_id,
-      title: body.title || parsed.title,
+      title: titleGuess,
       file_name: body.file_name,
-      file_type: parsed.fileType,
+      file_type: fileExt,
       mime_type: body.mime_type,
-      file_size_bytes: Buffer.from(body.file_content_base64, 'base64').length,
+      file_size_bytes: fileBytes,
       source_kind: body.source_kind || 'upload',
-      material_type: body.material_type || (parsed.fileType === 'pdf' ? 'pdf' : parsed.fileType === 'docx' ? 'doc' : parsed.fileType === 'md' || parsed.fileType === 'txt' ? 'notes' : 'other'),
-      processing_status: 'ready',
-      extracted_text: parsed.text,
-      summary: parsed.text.slice(0, 500)
+      material_type: body.material_type || materialType,
+      processing_status: 'pending',
+      extracted_text: '',
+      summary: ''
     })
-    await db.createStudyMaterialChunks(materialId, chunks.map(chunk => ({
-      content: chunk.content,
-      token_count: Math.ceil(chunk.content.length / 4)
-    })))
+
+    // Process in background — do not await
+    ;(async () => {
+      try {
+        const parsed = await studyMaterialService.parseBase64File(body.file_name, body.mime_type || '', body.file_content_base64)
+        const chunks = studyMaterialService.chunkText(parsed.text)
+        await db.updateStudyMaterialReady(materialId, {
+          extracted_text: parsed.text,
+          summary: parsed.text.slice(0, 500),
+          file_type: parsed.fileType
+        })
+        await db.createStudyMaterialChunks(materialId, chunks.map(chunk => ({
+          content: chunk.content,
+          token_count: Math.ceil(chunk.content.length / 4)
+        })))
+      } catch (bgErr) {
+        console.error('Background material processing failed:', bgErr)
+        try {
+          await db.updateStudyMaterialFailed(materialId, bgErr instanceof Error ? bgErr.message : 'Processing failed')
+        } catch {}
+      }
+    })()
 
     return c.json({
       success: true,
-      message: 'Study material imported successfully',
+      message: 'Material upload received. Processing in the background — it will be ready in a moment.',
       material: {
         id: materialId,
-        title: body.title || parsed.title,
+        title: titleGuess,
         file_name: body.file_name,
-        file_type: parsed.fileType,
+        file_type: fileExt,
         mime_type: body.mime_type,
-        material_type: body.material_type || (parsed.fileType === 'pdf' ? 'pdf' : parsed.fileType === 'docx' ? 'doc' : parsed.fileType === 'md' || parsed.fileType === 'txt' ? 'notes' : 'other'),
-        processing_status: 'ready',
-        file_size_bytes: Buffer.from(body.file_content_base64, 'base64').length,
-        stats: parsed.stats,
-        chunk_count: chunks.length,
-        extraction_quality: parsed.stats.extractionQuality,
-        extraction_warnings: parsed.stats.warnings,
-        created_at: new Date().toISOString(),
-        text_preview: parsed.text.slice(0, 500)
+        material_type: body.material_type || materialType,
+        processing_status: 'pending',
+        file_size_bytes: fileBytes,
+        created_at: new Date().toISOString()
       }
     }, 201)
   } catch (error) {
