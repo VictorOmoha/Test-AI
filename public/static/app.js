@@ -1276,7 +1276,7 @@ class TestApp {
             importBtn.classList.toggle('opacity-60', importBtn.disabled);
             importBtn.classList.toggle('cursor-not-allowed', importBtn.disabled);
             importBtn.innerHTML = this.materialsState.importing
-                ? '<i class="fas fa-spinner fa-spin mr-2"></i>Importing...'
+                ? '<i class="fas fa-spinner fa-spin mr-2"></i>Uploading and processing...'
                 : '<i class="fas fa-upload mr-2"></i>Import Material';
         }
 
@@ -1287,6 +1287,9 @@ class TestApp {
             } else if (this.materialsState.warning) {
                 statusBox.className = 'rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700';
                 statusBox.textContent = this.materialsState.warning;
+            } else if (this.materialsState.importing) {
+                statusBox.className = 'rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700';
+                statusBox.innerHTML = '<div class="font-medium">Processing your material...</div><div class="text-xs mt-1 text-blue-600">Uploading, extracting text, and saving study chunks. Larger files, especially DOCX, can take a little time.</div>';
             } else if (this.materialsState.loading) {
                 statusBox.className = 'rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500';
                 statusBox.textContent = 'Loading study materials...';
