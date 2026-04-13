@@ -1,4 +1,3 @@
-import 'dotenv/config'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
@@ -11,7 +10,8 @@ import { DatabaseService } from './utils/database'
 const app = new Hono<{ Bindings: Env }>()
 
 function getEnvValue(c: any, key: 'DATABASE_URL' | 'OPENAI_API_KEY' | 'JWT_SECRET') {
-  return c?.env?.[key] || process.env[key]
+  const processEnv = typeof process !== 'undefined' ? process.env : undefined
+  return c?.env?.[key] || processEnv?.[key]
 }
 
 function getDb(c: any) {
