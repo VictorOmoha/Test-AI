@@ -1,6 +1,6 @@
 // Authentication routes for AI Test Application
 import { Hono } from 'hono'
-import { Pool } from '@neondatabase/serverless'
+import { neon } from '@neondatabase/serverless'
 import { Env } from '../types/database'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT, generateUUID } from '../utils/auth'
 
@@ -11,7 +11,10 @@ function envValue(c: any, key: 'DATABASE_URL' | 'JWT_SECRET') {
 function getPool(c: any) {
   const connectionString = envValue(c, 'DATABASE_URL')
   if (!connectionString) throw new Error('DATABASE_URL is not configured')
-  return new Pool({ connectionString })
+  const sql = neon(connectionString)
+  return {
+    query: async (text: string, params: any[] = []) => ({ rows: await sql(text, params) as any[] })
+  }
 }
 
 const auth = new Hono<{ Bindings: Env }>()

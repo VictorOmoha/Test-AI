@@ -1,4 +1,4 @@
-import { Pool } from '@neondatabase/serverless'
+import { Pool, neon } from '@neondatabase/serverless'
 import { User, TestConfiguration, TestAttempt, Question, TestCategory, StudyMaterial, StudyMaterialChunk } from '../types/database'
 import { generateUUID } from './auth'
 
@@ -23,8 +23,15 @@ export class DatabaseService {
 
   static fromDatabaseUrl(databaseUrl?: string): DatabaseService {
     if (!databaseUrl) throw new Error('DATABASE_URL is not configured')
-    const pool = new Pool({ connectionString: databaseUrl })
-    return new DatabaseService(pool)
+    // Use Neon HTTP driver for serverless — avoids TCP cold-start latency
+    const sql = neon(databaseUrl)
+    const httpAdapter: SqlLike = {
+      async query(text: string, params: any[] = []) {
+        const rows = await sql(text, params)
+        return { rows: rows as any[] }
+      }
+    }
+    return new DatabaseService(httpAdapter)
   }
 
   async rawQuery<T = any>(query: string, params: any[] = []): Promise<T[]> {
