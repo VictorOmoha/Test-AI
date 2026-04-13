@@ -1330,66 +1330,22 @@ class TestApp {
             });
 
             if (response.data?.success) {
-                const materialId = response.data?.material?.id;
+                this.showSuccess('✅ Study material imported successfully!');
                 if (fileInput) fileInput.value = '';
                 if (titleInput) titleInput.value = '';
-
-                // Poll for ready status instead of blocking on import
-                if (materialId) {
-                    this.materialsState.importing = false;
-                    this.setupMaterialsSection();
-                    await this.pollMaterialReady(materialId);
-                } else {
-                    this.showSuccess('Study material received.');
-                    await this.loadStudyMaterials();
-                    this.materialsState.importing = false;
-                    this.setupMaterialsSection();
-                }
+                await this.loadStudyMaterials(response.data?.material?.id);
             } else {
                 this.materialsState.error = response.data?.message || 'Import failed.';
                 this.showError(this.materialsState.error);
-                this.materialsState.importing = false;
-                this.setupMaterialsSection();
             }
         } catch (error) {
             console.error('Material import failed:', error);
             this.materialsState.error = error.response?.data?.message || 'Failed to import file.';
             this.showError(this.materialsState.error);
+        } finally {
             this.materialsState.importing = false;
             this.setupMaterialsSection();
         }
-    }
-
-    async pollMaterialReady(materialId, maxAttempts = 30, intervalMs = 2000) {
-        const statusBox = document.getElementById('materialsStatus');
-        if (statusBox) {
-            statusBox.className = 'rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700';
-            statusBox.innerHTML = '<div class="font-medium">Processing your material…</div><div class="text-xs mt-1 text-blue-600">Extracting text and building study chunks. This usually takes 5–15 seconds.</div>';
-        }
-
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            await new Promise(r => setTimeout(r, intervalMs));
-            try {
-                const res = await axios.get('/api/tests/materials');
-                const materials = res.data?.materials || [];
-                const mat = materials.find(m => m.id === materialId);
-                if (mat?.processing_status === 'ready') {
-                    this.showSuccess('\u2705 Material ready! You can now generate a test from it.');
-                    await this.loadStudyMaterials(materialId);
-                    return;
-                }
-                if (mat?.processing_status === 'failed') {
-                    this.showError('Material processing failed. Try a smaller or cleaner file.');
-                    await this.loadStudyMaterials();
-                    return;
-                }
-            } catch (e) {
-                console.warn('Polling error:', e);
-            }
-        }
-        // Timed out but still load materials
-        this.showSuccess('Material received. If it doesn\'t appear, refresh the Materials list.');
-        await this.loadStudyMaterials(materialId);
     }
 
 
