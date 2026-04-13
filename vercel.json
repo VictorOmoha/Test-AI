@@ -1,7 +1,1 @@
-{
-  "functions": {
-    "__hono.func/index.js": {
-      "maxDuration": 60
-    }
-  }
-}
+{}
