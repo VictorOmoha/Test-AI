@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/**": {
+    "__hono.func/index.js": {
       "maxDuration": 60
     }
   }
