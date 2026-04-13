@@ -1,3 +1,6 @@
+import mammoth from 'mammoth'
+import { PDFParse } from 'pdf-parse'
+
 export interface ParsedStudyMaterial {
   title: string
   text: string
@@ -5,6 +8,8 @@ export interface ParsedStudyMaterial {
   stats: {
     characters: number
     estimatedSections: number
+    extractionQuality: 'high' | 'medium' | 'low'
+    warnings: string[]
   }
 }
 
@@ -14,23 +19,26 @@ export interface StudyChunk {
 }
 
 export class StudyMaterialService {
-  parseBase64File(fileName: string, mimeType: string, base64Content: string): ParsedStudyMaterial {
+  async parseBase64File(fileName: string, mimeType: string, base64Content: string): Promise<ParsedStudyMaterial> {
     const buffer = Buffer.from(base64Content, 'base64')
     const extension = this.getExtension(fileName, mimeType)
-    const rawText = this.extractText(buffer, extension)
+    const rawText = await this.extractText(buffer, extension)
     const cleanedText = this.normalizeText(rawText)
+    const warnings = this.assessExtractionWarnings(cleanedText, extension)
 
     if (!cleanedText || cleanedText.length < 40) {
-      throw new Error('Uploaded file does not contain enough readable text yet. Start with TXT or Markdown files.')
+      throw new Error('Uploaded file does not contain enough readable text yet. Try a cleaner TXT, Markdown, PDF, or DOCX file.')
     }
 
     return {
-      title: fileName,
+      title: fileName.replace(/\.[^.]+$/, ''),
       text: cleanedText,
       fileType: extension,
       stats: {
         characters: cleanedText.length,
-        estimatedSections: this.chunkText(cleanedText).length
+        estimatedSections: this.chunkText(cleanedText).length,
+        extractionQuality: this.getExtractionQuality(cleanedText, warnings),
+        warnings
       }
     }
   }
@@ -93,38 +101,68 @@ export class StudyMaterialService {
   private getExtension(fileName: string, mimeType: string): string {
     const fromName = fileName.split('.').pop()?.toLowerCase() || ''
     if (fromName) return fromName
+    if (mimeType.includes('wordprocessingml')) return 'docx'
+    if (mimeType.includes('pdf')) return 'pdf'
     if (mimeType.includes('markdown')) return 'md'
     if (mimeType.includes('plain')) return 'txt'
     return 'txt'
   }
 
-  private extractText(buffer: Buffer, extension: string): string {
+  private async extractText(buffer: Buffer, extension: string): Promise<string> {
     if (['txt', 'md', 'markdown', 'csv', 'json'].includes(extension)) {
       return buffer.toString('utf-8')
     }
 
     if (extension === 'pdf') {
-      const binary = buffer.toString('latin1')
-      const matches = binary.match(/\(([^()]|\\.){2,}\)/g) || []
-      const extracted = matches
-        .map(match => match.slice(1, -1))
-        .join(' ')
-      return extracted
+      const parser = new PDFParse({ data: buffer })
+      try {
+        const parsed = await parser.getText()
+        return parsed.text || ''
+      } finally {
+        await parser.destroy()
+      }
     }
 
     if (extension === 'docx') {
-      const binary = buffer.toString('latin1')
-      const matches = binary.match(/[A-Za-z0-9][A-Za-z0-9 ,.;:!?()'"\-\n]{20,}/g) || []
-      return matches.join(' ')
+      const result = await mammoth.extractRawText({ buffer })
+      return result.value || ''
     }
 
     return buffer.toString('utf-8')
+  }
+
+  private assessExtractionWarnings(text: string, extension: string): string[] {
+    const warnings: string[] = []
+    const suspiciousSymbolRatio = text.length
+      ? ((text.match(/[^\w\s.,;:!?()'"%&\-]/g) || []).length / text.length)
+      : 0
+
+    if (text.length < 300) {
+      warnings.push('Very little readable text was extracted from this file.')
+    }
+
+    if (suspiciousSymbolRatio > 0.12) {
+      warnings.push('The extracted text looks noisy, which may reduce test quality.')
+    }
+
+    if ((extension === 'pdf' || extension === 'docx') && text.length < 800) {
+      warnings.push('This document may not have extracted cleanly. If the results feel off, try exporting cleaner text or Markdown.')
+    }
+
+    return warnings
+  }
+
+  private getExtractionQuality(text: string, warnings: string[]): 'high' | 'medium' | 'low' {
+    if (text.length < 300 || warnings.length >= 2) return 'low'
+    if (text.length < 1200 || warnings.length === 1) return 'medium'
+    return 'high'
   }
 
   private normalizeText(text: string): string {
     return text
       .replace(/\r/g, '\n')
       .replace(/\u0000/g, ' ')
+      .replace(/\t/g, ' ')
       .replace(/\n{3,}/g, '\n\n')
       .replace(/[ \t]{2,}/g, ' ')
       .trim()

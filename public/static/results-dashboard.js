@@ -120,6 +120,14 @@ class ResultsDashboard {
                         </div>
                     </div>
 
+                    <div id="materialContextCard" class="hidden bg-emerald-50 p-4 rounded-lg mb-6 border border-emerald-200">
+                        <h4 class="font-semibold mb-2 flex items-center text-emerald-900">
+                            <i class="fas fa-file-lines text-emerald-700 mr-2"></i>
+                            Source Material
+                        </h4>
+                        <div id="materialContextBody" class="text-sm text-emerald-900"></div>
+                    </div>
+
                     <!-- AI Recommendations -->
                     <div class="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg mb-6">
                         <h4 class="font-semibold mb-3 flex items-center">
@@ -133,12 +141,28 @@ class ResultsDashboard {
                             </div>
                         </div>
                     </div>
+
+                    <div class="bg-slate-50 p-4 rounded-lg mb-6 border border-slate-200">
+                        <h4 class="font-semibold mb-3 flex items-center text-slate-900">
+                            <i class="fas fa-compass text-slate-700 mr-2"></i>
+                            Study Next
+                        </h4>
+                        <div id="studyNextPlan" class="space-y-3 text-sm text-slate-600">
+                            <div class="flex items-center justify-center py-4">
+                                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-500 mr-2"></div>
+                                <span>Preparing your next-step plan...</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="p-6 bg-gray-50 rounded-b-lg">
                     <div class="flex justify-between items-center">
                         <div class="space-x-3">
+                            <button id="retryWeakAreas" class="bg-amber-500 text-white px-6 py-2 rounded-lg hover:bg-amber-600 transition-colors">
+                                <i class="fas fa-bullseye mr-2"></i>Retry Weak Areas
+                            </button>
                             <button id="retakeTest" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                                 <i class="fas fa-redo mr-2"></i>Retake Test
                             </button>
@@ -164,6 +188,7 @@ class ResultsDashboard {
 
     setupEventListeners() {
         document.getElementById('closeResultsModal').addEventListener('click', () => this.hideResultsModal());
+        document.getElementById('retryWeakAreas').addEventListener('click', () => this.retryWeakAreas());
         document.getElementById('retakeTest').addEventListener('click', () => this.retakeTest());
         document.getElementById('newTest').addEventListener('click', () => this.startNewTest());
         document.getElementById('shareResults').addEventListener('click', () => this.shareResults());
@@ -192,13 +217,47 @@ class ResultsDashboard {
         // Populate detailed sections
         this.populateTimeAnalysis(resultsData);
         this.populateQuestionReview(resultsData.questions);
+        this.populateMaterialContext(resultsData);
         
         // Generate AI recommendations
         this.generateAIRecommendations(resultsData);
+        this.generateStudyNextPlan(resultsData);
+        this.updateRetryWeakAreasButton(resultsData);
         
         // Update subtitle
-        document.getElementById('testResultsSubtitle').textContent = 
-            `${resultsData.config.test_type} - ${resultsData.config.difficulty} Level`;
+        const materialTitle = resultsData?.material?.title;
+        document.getElementById('testResultsSubtitle').textContent = materialTitle
+            ? `${resultsData.config.test_type} - ${resultsData.config.difficulty} Level • Grounded in ${materialTitle}`
+            : `${resultsData.config.test_type} - ${resultsData.config.difficulty} Level`;
+    }
+
+    populateMaterialContext(resultsData) {
+        const card = document.getElementById('materialContextCard');
+        const body = document.getElementById('materialContextBody');
+        const material = resultsData?.material;
+
+        if (!card || !body) return;
+
+        if (!material?.id) {
+            card.classList.add('hidden');
+            body.innerHTML = '';
+            return;
+        }
+
+        const metadata = [
+            material.file_type ? `File type: ${material.file_type}` : '',
+            material.material_type ? `Material type: ${material.material_type}` : '',
+            material.processing_status ? `Status: ${material.processing_status}` : '',
+            material.chunk_count ? `Retrieved chunks: ${material.chunk_count}` : ''
+        ].filter(Boolean);
+
+        body.innerHTML = `
+            <div class="font-medium text-emerald-950">${material.title || 'Study material'}</div>
+            ${material.file_name ? `<div class="text-xs text-emerald-700 mt-1">${material.file_name}</div>` : ''}
+            ${metadata.length ? `<div class="mt-2 text-xs text-emerald-800">${metadata.join(' • ')}</div>` : ''}
+            <div class="mt-3 text-sm text-emerald-900">This test was generated from your imported material, so the best next step is to review mistakes against the source and retry weak areas while the context is still fresh.</div>
+        `;
+        card.classList.remove('hidden');
     }
 
     populateBasicStats(resultsData) {
@@ -486,6 +545,101 @@ class ResultsDashboard {
         return weakAreas;
     }
 
+    updateRetryWeakAreasButton(resultsData) {
+        const btn = document.getElementById('retryWeakAreas');
+        if (!btn) return;
+
+        const materialId = resultsData?.material?.id || resultsData?.attempt?.material_id || resultsData?.attempt?.study_material_id;
+        const missedCount = Array.isArray(resultsData?.questions)
+            ? resultsData.questions.filter(q => !q.is_correct).length
+            : 0;
+
+        const enabled = Boolean(materialId && missedCount > 0);
+        btn.disabled = !enabled;
+        btn.classList.toggle('opacity-50', !enabled);
+        btn.classList.toggle('cursor-not-allowed', !enabled);
+        btn.title = enabled
+            ? 'Generate a focused retry test from the questions you missed, using the same source material'
+            : 'Available after a material-based test with missed questions';
+    }
+
+    extractMissedConcepts(resultsData) {
+        const incorrectQuestions = Array.isArray(resultsData?.questions)
+            ? resultsData.questions.filter(q => !q.is_correct)
+            : [];
+
+        return incorrectQuestions.slice(0, 5).map((question, index) => ({
+            label: `Missed concept ${index + 1}`,
+            question: question.question_text,
+            answer: question.correct_answer,
+            explanation: question.ai_explanation || ''
+        }));
+    }
+
+    generateStudyNextPlan(resultsData) {
+        const container = document.getElementById('studyNextPlan');
+        if (!container) return;
+
+        const score = Math.round(resultsData?.attempt?.score || 0);
+        const material = resultsData?.material;
+        const missedConcepts = this.extractMissedConcepts(resultsData);
+        const hasMaterial = Boolean(material?.id);
+
+        const steps = [];
+
+        if (missedConcepts.length) {
+            steps.push({
+                title: 'Review the exact concepts you missed',
+                body: missedConcepts.map(item => item.question).slice(0, 2).join(' • ')
+            });
+        }
+
+        if (hasMaterial && missedConcepts.length) {
+            steps.push({
+                title: 'Run a focused retry test',
+                body: 'Use Retry Weak Areas to practice the same concepts with fresh questions grounded in your material.'
+            });
+            steps.push({
+                title: 'Ask follow-up questions from the same material',
+                body: 'Use the material Q&A flow to clarify why the right answer is correct before retesting.'
+            });
+        } else if (score < 70) {
+            steps.push({
+                title: 'Rebuild the foundation first',
+                body: 'Review core concepts, then take a shorter test to confirm the basics are locked in.'
+            });
+        } else {
+            steps.push({
+                title: 'Increase difficulty or narrow the focus',
+                body: 'You are doing well. Try a harder test or target one specific topic to sharpen mastery.'
+            });
+        }
+
+        const summary = score >= 85
+            ? 'Strong result. Your best next move is precision, not volume.'
+            : score >= 60
+                ? 'You are close. A focused review loop should raise your score fast.'
+                : 'Do not brute-force more tests yet. Review, clarify, then retry.';
+
+        container.innerHTML = `
+            <div class="rounded-lg bg-white border border-slate-200 p-4">
+                <div class="text-sm font-semibold text-slate-900 mb-1">Next-step summary</div>
+                <div class="text-sm text-slate-600 leading-6">${summary}</div>
+            </div>
+            ${steps.map((step, index) => `
+                <div class="rounded-lg bg-white border border-slate-200 p-4">
+                    <div class="flex items-start gap-3">
+                        <div class="w-6 h-6 rounded-full bg-slate-900 text-white text-xs flex items-center justify-center mt-0.5">${index + 1}</div>
+                        <div>
+                            <div class="font-medium text-slate-900">${step.title}</div>
+                            <div class="text-sm text-slate-600 mt-1 leading-6">${step.body}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        `;
+    }
+
     showGenericRecommendations(resultsData, weakAreas = []) {
         const score = resultsData.attempt.score;
         const testType = resultsData.config.test_type;
@@ -541,6 +695,56 @@ class ResultsDashboard {
     hideResultsModal() {
         document.getElementById('resultsModal').classList.add('hidden');
         document.getElementById('resultsModal').classList.remove('flex');
+    }
+
+    async retryWeakAreas() {
+        const materialId = this.currentResults?.material?.id || this.currentResults?.attempt?.material_id || this.currentResults?.attempt?.study_material_id;
+        const missedQuestions = Array.isArray(this.currentResults?.questions)
+            ? this.currentResults.questions.filter(q => !q.is_correct)
+            : [];
+
+        if (!materialId || !missedQuestions.length) {
+            this.app?.showInfo?.('Retry weak areas is available after a material-based test with missed questions.');
+            return;
+        }
+
+        const button = document.getElementById('retryWeakAreas');
+        const originalHtml = button?.innerHTML;
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Building Retry Test...';
+        }
+
+        try {
+            const response = await axios.post('/api/tests/materials/retry-test', {
+                material_id: materialId,
+                difficulty: this.currentResults?.config?.difficulty || 'Medium',
+                num_questions: Math.min(Math.max(missedQuestions.length, 4), 10),
+                question_types: ['MCQ', 'TrueFalse', 'ShortAnswer'],
+                missed_questions: missedQuestions.map(question => ({
+                    question: question.question_text,
+                    correct_answer: question.correct_answer,
+                    explanation: question.ai_explanation || ''
+                }))
+            });
+
+            if (response.data?.success && this.app?.testInterface) {
+                this.app.showSuccess('Focused retry test ready.');
+                this.hideResultsModal();
+                this.app.testInterface.startTest(response.data);
+            } else {
+                this.app.showError(response.data?.message || 'Failed to generate retry test.');
+            }
+        } catch (error) {
+            console.error('Retry weak areas failed:', error);
+            this.app.showError(error.response?.data?.message || 'Failed to generate retry test.');
+        } finally {
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = originalHtml || '<i class="fas fa-bullseye mr-2"></i>Retry Weak Areas';
+                this.updateRetryWeakAreasButton(this.currentResults);
+            }
+        }
     }
 
     retakeTest() {

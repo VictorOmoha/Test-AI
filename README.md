@@ -15,7 +15,27 @@
 - **Dashboard**: https://3000-ijrwvm9qu83g6fnid5h62-6532622b.e2b.dev
 - **API Health Check**: https://3000-ijrwvm9qu83g6fnid5h62-6532622b.e2b.dev/api/health
 
-## Current Status: 🚀 FULLY FEATURED APPLICATION WITH MODERN DASHBOARD
+## Current Status: 🚀 AI STUDY PLATFORM IN TRANSITION
+
+This project is no longer just a generic quiz app.
+
+It is evolving into an **AI-powered study platform** where users can:
+- upload their own study materials
+- generate tests from those materials
+- ask grounded questions against imported files
+- track performance over time
+- turn studying into a real feedback loop
+
+### Current reality check
+- Production target is now **Vercel + Neon Postgres**
+- The **study materials feature is the core differentiator**
+- The current migration path is:
+  - `migrations/0001_initial_schema.sql` for the Postgres baseline
+  - `migrations/0002_study_materials.sql` for the materials workflow
+  - `migrations/0003_neon_materials_patch.sql` only for existing Neon databases that are missing the materials layer
+- `neon-schema.sql` remains the full canonical schema snapshot for fresh Neon setup
+- Some legacy README sections below still describe older Cloudflare/D1-era setup and should be treated as historical context unless they match the current code
+
 
 ### ✅ Completed Features
 

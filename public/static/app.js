@@ -131,7 +131,10 @@ class TestApp {
 
         document.querySelectorAll('.difficulty-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                const parent = btn.parentElement;
+                if (parent) {
+                    parent.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                }
                 btn.classList.add('active');
             });
         });
@@ -428,12 +431,13 @@ class TestApp {
             localStorage.setItem('ai_test_onboarding_done', '1');
             this.switchSection('materials');
             this.showInfo(hasMaterials
-                ? 'You are ready to generate a test from your materials.'
-                : 'Start by uploading a study file, then generate your first AI test.');
+                ? 'You are ready to generate a grounded test from your materials.'
+                : 'Start in Materials: upload a study file, generate a grounded test, then review and retry weak areas.');
             return;
         }
 
         this.switchSection('dashboard');
+        this.showInfo('Tip: the strongest TestAI workflow starts in Materials, not generic category tests.');
     }
 
     showTests() {
@@ -593,7 +597,7 @@ class TestApp {
                         </div>
                         <div class="category-card-meta">
                             <span>${testsTaken} tests taken</span>
-                            <span>Tap to practice</span>
+                            <span>General practice</span>
                         </div>
                     </div>
                 </button>
@@ -961,7 +965,7 @@ class TestApp {
         e.preventDefault();
 
         const category = document.getElementById('quickTestCategory').value;
-        const difficulty = document.querySelector('.difficulty-btn.active')?.getAttribute('data-difficulty') || 'Medium';
+        const difficulty = document.querySelector('#quickTestForm .difficulty-btn.active')?.getAttribute('data-difficulty') || 'Medium';
         const numQuestions = document.getElementById('questionSlider').value;
         const timeLimit = document.getElementById('timeLimitSelect').value;
 
@@ -1179,7 +1183,7 @@ class TestApp {
 
     async handleCreateTest() {
         const category = document.getElementById('testCategory')?.value;
-        const difficulty = document.querySelector('.difficulty-btn.active')?.dataset.difficulty || 'Medium';
+        const difficulty = document.querySelector('#testCreationForm .difficulty-btn.active')?.dataset.difficulty || 'Medium';
         const questionCount = document.getElementById('questionCountSlider')?.value || 15;
         const timeLimit = document.getElementById('timeLimit')?.value;
 
@@ -1345,6 +1349,12 @@ class TestApp {
             const response = await axios.get('/api/tests/materials');
             if (response.data?.success) {
                 this.studyMaterials = response.data.materials || [];
+                if (selectMaterialId && response.data?.material) {
+                    const existing = this.studyMaterials.find(item => item.id === response.data.material.id);
+                    if (!existing) {
+                        this.studyMaterials.unshift(response.data.material);
+                    }
+                }
                 this.materialsState.warning = response.data.warning || '';
                 this.renderStudyMaterials();
                 this.populateStudyMaterialSelects(selectMaterialId);
@@ -1378,7 +1388,20 @@ class TestApp {
             return;
         }
 
-        list.innerHTML = this.studyMaterials.map(material => `
+        list.innerHTML = this.studyMaterials.map(material => {
+            const quality = material.extraction_quality || 'high';
+            const qualityClass = quality === 'high'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : quality === 'medium'
+                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                    : 'bg-rose-50 text-rose-700 border-rose-200';
+            const status = material.processing_status || 'ready';
+            const warnings = Array.isArray(material.extraction_warnings) ? material.extraction_warnings : [];
+            const fileSize = material.file_size_bytes
+                ? `${Math.max(1, Math.round(material.file_size_bytes / 1024))} KB`
+                : 'Unknown size';
+
+            return `
             <div class="p-4 rounded-xl border border-slate-200 bg-slate-50">
                 <div class="flex items-start justify-between gap-3">
                     <div>
@@ -1387,9 +1410,21 @@ class TestApp {
                     </div>
                     <div class="text-xs text-slate-400">${this.formatRelativeDate(material.created_at)}</div>
                 </div>
+                <div class="flex flex-wrap gap-2 mt-3">
+                    <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${qualityClass}">Extraction: ${quality}</span>
+                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">Type: ${material.material_type || material.file_type}</span>
+                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">Status: ${status}</span>
+                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">Chunks: ${material.chunk_count || 0}</span>
+                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">Size: ${fileSize}</span>
+                </div>
+                ${warnings.length ? `
+                    <div class="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                        ${warnings.map(warning => `<div>• ${warning}</div>`).join('')}
+                    </div>
+                ` : ''}
                 <p class="text-sm text-slate-500 mt-3 leading-6">${material.text_preview || ''}...</p>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     populateStudyMaterialSelects(preferredId = '') {
@@ -1400,7 +1435,10 @@ class TestApp {
             const placeholder = this.studyMaterials.length
                 ? 'Choose imported material...'
                 : 'No imported materials yet';
-            select.innerHTML = `<option value="">${placeholder}</option>` + this.studyMaterials.map(material => `<option value="${material.id}">${material.title}</option>`).join('');
+            select.innerHTML = `<option value="">${placeholder}</option>` + this.studyMaterials.map(material => {
+                const quality = material.extraction_quality ? ` [${material.extraction_quality}]` : '';
+                return `<option value="${material.id}">${material.title}${quality}</option>`;
+            }).join('');
             const targetValue = preferredId || current || this.studyMaterials[0]?.id || '';
             if (targetValue) select.value = targetValue;
             select.disabled = !this.studyMaterials.length;

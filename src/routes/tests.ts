@@ -14,6 +14,14 @@ function envValue(c: any, key: 'DATABASE_URL' | 'OPENAI_API_KEY') {
 const tests = new Hono<{ Bindings: Env }>()
 const studyMaterialService = new StudyMaterialService()
 
+function inferMaterialQuality(item: any): 'high' | 'medium' | 'low' {
+  const chunkCount = Number(item?.chunk_count || 0)
+  const textLength = Number(item?.extracted_text?.length || 0)
+  if (textLength < 300 || chunkCount <= 1) return 'low'
+  if (textLength < 1200 || chunkCount <= 2) return 'medium'
+  return 'high'
+}
+
 function readQueryArray(value?: string): string[] {
   if (!value) return []
   return value.split(',').map(v => v.trim()).filter(Boolean)
@@ -166,6 +174,13 @@ tests.get('/materials', authMiddleware, async (c) => {
         title: item.title,
         file_name: item.file_name,
         file_type: item.file_type,
+        mime_type: item.mime_type,
+        material_type: item.material_type,
+        processing_status: item.processing_status,
+        file_size_bytes: item.file_size_bytes,
+        chunk_count: (item as any).chunk_count || 0,
+        extraction_quality: inferMaterialQuality(item),
+        extraction_warnings: Array.isArray((item as any).extraction_warnings) ? (item as any).extraction_warnings : [],
         summary: item.summary,
         created_at: item.created_at,
         text_preview: item.extracted_text.slice(0, 280)
@@ -197,16 +212,26 @@ tests.post('/materials/import', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'File name and file content are required' }, 400)
     }
 
-    const parsed = studyMaterialService.parseBase64File(body.file_name, body.mime_type || '', body.file_content_base64)
+    const parsed = await studyMaterialService.parseBase64File(body.file_name, body.mime_type || '', body.file_content_base64)
     const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const chunks = studyMaterialService.chunkText(parsed.text)
     const materialId = await db.createStudyMaterial({
       user_id: auth.user_id,
       title: body.title || parsed.title,
       file_name: body.file_name,
       file_type: parsed.fileType,
+      mime_type: body.mime_type,
+      file_size_bytes: Buffer.from(body.file_content_base64, 'base64').length,
+      source_kind: body.source_kind || 'upload',
+      material_type: body.material_type || (parsed.fileType === 'pdf' ? 'pdf' : parsed.fileType === 'docx' ? 'doc' : parsed.fileType === 'md' || parsed.fileType === 'txt' ? 'notes' : 'other'),
+      processing_status: 'ready',
       extracted_text: parsed.text,
       summary: parsed.text.slice(0, 500)
     })
+    await db.createStudyMaterialChunks(materialId, chunks.map(chunk => ({
+      content: chunk.content,
+      token_count: Math.ceil(chunk.content.length / 4)
+    })))
 
     return c.json({
       success: true,
@@ -216,7 +241,15 @@ tests.post('/materials/import', authMiddleware, async (c) => {
         title: body.title || parsed.title,
         file_name: body.file_name,
         file_type: parsed.fileType,
+        mime_type: body.mime_type,
+        material_type: body.material_type || (parsed.fileType === 'pdf' ? 'pdf' : parsed.fileType === 'docx' ? 'doc' : parsed.fileType === 'md' || parsed.fileType === 'txt' ? 'notes' : 'other'),
+        processing_status: 'ready',
+        file_size_bytes: Buffer.from(body.file_content_base64, 'base64').length,
         stats: parsed.stats,
+        chunk_count: chunks.length,
+        extraction_quality: parsed.stats.extractionQuality,
+        extraction_warnings: parsed.stats.warnings,
+        created_at: new Date().toISOString(),
         text_preview: parsed.text.slice(0, 500)
       }
     }, 201)
@@ -245,6 +278,8 @@ tests.post('/materials/generate-test', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Material ID is required' }, 400)
     }
 
+    const normalizedNumQuestions = Math.min(Math.max(Number(body?.num_questions || 10), 10), 50)
+
     const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
     const material = await db.getStudyMaterialById(body.material_id)
     if (!material) {
@@ -260,14 +295,20 @@ tests.post('/materials/generate-test', authMiddleware, async (c) => {
     }
 
     const aiService = new AIService(openaiKey)
+    const relevantChunks = await db.searchStudyMaterialChunks(
+      material.id,
+      body.topic_focus || material.title,
+      Math.max(4, Math.min(8, normalizedNumQuestions))
+    )
     const aiResponse = await aiService.generateQuestionsFromMaterial({
       test_type: `Study Material: ${material.title}`,
       difficulty: body.difficulty,
-      num_questions: body.num_questions,
+      num_questions: normalizedNumQuestions,
       question_types: body.question_types,
       topic_focus: body.topic_focus,
       sourceText: material.extracted_text,
       sourceTitle: material.title,
+      sourceChunks: relevantChunks.map(chunk => chunk.content),
       useWebSources: body.use_web_sources
     })
 
@@ -279,8 +320,8 @@ tests.post('/materials/generate-test', authMiddleware, async (c) => {
       user_id: auth.user_id,
       test_type: `Study Material: ${material.title}`,
       difficulty: body.difficulty,
-      num_questions: body.num_questions,
-      duration_minutes: Math.max(15, body.num_questions * 2),
+      num_questions: normalizedNumQuestions,
+      duration_minutes: Math.max(15, normalizedNumQuestions * 2),
       question_types: body.question_types
     })
 
@@ -303,6 +344,8 @@ tests.post('/materials/generate-test', authMiddleware, async (c) => {
       })
     }
 
+    await db.createMaterialTestLink(material.id, configId, attemptId)
+
     const questions = await db.getTestQuestions(attemptId)
     return c.json({
       success: true,
@@ -311,7 +354,11 @@ tests.post('/materials/generate-test', authMiddleware, async (c) => {
       material: {
         id: material.id,
         title: material.title,
-        file_name: material.file_name
+        file_name: material.file_name,
+        file_type: material.file_type,
+        material_type: material.material_type,
+        processing_status: material.processing_status,
+        chunk_count: relevantChunks.length
       },
       questions: questions.map(q => ({
         id: q.id,
@@ -331,6 +378,127 @@ tests.post('/materials/generate-test', authMiddleware, async (c) => {
       }, 503)
     }
     return c.json({ success: false, message: 'Failed to generate material test' }, 500)
+  }
+})
+
+tests.post('/materials/retry-test', authMiddleware, async (c) => {
+  try {
+    const auth = getAuthUser(c)
+    if (!auth) {
+      return c.json({ success: false, message: 'Authentication required' }, 401)
+    }
+
+    const body = await c.req.json()
+    const materialId = body?.material_id
+    const missedQuestions = Array.isArray(body?.missed_questions) ? body.missed_questions : []
+    const difficulty = body?.difficulty || 'Medium'
+    const numQuestions = Math.min(Math.max(parseInt(String(body?.num_questions || '6')), 3), 20)
+    const questionTypes = Array.isArray(body?.question_types) && body.question_types.length > 0
+      ? body.question_types
+      : ['MCQ', 'TrueFalse']
+
+    if (!materialId || missedQuestions.length === 0) {
+      return c.json({ success: false, message: 'Material ID and missed questions are required' }, 400)
+    }
+
+    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const material = await db.getStudyMaterialById(materialId)
+    if (!material) return c.json({ success: false, message: 'Study material not found' }, 404)
+    if (material.user_id !== auth.user_id) return c.json({ success: false, message: 'Access denied' }, 403)
+
+    const openaiKey = envValue(c, 'OPENAI_API_KEY')
+    if (!openaiKey) {
+      return c.json({ success: false, message: 'AI service not configured' }, 503)
+    }
+
+    const searchQuery = missedQuestions
+      .map((item: any) => `${item.question || ''} ${item.correct_answer || ''}`.trim())
+      .join(' ')
+      .trim() || material.title
+
+    const normalizedNumQuestions = Math.min(Math.max(numQuestions, 10), 50)
+    const relevantChunks = await db.searchStudyMaterialChunks(material.id, searchQuery, Math.min(8, normalizedNumQuestions + 2))
+    const aiService = new AIService(openaiKey)
+    const aiResponse = await aiService.generateRetryQuestionsFromMissedConcepts({
+      sourceTitle: material.title,
+      sourceChunks: relevantChunks.map(chunk => chunk.content),
+      missedQuestions: missedQuestions.map((item: any) => ({
+        question: item.question || '',
+        correct_answer: item.correct_answer || '',
+        explanation: item.explanation || ''
+      })),
+      difficulty,
+      num_questions: normalizedNumQuestions,
+      question_types: questionTypes
+    })
+
+    if (!aiResponse.success || !aiResponse.questions) {
+      return c.json({ success: false, message: 'Failed to generate retry test', error: aiResponse.error }, 500)
+    }
+
+    const configId = await db.createTestConfiguration({
+      user_id: auth.user_id,
+      test_type: `Retry: ${material.title}`,
+      difficulty,
+      num_questions: normalizedNumQuestions,
+      duration_minutes: Math.max(10, normalizedNumQuestions * 2),
+      question_types: questionTypes
+    })
+
+    const attemptId = await db.createTestAttempt({
+      user_id: auth.user_id,
+      config_id: configId,
+      total_questions: aiResponse.questions.length
+    })
+
+    for (let i = 0; i < aiResponse.questions.length; i++) {
+      const question = aiResponse.questions[i]
+      await db.createQuestion({
+        attempt_id: attemptId,
+        question_number: i + 1,
+        question_type: question.type,
+        question_text: question.question,
+        options: question.options,
+        correct_answer: question.correct_answer,
+        ai_explanation: question.explanation
+      })
+    }
+
+    await db.createMaterialTestLink(material.id, configId, attemptId)
+
+    const questions = await db.getTestQuestions(attemptId)
+    return c.json({
+      success: true,
+      message: 'Retry test generated successfully',
+      attempt_id: attemptId,
+      material: {
+        id: material.id,
+        title: material.title,
+        file_name: material.file_name,
+        file_type: material.file_type,
+        material_type: material.material_type,
+        processing_status: material.processing_status,
+        chunk_count: relevantChunks.length
+      },
+      questions: questions.map(q => ({
+        id: q.id,
+        question_number: q.question_number,
+        question_type: q.question_type,
+        question_text: q.question_text,
+        options: q.options ? JSON.parse(q.options) : undefined
+      })),
+      config: {
+        id: configId,
+        test_type: `Retry: ${material.title}`,
+        difficulty,
+        num_questions: normalizedNumQuestions,
+        duration_minutes: Math.max(10, normalizedNumQuestions * 2),
+        question_types: questionTypes
+      }
+    }, 201)
+  } catch (error) {
+    console.error('Error generating retry test:', error)
+    return c.json({ success: false, message: 'Failed to generate retry test' }, 500)
   }
 })
 
@@ -361,9 +529,11 @@ tests.post('/materials/ask', authMiddleware, async (c) => {
     }
 
     const aiService = new AIService(openaiKey)
+    const relevantChunks = await db.searchStudyMaterialChunks(material.id, question, 5)
     const answer = await aiService.answerFromMaterial({
       sourceText: material.extracted_text,
       sourceTitle: material.title,
+      sourceChunks: relevantChunks.map(chunk => chunk.content),
       question,
       useWebSources
     })
@@ -374,7 +544,8 @@ tests.post('/materials/ask', authMiddleware, async (c) => {
       source: {
         material_id: material.id,
         title: material.title,
-        used_web_sources: useWebSources
+        used_web_sources: useWebSources,
+        chunk_count: relevantChunks.length
       },
       error: answer.error
     })
@@ -686,6 +857,7 @@ tests.post('/complete/:attempt_id', authMiddleware, async (c) => {
 
     // Get configuration for context
     const config = await db.getTestConfiguration(attempt.config_id)
+    const material = await db.getMaterialByAttemptId(attempt_id)
 
     // Calculate performance analytics
     const totalTimeSpent = questions.reduce((sum, q) => sum + q.time_spent_seconds, 0)
@@ -730,6 +902,7 @@ tests.post('/complete/:attempt_id', authMiddleware, async (c) => {
           ...config,
           question_types: JSON.parse(config.question_types)
         } : null,
+        material,
         performance_analytics: {
           average_time_per_question: avgTimePerQuestion,
           fastest_question: fastestQuestion,

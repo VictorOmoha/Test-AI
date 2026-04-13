@@ -28,12 +28,20 @@ class TestInterface {
         testConfigModal.innerHTML = `
             <div class="bg-white rounded-3xl p-8 w-full max-w-2xl mx-4 shadow-2xl">
                 <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-3xl font-black text-gray-900">Configure Test</h2>
+                    <div>
+                        <h2 class="text-3xl font-black text-gray-900">General Practice Test</h2>
+                        <p class="text-sm text-slate-500 mt-2">Best for broad category practice. For the strongest TestAI experience, upload material first and generate a grounded study test from the Materials tab.</p>
+                    </div>
                     <button id="closeTestConfigModal" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <i class="fas fa-times text-2xl"></i>
                     </button>
                 </div>
                 
+                <div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+                    <div class="font-semibold">Recommended path</div>
+                    <div class="mt-1">Materials → Generate test → Review mistakes → Retry weak areas → Ask follow-up questions from the same source.</div>
+                </div>
+
                 <form id="testConfigForm" class="space-y-6">
                     <div class="grid md:grid-cols-2 gap-6">
                         <div>
@@ -91,8 +99,8 @@ class TestInterface {
                     </div>
                     
                     <div class="pt-4">
-                        <button type="submit" class="w-full py-4 bg-primary text-white rounded-2xl font-bold text-lg shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 transition-all active:scale-[0.98]">
-                            <i class="fas fa-wand-magic-sparkles mr-2"></i> Generate AI Test
+                        <button type="submit" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-lg shadow-lg shadow-slate-500/20 hover:bg-slate-800 transition-all active:scale-[0.98]">
+                            <i class="fas fa-wand-magic-sparkles mr-2"></i> Generate General Practice Test
                         </button>
                     </div>
                 </form>
@@ -442,7 +450,9 @@ class TestInterface {
         const savedAnswer = this.answers.get(question.id);
         
         if (question.question_type === 'MCQ') {
-            const options = question.options;
+            const options = Array.isArray(question.options)
+                ? question.options
+                : (question.options ? JSON.parse(question.options) : []);
             options.forEach((option, index) => {
                 const optionDiv = document.createElement('div');
                 optionDiv.className = `test-option-card ${savedAnswer === String.fromCharCode(65 + index) ? 'selected' : ''}`;
@@ -709,70 +719,29 @@ class TestInterface {
                 this.app.showInfo('Submitting your test...');
             }
 
-            const totalQuestions = this.questions.length;
-            let correctAnswers = 0;
-
-            const reviewedQuestions = this.questions.map((question) => {
-                const userAnswer = this.answers.get(question.id) ?? null;
-                const normalizedUser = userAnswer == null ? '' : String(userAnswer).trim().toLowerCase();
-                const normalizedCorrect = question.correct_answer == null ? '' : String(question.correct_answer).trim().toLowerCase();
-                const isCorrect = normalizedUser !== '' && normalizedUser === normalizedCorrect;
-                if (isCorrect) correctAnswers++;
-
-                return {
-                    ...question,
-                    user_answer: userAnswer,
-                    is_correct: isCorrect,
-                    time_spent_seconds: this.questionTimes.get(question.id) || 0
-                };
-            });
-
-            const score = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
-            const durationSeconds = Math.max(1, Math.floor((Date.now() - this.startTime) / 1000));
-            const totalTimeSpent = reviewedQuestions.reduce((sum, q) => sum + (q.time_spent_seconds || 0), 0);
-            const averageTimePerQuestion = totalQuestions > 0 ? totalTimeSpent / totalQuestions : 0;
-
-            const correctByType = {};
-            const totalByType = {};
-            reviewedQuestions.forEach((q) => {
-                totalByType[q.question_type] = (totalByType[q.question_type] || 0) + 1;
-                if (q.is_correct) {
-                    correctByType[q.question_type] = (correctByType[q.question_type] || 0) + 1;
-                } else if (!correctByType[q.question_type]) {
-                    correctByType[q.question_type] = 0;
+            for (const question of this.questions) {
+                const userAnswer = this.answers.get(question.id);
+                if (userAnswer !== undefined && userAnswer !== null && String(userAnswer).trim() !== '') {
+                    await axios.post('/api/tests/answer', {
+                        question_id: question.id,
+                        user_answer: userAnswer,
+                        time_spent_seconds: this.questionTimes.get(question.id) || 0
+                    });
                 }
-            });
+            }
 
-            const results = {
-                attempt: {
-                    id: this.currentAttempt,
-                    score,
-                    correct_answers: correctAnswers,
-                    total_questions: totalQuestions,
-                    duration_seconds: durationSeconds,
-                    status: 'Completed'
-                },
-                questions: reviewedQuestions,
-                config: this.currentConfig || {
-                    test_type: 'Test',
-                    difficulty: 'Medium',
-                    question_types: []
-                },
-                performance_analytics: {
-                    average_time_per_question: averageTimePerQuestion,
-                    fastest_question: reviewedQuestions.length ? Math.min(...reviewedQuestions.map(q => q.time_spent_seconds || 0)) : 0,
-                    slowest_question: reviewedQuestions.length ? Math.max(...reviewedQuestions.map(q => q.time_spent_seconds || 0)) : 0,
-                    correct_by_type: correctByType,
-                    total_by_type: totalByType
-                }
-            };
+            const response = await axios.post(`/api/tests/complete/${this.currentAttempt}`);
+            if (!response.data?.success) {
+                throw new Error(response.data?.message || 'Failed to complete test');
+            }
 
+            const results = response.data.results;
             this.hideTestInterface();
             this.app.showResultsModal(results);
             this.app.showSuccess('Test submitted successfully!');
         } catch (error) {
             console.error('Error submitting test:', error);
-            this.app.showError('Failed to submit test');
+            this.app.showError(error.response?.data?.message || 'Failed to submit test');
         }
     }
 

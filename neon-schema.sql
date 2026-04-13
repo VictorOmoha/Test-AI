@@ -74,8 +74,50 @@ CREATE TABLE IF NOT EXISTS test_categories (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS study_materials (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  file_name TEXT NOT NULL,
+  file_type TEXT NOT NULL,
+  mime_type TEXT,
+  file_size_bytes INTEGER,
+  source_kind TEXT DEFAULT 'upload' CHECK (source_kind IN ('upload', 'note', 'url')),
+  material_type TEXT DEFAULT 'other' CHECK (material_type IN ('notes', 'pdf', 'slide', 'doc', 'other')),
+  processing_status TEXT DEFAULT 'ready' CHECK (processing_status IN ('pending', 'ready', 'failed')),
+  error_message TEXT,
+  extracted_text TEXT NOT NULL,
+  summary TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS study_material_chunks (
+  id TEXT PRIMARY KEY,
+  material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,
+  chunk_index INTEGER NOT NULL,
+  content TEXT NOT NULL,
+  token_count INTEGER,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS material_test_links (
+  id TEXT PRIMARY KEY,
+  material_id TEXT NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,
+  test_configuration_id TEXT NOT NULL REFERENCES test_configurations(id) ON DELETE CASCADE,
+  test_attempt_id TEXT NOT NULL REFERENCES test_attempts(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_test_configurations_user_id ON test_configurations(user_id);
 CREATE INDEX IF NOT EXISTS idx_test_attempts_user_id ON test_attempts(user_id);
 CREATE INDEX IF NOT EXISTS idx_questions_attempt_id ON questions(attempt_id);
 CREATE INDEX IF NOT EXISTS idx_test_categories_name ON test_categories(name);
+CREATE INDEX IF NOT EXISTS idx_study_materials_user_id ON study_materials(user_id);
+CREATE INDEX IF NOT EXISTS idx_study_materials_created_at ON study_materials(created_at);
+CREATE INDEX IF NOT EXISTS idx_study_materials_processing_status ON study_materials(processing_status);
+CREATE INDEX IF NOT EXISTS idx_study_material_chunks_material_id ON study_material_chunks(material_id);
+CREATE INDEX IF NOT EXISTS idx_study_material_chunks_chunk_index ON study_material_chunks(material_id, chunk_index);
+CREATE INDEX IF NOT EXISTS idx_material_test_links_material_id ON material_test_links(material_id);
+CREATE INDEX IF NOT EXISTS idx_material_test_links_attempt_id ON material_test_links(test_attempt_id);

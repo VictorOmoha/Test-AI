@@ -8,9 +8,21 @@ Set these in Vercel project settings:
 - `OPENAI_API_KEY` = your OpenAI key
 
 ## Database setup
+### Fresh Neon database
 Run this SQL in Neon:
 1. `neon-schema.sql`
 2. `seed.sql` (optional, for starter categories/demo data)
+
+### Existing Neon database
+If the app was already initialized from older schema/migrations, do not blindly rerun everything.
+Use:
+1. `migrations/0003_neon_materials_patch.sql`
+2. `seed.sql` only if you still need starter categories/demo data
+
+This patch adds the material-study workflow tables required for:
+- imported study materials
+- persisted material chunks
+- links between materials and generated tests
 
 ## Notes
 - The app backend now reads `DATABASE_URL` instead of Cloudflare D1 bindings.

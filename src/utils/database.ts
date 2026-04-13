@@ -1,5 +1,5 @@
 import { Pool } from '@neondatabase/serverless'
-import { User, TestConfiguration, TestAttempt, Question, TestCategory, StudyMaterial } from '../types/database'
+import { User, TestConfiguration, TestAttempt, Question, TestCategory, StudyMaterial, StudyMaterialChunk } from '../types/database'
 import { generateUUID } from './auth'
 
 export interface SqlLike {
@@ -244,6 +244,12 @@ export class DatabaseService {
     title: string;
     file_name: string;
     file_type: string;
+    mime_type?: string;
+    file_size_bytes?: number;
+    source_kind?: 'upload' | 'note' | 'url';
+    material_type?: 'notes' | 'pdf' | 'slide' | 'doc' | 'other';
+    processing_status?: 'pending' | 'ready' | 'failed';
+    error_message?: string;
     extracted_text: string;
     summary?: string;
   }): Promise<string> {
@@ -251,12 +257,72 @@ export class DatabaseService {
     const now = new Date().toISOString()
 
     await this.db.query(
-      `INSERT INTO study_materials (id, user_id, title, file_name, file_type, extracted_text, summary, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [id, material.user_id, material.title, material.file_name, material.file_type, material.extracted_text, material.summary || null, now, now]
+      `INSERT INTO study_materials (
+        id, user_id, title, file_name, file_type, mime_type, file_size_bytes, source_kind,
+        material_type, processing_status, error_message, extracted_text, summary, created_at, updated_at
+      )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+      [
+        id,
+        material.user_id,
+        material.title,
+        material.file_name,
+        material.file_type,
+        material.mime_type || null,
+        material.file_size_bytes || null,
+        material.source_kind || 'upload',
+        material.material_type || 'other',
+        material.processing_status || 'ready',
+        material.error_message || null,
+        material.extracted_text,
+        material.summary || null,
+        now,
+        now
+      ]
     )
 
     return id
+  }
+
+  async createStudyMaterialChunks(material_id: string, chunks: Array<{ content: string; token_count?: number }>): Promise<void> {
+    const now = new Date().toISOString()
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i]
+      await this.db.query(
+        `INSERT INTO study_material_chunks (id, material_id, chunk_index, content, token_count, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [generateUUID(), material_id, i + 1, chunk.content, chunk.token_count || null, now]
+      )
+    }
+  }
+
+  async getStudyMaterialChunks(material_id: string): Promise<StudyMaterialChunk[]> {
+    const result = await this.db.query(
+      'SELECT * FROM study_material_chunks WHERE material_id = $1 ORDER BY chunk_index ASC',
+      [material_id]
+    )
+    return result.rows as StudyMaterialChunk[]
+  }
+
+  async createMaterialTestLink(material_id: string, test_configuration_id: string, test_attempt_id: string): Promise<void> {
+    await this.db.query(
+      `INSERT INTO material_test_links (id, material_id, test_configuration_id, test_attempt_id, created_at)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [generateUUID(), material_id, test_configuration_id, test_attempt_id, new Date().toISOString()]
+    )
+  }
+
+  async getMaterialByAttemptId(test_attempt_id: string): Promise<Pick<StudyMaterial, 'id' | 'title' | 'file_name'> | null> {
+    const result = await this.db.query(
+      `SELECT sm.id, sm.title, sm.file_name
+       FROM material_test_links mtl
+       INNER JOIN study_materials sm ON sm.id = mtl.material_id
+       WHERE mtl.test_attempt_id = $1
+       ORDER BY mtl.created_at DESC
+       LIMIT 1`,
+      [test_attempt_id]
+    )
+    return (result.rows[0] as Pick<StudyMaterial, 'id' | 'title' | 'file_name'>) || null
   }
 
   async getStudyMaterialById(id: string): Promise<StudyMaterial | null> {
@@ -266,10 +332,44 @@ export class DatabaseService {
 
   async getUserStudyMaterials(user_id: string, limit: number = 20): Promise<StudyMaterial[]> {
     const result = await this.db.query(
-      'SELECT * FROM study_materials WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2',
+      `SELECT sm.*, COALESCE(chunk_counts.chunk_count, 0)::int AS chunk_count
+       FROM study_materials sm
+       LEFT JOIN (
+         SELECT material_id, COUNT(*) AS chunk_count
+         FROM study_material_chunks
+         GROUP BY material_id
+       ) chunk_counts ON chunk_counts.material_id = sm.id
+       WHERE sm.user_id = $1
+       ORDER BY sm.created_at DESC
+       LIMIT $2`,
       [user_id, limit]
     )
     return result.rows as StudyMaterial[]
+  }
+
+  async searchStudyMaterialChunks(material_id: string, query: string, limit: number = 4): Promise<StudyMaterialChunk[]> {
+    const normalizedTerms = query
+      .toLowerCase()
+      .split(/\W+/)
+      .map(term => term.trim())
+      .filter(term => term.length >= 3)
+      .slice(0, 8)
+
+    const chunks = await this.getStudyMaterialChunks(material_id)
+    if (normalizedTerms.length === 0) {
+      return chunks.slice(0, limit)
+    }
+
+    const scored = chunks
+      .map(chunk => {
+        const text = chunk.content.toLowerCase()
+        const score = normalizedTerms.reduce((sum, term) => sum + (text.includes(term) ? 1 : 0), 0)
+        return { chunk, score }
+      })
+      .filter(item => item.score > 0)
+      .sort((a, b) => b.score - a.score || a.chunk.chunk_index - b.chunk.chunk_index)
+
+    return (scored.length > 0 ? scored.map(item => item.chunk) : chunks).slice(0, limit)
   }
 
   async getTestStatistics(user_id: string): Promise<{

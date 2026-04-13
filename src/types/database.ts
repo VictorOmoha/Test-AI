@@ -141,16 +141,44 @@ export interface StudyMaterial {
   title: string;
   file_name: string;
   file_type: string;
+  mime_type?: string;
+  file_size_bytes?: number;
+  source_kind?: 'upload' | 'note' | 'url';
+  material_type?: 'notes' | 'pdf' | 'slide' | 'doc' | 'other';
+  processing_status?: 'pending' | 'ready' | 'failed';
+  error_message?: string;
+  extraction_quality?: 'high' | 'medium' | 'low';
+  extraction_warnings?: string[];
+  chunk_count?: number;
   extracted_text: string;
   summary?: string;
   created_at: string;
   updated_at: string;
 }
 
+export interface StudyMaterialChunk {
+  id: string;
+  material_id: string;
+  chunk_index: number;
+  content: string;
+  token_count?: number;
+  created_at: string;
+}
+
+export interface MaterialTestLink {
+  id: string;
+  material_id: string;
+  test_configuration_id: string;
+  test_attempt_id: string;
+  created_at: string;
+}
+
 export interface CreateStudyMaterialRequest {
   title?: string;
   file_name: string;
   mime_type?: string;
+  source_kind?: 'upload' | 'note' | 'url';
+  material_type?: 'notes' | 'pdf' | 'slide' | 'doc' | 'other';
   file_content_base64: string;
 }
 

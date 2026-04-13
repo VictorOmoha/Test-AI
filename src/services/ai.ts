@@ -86,6 +86,7 @@ export class AIService {
   async generateQuestionsFromMaterial(request: AIQuestionRequest & {
     sourceText: string;
     sourceTitle: string;
+    sourceChunks?: string[];
     useWebSources?: boolean;
   }): Promise<AIGenerationResponse> {
     if (!this.apiKey || this.apiKey === 'your-openai-api-key-here' || this.apiKey.length < 10) {
@@ -93,7 +94,9 @@ export class AIService {
     }
 
     try {
-      const context = this.studyMaterialService.buildContextSnippet(request.sourceText)
+      const context = request.sourceChunks?.length
+        ? request.sourceChunks.map((chunk, index) => `[Chunk ${index + 1}]\n${chunk}`).join('\n\n').slice(0, 7000)
+        : this.studyMaterialService.buildContextSnippet(request.sourceText)
       const prompt = `You are TestAI, an intelligent study coach. Generate exactly ${request.num_questions} questions from the uploaded study material titled "${request.sourceTitle}".
 
 Use the study material as the primary source of truth.
@@ -169,11 +172,14 @@ Respond with valid JSON in this exact format:
   async answerFromMaterial(params: {
     sourceText: string;
     sourceTitle: string;
+    sourceChunks?: string[];
     question: string;
     useWebSources?: boolean;
   }): Promise<{ success: boolean; answer: string; error?: string }> {
     if (!this.apiKey || this.apiKey === 'your-openai-api-key-here' || this.apiKey.length < 10) {
-      const context = this.studyMaterialService.buildContextSnippet(params.sourceText, 3500)
+      const context = params.sourceChunks?.length
+        ? params.sourceChunks.map((chunk, index) => `[Chunk ${index + 1}]\n${chunk}`).join('\n\n').slice(0, 3500)
+        : this.studyMaterialService.buildContextSnippet(params.sourceText, 3500)
       return {
         success: true,
         answer: `Based on ${params.sourceTitle}, here is the most relevant study context I found:\n\n${context}\n\nQuestion: ${params.question}\n\nWeb-supported answers need a live search integration next.`
@@ -181,7 +187,9 @@ Respond with valid JSON in this exact format:
     }
 
     try {
-      const context = this.studyMaterialService.buildContextSnippet(params.sourceText)
+      const context = params.sourceChunks?.length
+        ? params.sourceChunks.map((chunk, index) => `[Chunk ${index + 1}]\n${chunk}`).join('\n\n').slice(0, 7000)
+        : this.studyMaterialService.buildContextSnippet(params.sourceText)
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -211,6 +219,112 @@ Respond with valid JSON in this exact format:
     } catch (error) {
       console.error('Material answer generation failed:', error)
       return { success: false, answer: '', error: error instanceof Error ? error.message : 'Failed to answer from material' }
+    }
+  }
+
+  async generateRetryQuestionsFromMissedConcepts(params: {
+    sourceTitle: string;
+    sourceChunks?: string[];
+    missedQuestions: Array<{ question: string; correct_answer: string; explanation?: string }>;
+    difficulty: 'Easy' | 'Medium' | 'Hard';
+    num_questions: number;
+    question_types: ('MCQ' | 'TrueFalse' | 'ShortAnswer')[];
+  }): Promise<AIGenerationResponse> {
+    const context = params.sourceChunks?.length
+      ? params.sourceChunks.map((chunk, index) => `[Chunk ${index + 1}]\n${chunk}`).join('\n\n').slice(0, 7000)
+      : ''
+
+    const missedSummary = params.missedQuestions
+      .slice(0, 8)
+      .map((item, index) => `${index + 1}. Missed question: ${item.question}\nCorrect answer: ${item.correct_answer}\nExplanation: ${item.explanation || 'None provided'}`)
+      .join('\n\n')
+
+    if (!this.apiKey || this.apiKey === 'your-openai-api-key-here' || this.apiKey.length < 10) {
+      return this.generateQuestionsFromMaterialFallback({
+        test_type: `Retry: ${params.sourceTitle}`,
+        difficulty: params.difficulty,
+        num_questions: params.num_questions,
+        question_types: params.question_types,
+        sourceText: `${context}\n\n${missedSummary}`,
+        sourceTitle: params.sourceTitle
+      })
+    }
+
+    try {
+      const prompt = `You are TestAI. Generate a focused retry test that helps a student improve on concepts they missed.
+
+Source material title: ${params.sourceTitle}
+
+Relevant study context:
+${context || 'No chunked context available.'}
+
+Missed concepts to target:
+${missedSummary}
+
+Generate exactly ${params.num_questions} ${params.difficulty}-level questions using these question types: ${params.question_types.join(', ')}.
+
+Rules:
+- Target the same concepts the student missed, but do not repeat the exact same questions verbatim.
+- Stay grounded in the source material context.
+- Include clear explanations.
+- Return valid JSON in the same format as the standard question generator.`
+
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You create focused retry practice sets from missed concepts and source material. Always return valid JSON.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 3200,
+          temperature: 0.45,
+          response_format: { type: 'json_object' }
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      const content = data.choices?.[0]?.message?.content
+      if (!content) throw new Error('No content received from OpenAI API')
+
+      const parsed = JSON.parse(content)
+      const validatedQuestions = this.validateQuestions(parsed.questions, {
+        test_type: `Retry: ${params.sourceTitle}`,
+        difficulty: params.difficulty,
+        num_questions: params.num_questions,
+        question_types: params.question_types
+      })
+
+      return {
+        success: true,
+        questions: validatedQuestions,
+        tokens_used: data.usage?.total_tokens || 0,
+        cost_estimate: this.estimateCost(data.usage?.total_tokens || 0)
+      }
+    } catch (error) {
+      console.error('Retry question generation failed:', error)
+      return this.generateQuestionsFromMaterialFallback({
+        test_type: `Retry: ${params.sourceTitle}`,
+        difficulty: params.difficulty,
+        num_questions: params.num_questions,
+        question_types: params.question_types,
+        sourceText: `${context}\n\n${missedSummary}`,
+        sourceTitle: params.sourceTitle
+      })
     }
   }
 

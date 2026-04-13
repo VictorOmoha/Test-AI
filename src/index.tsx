@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
@@ -839,7 +840,7 @@ app.get('/', async (c) => {
                                     <div>
                                         <label class="form-label">Choose file</label>
                                         <input type="file" id="materialFile" class="form-input" accept=".txt,.md,.markdown,.pdf,.docx">
-                                        <p class="text-xs text-slate-400 mt-2">Best supported right now: TXT and Markdown. PDF/DOCX use lightweight text extraction.</p>
+                                        <p class="text-xs text-slate-400 mt-2">Best supported: TXT, Markdown, PDF, and DOCX. If extraction quality is weak, TestAI will warn you after import.</p>
                                     </div>
                                     <button id="importMaterialBtn" class="btn-primary">
                                         <i class="fas fa-upload mr-2"></i>Import Material
