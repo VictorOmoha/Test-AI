@@ -285,15 +285,21 @@ export class DatabaseService {
   }
 
   async createStudyMaterialChunks(material_id: string, chunks: Array<{ content: string; token_count?: number }>): Promise<void> {
+    if (!chunks.length) return
+
     const now = new Date().toISOString()
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i]
-      await this.db.query(
-        `INSERT INTO study_material_chunks (id, material_id, chunk_index, content, token_count, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [generateUUID(), material_id, i + 1, chunk.content, chunk.token_count || null, now]
-      )
-    }
+    const values: any[] = []
+    const placeholders = chunks.map((chunk, index) => {
+      const base = index * 6
+      values.push(generateUUID(), material_id, index + 1, chunk.content, chunk.token_count || null, now)
+      return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6})`
+    })
+
+    await this.db.query(
+      `INSERT INTO study_material_chunks (id, material_id, chunk_index, content, token_count, created_at)
+       VALUES ${placeholders.join(', ')}`,
+      values
+    )
   }
 
   async getStudyMaterialChunks(material_id: string): Promise<StudyMaterialChunk[]> {
