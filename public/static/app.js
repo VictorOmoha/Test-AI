@@ -1310,6 +1310,12 @@ class TestApp {
             return;
         }
 
+        const maxFileSizeBytes = 2 * 1024 * 1024;
+        if (file.size > maxFileSizeBytes) {
+            this.showError('This file is too large for the current upload flow. Please keep it under 2 MB, or paste/export a smaller TXT, Markdown, or DOCX file. Large uploads can stall in the browser.');
+            return;
+        }
+
         this.materialsState.importing = true;
         this.materialsState.error = '';
         this.setupMaterialsSection();

@@ -840,7 +840,7 @@ app.get('/', async (c) => {
                                     <div>
                                         <label class="form-label">Choose file</label>
                                         <input type="file" id="materialFile" class="form-input" accept=".txt,.md,.markdown,.docx">
-                                        <p class="text-xs text-slate-400 mt-2">Best supported right now: TXT, Markdown, and DOCX. PDF import is temporarily unavailable in production while the parser runtime is being stabilized.</p>
+                                        <p class="text-xs text-slate-400 mt-2">Best supported right now: TXT, Markdown, and DOCX under about 2 MB. PDF import is temporarily unavailable in production while the parser runtime is being stabilized.</p>
                                     </div>
                                     <button id="importMaterialBtn" class="btn-primary">
                                         <i class="fas fa-upload mr-2"></i>Import Material
