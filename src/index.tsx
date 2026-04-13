@@ -821,7 +821,7 @@ app.get('/', async (c) => {
                             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                 <div>
                                     <div class="text-sm font-semibold text-slate-900">Recommended first step</div>
-                                    <div class="text-sm text-slate-500 mt-1">Upload a note, handout, or PDF, then generate a test from it. This is the fastest way to get real value from TestAI.</div>
+                                    <div class="text-sm text-slate-500 mt-1">Upload a note, handout, TXT, Markdown, or DOCX file, then generate a test from it. This is the fastest way to get real value from TestAI. PDF import is temporarily unavailable in production.</div>
                                 </div>
                                 <span class="text-xs font-bold px-3 py-1 rounded-full bg-white text-blue-600 border border-blue-200 whitespace-nowrap">Best workflow</span>
                             </div>
@@ -839,8 +839,8 @@ app.get('/', async (c) => {
                                     </div>
                                     <div>
                                         <label class="form-label">Choose file</label>
-                                        <input type="file" id="materialFile" class="form-input" accept=".txt,.md,.markdown,.pdf,.docx">
-                                        <p class="text-xs text-slate-400 mt-2">Best supported: TXT, Markdown, PDF, and DOCX. If extraction quality is weak, TestAI will warn you after import.</p>
+                                        <input type="file" id="materialFile" class="form-input" accept=".txt,.md,.markdown,.docx">
+                                        <p class="text-xs text-slate-400 mt-2">Best supported right now: TXT, Markdown, and DOCX. PDF import is temporarily unavailable in production while the parser runtime is being stabilized.</p>
                                     </div>
                                     <button id="importMaterialBtn" class="btn-primary">
                                         <i class="fas fa-upload mr-2"></i>Import Material

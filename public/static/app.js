@@ -1089,7 +1089,7 @@ class TestApp {
             : [
                 {
                     title: 'Start with your real study material',
-                    description: 'Upload notes, slides, or a PDF first. That gives TestAI something real to generate high-value questions from.'
+                    description: 'Upload notes, slides, TXT, Markdown, or DOCX first. That gives TestAI something real to generate high-value questions from. PDF import is temporarily unavailable in production.'
                 },
                 {
                     title: 'Use generic tests for warm-up only',
@@ -1382,7 +1382,7 @@ class TestApp {
         if (!this.studyMaterials.length) {
             list.innerHTML = `
                 <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-500 leading-6">
-                    No materials imported yet. Import a TXT, Markdown, PDF, or DOCX file to unlock material-based test generation.
+                    No materials imported yet. Import a TXT, Markdown, or DOCX file to unlock material-based test generation. PDF import is temporarily unavailable in production.
                 </div>
             `;
             return;
