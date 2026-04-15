@@ -111,10 +111,32 @@ export class StudyMaterialService {
     }
 
     if (extension === 'pdf') {
-      const pdf = await import('pdf-parse')
-      const parse = (pdf as any).default || pdf
-      const result = await parse(buffer)
-      return result.text || ''
+      const { default: PDFParser } = await import('pdf2json')
+      const parser = new (PDFParser as any)()
+      const text: string = await new Promise((resolve, reject) => {
+        (parser as any).on('pdfParser_dataReady', (pdfData: any) => {
+          try {
+            const pages = pdfData?.Pages || []
+            const text = pages
+              .map((page: any) =>
+                (page.Texts || [])
+                  .map((t: any) =>
+                    (t.R || [])
+                      .map((r: any) => decodeURIComponent(r.T || ''))
+                      .join('')
+                  )
+                  .join(' ')
+              )
+              .join('\n\n')
+            resolve(text)
+          } catch (err) {
+            reject(err)
+          }
+        })
+        ;(parser as any).on('pdfParser_dataError', (err: any) => reject(err?.parserError || err))
+        ;(parser as any).parseBuffer(buffer)
+      })
+      return text || ''
     }
 
     if (extension === 'docx') {

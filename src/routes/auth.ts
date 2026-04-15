@@ -5,7 +5,7 @@ import { Env } from '../types/database'
 import { hashPassword, verifyPassword, generateJWT, verifyJWT, generateUUID, getEnv } from '../utils/auth'
 
 function getPool(c: any) {
-  const connectionString = getEnv('DATABASE_URL', c)
+  const connectionString = getEnv(c, 'DATABASE_URL')
   if (!connectionString) throw new Error('DATABASE_URL is not configured')
   const sql = neon(connectionString)
   return {
@@ -44,7 +44,7 @@ async function registerUser(c: any, payload: { email?: string; password?: string
     return c.json({ success: false, message: 'Email already registered' }, 409)
   }
 
-  const jwtSecret = getEnv('JWT_SECRET', c)
+  const jwtSecret = getEnv(c, 'JWT_SECRET')
   if (!jwtSecret) {
     return c.json({ success: false, message: 'Server misconfigured: JWT_SECRET not set' }, 500)
   }
@@ -80,7 +80,7 @@ async function loginUser(c: any, payload: { email?: string; password?: string })
     return c.json({ success: false, message: 'Invalid credentials' }, 401)
   }
 
-  const jwtSecret = getEnv('JWT_SECRET', c)
+  const jwtSecret = getEnv(c, 'JWT_SECRET')
   if (!jwtSecret) {
     return c.json({ success: false, message: 'Server misconfigured: JWT_SECRET not set' }, 500)
   }
@@ -146,7 +146,7 @@ auth.post('/verify', async (c) => {
       return c.json({ success: false, message: 'No token provided' }, 400)
     }
 
-    const jwtSecret = getEnv('JWT_SECRET', c)
+    const jwtSecret = getEnv(c, 'JWT_SECRET')
     if (!jwtSecret) {
       return c.json({ success: false, message: 'Server misconfigured: JWT_SECRET not set' }, 500)
     }

@@ -16,6 +16,7 @@ const injectMaxDuration = () => ({
   }
 })
 
+
 export default defineConfig({
   define: {
     'process.env': 'process.env'

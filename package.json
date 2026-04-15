@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npx tailwindcss -i ./src/input.css -o ./public/static/tailwind.css --minify && vite build",
     "preview": "vite preview",
     "deploy": "vercel --prod",
     "clean-port": "node -e \"process.exit(0)\"",
@@ -20,15 +20,18 @@
     "dotenv": "^16.6.1",
     "hono": "^4.9.2",
     "mammoth": "^1.12.0",
-    "pdf-parse": "^2.4.5",
+    "pdf2json": "^4.0.2",
     "pg": "^8.20.0",
     "typescript": "^5.9.2",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "@hono/node-server": "^1.13.8",
-    "@hono/vite-build": "^1.2.0",
-    "@hono/vite-dev-server": "^0.18.2",
+    "@hono/node-server": "^1.19.14",
+    "@hono/vite-build": "^1.11.1",
+    "@hono/vite-dev-server": "^0.25.1",
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.10",
+    "tailwindcss": "^3.4.19",
     "vite": "^6.3.5"
   }
 }

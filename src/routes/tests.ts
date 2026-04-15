@@ -347,10 +347,15 @@ tests.post('/materials/generate-test', authMiddleware, async (c) => {
     await db.createMaterialTestLink(material.id, configId, attemptId)
 
     const questions = await db.getTestQuestions(attemptId)
+    const config = await db.getTestConfiguration(configId)
     return c.json({
       success: true,
       message: 'Material-based test generated successfully',
       attempt_id: attemptId,
+      config: {
+        ...config,
+        question_types: body.question_types
+      },
       material: {
         id: material.id,
         title: material.title,

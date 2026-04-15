@@ -89,7 +89,7 @@ app.get('/', async (c) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>TestAI — AI-Powered Testing Platform</title>
         <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="/static/tailwind.css" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -98,36 +98,6 @@ app.get('/', async (c) => {
         <style>
           * { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
         </style>
-        <script>
-          tailwind.config = {
-            theme: {
-              extend: {
-                colors: {
-                  primary: { DEFAULT: '#2563EB', light: '#3B82F6', dark: '#1D4ED8' },
-                  secondary: '#475569',
-                  success: '#10B981',
-                  warning: '#F59E0B',
-                  error: '#F43F5E',
-                  purple: '#8B5CF6',
-                  cyan: '#06B6D4',
-                  rose: '#F43F5E'
-                },
-                fontFamily: {
-                  sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif']
-                },
-                animation: {
-                  'fade-up': 'fadeInUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both'
-                },
-                keyframes: {
-                  fadeInUp: {
-                    from: { opacity: 0, transform: 'translateY(20px)' },
-                    to: { opacity: 1, transform: 'translateY(0)' }
-                  }
-                }
-              }
-            }
-          }
-        </script>
     </head>
     <body class="bg-[#F8FAFC] min-h-screen antialiased text-slate-900">
 
@@ -831,7 +801,7 @@ app.get('/', async (c) => {
                             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                 <div>
                                     <div class="text-sm font-semibold text-slate-900">Recommended first step</div>
-                                    <div class="text-sm text-slate-500 mt-1">Upload a note, handout, TXT, Markdown, or DOCX file, then generate a test from it. This is the fastest way to get real value from TestAI. PDF import is temporarily unavailable in production.</div>
+                                    <div class="text-sm text-slate-500 mt-1">Upload a note, handout, or TXT, Markdown, DOCX, or PDF file to generate a test from your own material.</div>
                                 </div>
                                 <span class="text-xs font-bold px-3 py-1 rounded-full bg-white text-blue-600 border border-blue-200 whitespace-nowrap">Best workflow</span>
                             </div>
@@ -849,8 +819,8 @@ app.get('/', async (c) => {
                                     </div>
                                     <div>
                                         <label class="form-label">Choose file</label>
-                                        <input type="file" id="materialFile" class="form-input" accept=".txt,.md,.markdown,.docx">
-                                        <p class="text-xs text-slate-400 mt-2">Best supported right now: TXT, Markdown, and DOCX under about 2 MB. PDF import is temporarily unavailable in production while the parser runtime is being stabilized.</p>
+                                        <input type="file" id="materialFile" class="form-input" accept=".txt,.md,.markdown,.docx,.pdf">
+                                        <p class="text-xs text-slate-400 mt-2">Supported formats: TXT, Markdown, DOCX, and PDF under 2 MB.</p>
                                     </div>
                                     <button id="importMaterialBtn" class="btn-primary">
                                         <i class="fas fa-upload mr-2"></i>Import Material

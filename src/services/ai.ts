@@ -218,7 +218,14 @@ Respond with valid JSON in this exact format:
       return { success: true, answer: data.choices?.[0]?.message?.content || 'No answer generated.' }
     } catch (error) {
       console.error('Material answer generation failed:', error)
-      return { success: false, answer: '', error: error instanceof Error ? error.message : 'Failed to answer from material' }
+      // Fallback: return relevant context from the material directly
+      const context = params.sourceChunks?.length
+        ? params.sourceChunks.map((chunk, index) => `[Section ${index + 1}]\n${chunk}`).join('\n\n').slice(0, 4000)
+        : this.studyMaterialService.buildContextSnippet(params.sourceText, 4000)
+      return {
+        success: true,
+        answer: `I found the most relevant sections from "${params.sourceTitle}" for your question:\n\n${context}\n\n⚠️ AI-powered analysis is temporarily unavailable. The sections above are the closest matches from your material.`
+      }
     }
   }
 
