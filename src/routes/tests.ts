@@ -4,12 +4,8 @@ import { Env, CreateTestConfigRequest, StartTestRequest, SubmitAnswerRequest, Cr
 import { DatabaseService } from '../utils/database'
 import { AIService } from '../services/ai'
 import { authMiddleware, getAuthUser } from '../middleware/auth'
-import { generateUUID } from '../utils/auth'
+import { generateUUID, getEnv } from '../utils/auth'
 import { StudyMaterialService } from '../services/study-material'
-
-function envValue(c: any, key: 'DATABASE_URL' | 'OPENAI_API_KEY') {
-  return c?.env?.[key] || process.env[key]
-}
 
 const tests = new Hono<{ Bindings: Env }>()
 const studyMaterialService = new StudyMaterialService()
@@ -50,7 +46,7 @@ tests.get('/query-config', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Invalid question types' }, 400)
     }
 
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     const configId = await db.createTestConfiguration({
       user_id: auth.user_id,
       test_type,
@@ -80,7 +76,7 @@ tests.get('/query-start', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Configuration ID is required' }, 400)
     }
 
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     const config = await db.getTestConfiguration(config_id)
     if (!config) {
       return c.json({ success: false, message: 'Test configuration not found' }, 404)
@@ -91,7 +87,7 @@ tests.get('/query-start', authMiddleware, async (c) => {
     }
 
     const category = await db.getTestCategoryByName(config.test_type)
-    const openaiKey = envValue(c, 'OPENAI_API_KEY')
+    const openaiKey = getEnv(c, 'OPENAI_API_KEY')
     if (!openaiKey) {
       return c.json({ success: false, message: 'AI service not configured' }, 503)
     }
@@ -164,7 +160,7 @@ tests.get('/materials', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Authentication required' }, 401)
     }
 
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     const materials = await db.getUserStudyMaterials(auth.user_id)
 
     return c.json({
@@ -213,7 +209,7 @@ tests.post('/materials/import', authMiddleware, async (c) => {
     }
 
     const parsed = await studyMaterialService.parseBase64File(body.file_name, body.mime_type || '', body.file_content_base64)
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     const chunks = studyMaterialService.chunkText(parsed.text)
     const fileBytes = Buffer.from(body.file_content_base64, 'base64').length
     const fileExt = parsed.fileType
@@ -284,7 +280,7 @@ tests.post('/materials/generate-test', authMiddleware, async (c) => {
 
     const normalizedNumQuestions = Math.min(Math.max(Number(body?.num_questions || 10), 10), 50)
 
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     const material = await db.getStudyMaterialById(body.material_id)
     if (!material) {
       return c.json({ success: false, message: 'Study material not found' }, 404)
@@ -293,7 +289,7 @@ tests.post('/materials/generate-test', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Access denied' }, 403)
     }
 
-    const openaiKey = envValue(c, 'OPENAI_API_KEY')
+    const openaiKey = getEnv(c, 'OPENAI_API_KEY')
     if (!openaiKey) {
       return c.json({ success: false, message: 'AI service not configured' }, 503)
     }
@@ -405,12 +401,12 @@ tests.post('/materials/retry-test', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Material ID and missed questions are required' }, 400)
     }
 
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     const material = await db.getStudyMaterialById(materialId)
     if (!material) return c.json({ success: false, message: 'Study material not found' }, 404)
     if (material.user_id !== auth.user_id) return c.json({ success: false, message: 'Access denied' }, 403)
 
-    const openaiKey = envValue(c, 'OPENAI_API_KEY')
+    const openaiKey = getEnv(c, 'OPENAI_API_KEY')
     if (!openaiKey) {
       return c.json({ success: false, message: 'AI service not configured' }, 503)
     }
@@ -522,12 +518,12 @@ tests.post('/materials/ask', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Material ID and question are required' }, 400)
     }
 
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     const material = await db.getStudyMaterialById(materialId)
     if (!material) return c.json({ success: false, message: 'Study material not found' }, 404)
     if (material.user_id !== auth.user_id) return c.json({ success: false, message: 'Access denied' }, 403)
 
-    const openaiKey = envValue(c, 'OPENAI_API_KEY')
+    const openaiKey = getEnv(c, 'OPENAI_API_KEY')
     if (!openaiKey) {
       return c.json({ success: false, message: 'AI service not configured' }, 503)
     }
@@ -569,7 +565,7 @@ tests.post('/materials/ask', authMiddleware, async (c) => {
 // Get all available test categories
 tests.get('/categories', async (c) => {
   try {
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     const categories = await db.getAllTestCategories()
     
     return c.json({
@@ -624,7 +620,7 @@ tests.post('/config', authMiddleware, async (c) => {
     }
 
     // Create configuration
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     const configId = await db.createTestConfiguration({
       user_id: auth.user_id,
       test_type,
@@ -654,7 +650,7 @@ tests.get('/config', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Authentication required' }, 401)
     }
 
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     const configs = await db.getUserTestConfigurations(auth.user_id)
     
     return c.json({
@@ -686,7 +682,7 @@ tests.post('/start', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Configuration ID is required' }, 400)
     }
 
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     
     // Get test configuration
     const config = await db.getTestConfiguration(config_id)
@@ -702,7 +698,7 @@ tests.post('/start', authMiddleware, async (c) => {
     const category = await db.getTestCategoryByName(config.test_type)
     
     // Generate questions using AI
-    const openaiKey = envValue(c, 'OPENAI_API_KEY')
+    const openaiKey = getEnv(c, 'OPENAI_API_KEY')
     if (!openaiKey) {
       return c.json({ success: false, message: 'AI service not configured' }, 503)
     }
@@ -793,7 +789,7 @@ tests.post('/answer', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Question ID, answer, and time spent are required' }, 400)
     }
 
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     
     // Update question with user's answer
     await db.updateQuestionAnswer(question_id, user_answer, time_spent_seconds)
@@ -822,7 +818,7 @@ tests.post('/complete/:attempt_id', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Attempt ID is required' }, 400)
     }
 
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     
     // Get test attempt
     const attempt = await db.getTestAttempt(attempt_id)
@@ -932,7 +928,7 @@ tests.get('/history', authMiddleware, async (c) => {
     }
 
     const limit = parseInt(c.req.query('limit') || '20')
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     
     const attempts = await db.getUserTestAttempts(auth.user_id, limit)
     
@@ -955,7 +951,7 @@ tests.get('/stats', authMiddleware, async (c) => {
       return c.json({ success: false, message: 'Authentication required' }, 401)
     }
 
-    const db = DatabaseService.fromDatabaseUrl(envValue(c, 'DATABASE_URL'))
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     const stats = await db.getTestStatistics(auth.user_id)
     
     return c.json({

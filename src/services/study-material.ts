@@ -111,7 +111,10 @@ export class StudyMaterialService {
     }
 
     if (extension === 'pdf') {
-      throw new Error('PDF import is temporarily unavailable in production while the server parser runtime is being stabilized. Please use TXT, Markdown, or DOCX for now.')
+      const pdf = await import('pdf-parse')
+      const parse = (pdf as any).default || pdf
+      const result = await parse(buffer)
+      return result.text || ''
     }
 
     if (extension === 'docx') {

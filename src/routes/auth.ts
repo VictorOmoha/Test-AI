@@ -2,14 +2,10 @@
 import { Hono } from 'hono'
 import { neon } from '@neondatabase/serverless'
 import { Env } from '../types/database'
-import { hashPassword, verifyPassword, generateJWT, verifyJWT, generateUUID } from '../utils/auth'
-
-function envValue(c: any, key: 'DATABASE_URL' | 'JWT_SECRET') {
-  return c?.env?.[key] || process.env[key]
-}
+import { hashPassword, verifyPassword, generateJWT, verifyJWT, generateUUID, getEnv } from '../utils/auth'
 
 function getPool(c: any) {
-  const connectionString = envValue(c, 'DATABASE_URL')
+  const connectionString = getEnv('DATABASE_URL', c)
   if (!connectionString) throw new Error('DATABASE_URL is not configured')
   const sql = neon(connectionString)
   return {
@@ -48,7 +44,10 @@ async function registerUser(c: any, payload: { email?: string; password?: string
     return c.json({ success: false, message: 'Email already registered' }, 409)
   }
 
-  const jwtSecret = envValue(c, 'JWT_SECRET') || 'default-jwt-secret-change-in-production'
+  const jwtSecret = getEnv('JWT_SECRET', c)
+  if (!jwtSecret) {
+    return c.json({ success: false, message: 'Server misconfigured: JWT_SECRET not set' }, 500)
+  }
   const token = await generateJWT(user.id, user.email, jwtSecret)
 
   return c.json({ success: true, message: 'User registered successfully', user, token }, 201)
@@ -81,7 +80,10 @@ async function loginUser(c: any, payload: { email?: string; password?: string })
     return c.json({ success: false, message: 'Invalid credentials' }, 401)
   }
 
-  const jwtSecret = envValue(c, 'JWT_SECRET') || 'default-jwt-secret-change-in-production'
+  const jwtSecret = getEnv('JWT_SECRET', c)
+  if (!jwtSecret) {
+    return c.json({ success: false, message: 'Server misconfigured: JWT_SECRET not set' }, 500)
+  }
   const token = await generateJWT(user.id, user.email, jwtSecret)
 
   const { password_hash: _, ...userWithoutPassword } = user
@@ -144,7 +146,10 @@ auth.post('/verify', async (c) => {
       return c.json({ success: false, message: 'No token provided' }, 400)
     }
 
-    const jwtSecret = envValue(c, 'JWT_SECRET') || 'default-jwt-secret-change-in-production'
+    const jwtSecret = getEnv('JWT_SECRET', c)
+    if (!jwtSecret) {
+      return c.json({ success: false, message: 'Server misconfigured: JWT_SECRET not set' }, 500)
+    }
     const payload = await verifyJWT(token, jwtSecret)
 
     if (!payload) {

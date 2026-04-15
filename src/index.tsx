@@ -6,22 +6,18 @@ import { auth } from './routes/auth'
 import { tests } from './routes/tests'
 import { social } from './routes/social'
 import { DatabaseService } from './utils/database'
+import { getEnv } from './utils/auth'
 
 const app = new Hono<{ Bindings: Env }>()
 
-function getEnvValue(c: any, key: 'DATABASE_URL' | 'OPENAI_API_KEY' | 'JWT_SECRET') {
-  const processEnv = typeof process !== 'undefined' ? process.env : undefined
-  return c?.env?.[key] || processEnv?.[key]
-}
-
 function getDb(c: any) {
-  return DatabaseService.fromDatabaseUrl(getEnvValue(c, 'DATABASE_URL'))
+  return DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
 }
 
 // Middleware
 app.use('*', logger())
 app.use('/api/*', cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173'],
+  origin: (origin) => origin, // Allow same-origin; add external origins as needed
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -29,19 +25,19 @@ app.use('/api/*', cors({
 
 // Fail-fast middleware: reject API calls immediately if DB is unavailable
 app.use('/api/auth/*', async (c, next) => {
-  if (!getEnvValue(c, 'DATABASE_URL')) {
+  if (!getEnv(c, 'DATABASE_URL')) {
     return c.json({ success: false, message: 'Database not available' }, 503)
   }
   await next()
 })
 app.use('/api/tests/*', async (c, next) => {
-  if (!getEnvValue(c, 'DATABASE_URL')) {
+  if (!getEnv(c, 'DATABASE_URL')) {
     return c.json({ success: false, message: 'Database not available' }, 503)
   }
   await next()
 })
 app.use('/api/social/*', async (c, next) => {
-  if (!getEnvValue(c, 'DATABASE_URL')) {
+  if (!getEnv(c, 'DATABASE_URL')) {
     return c.json({ success: false, message: 'Database not available' }, 503)
   }
   await next()
@@ -339,26 +335,26 @@ app.get('/', async (c) => {
                         </div>
                     </div>
 
-                    <!-- Stats Bar -->
+                    <!-- Value Proposition Bar -->
                     <div data-guest-only="true" class="max-w-5xl mx-auto px-6 mb-28">
                         <div class="glass-card rounded-2xl p-8 md:p-12 relative overflow-hidden">
                             <div class="absolute inset-0 bg-gradient-to-r from-primary/5 via-purple/5 to-cyan/5"></div>
                             <div class="relative stats-bar">
                                 <div class="stat-item">
-                                    <div class="stat-number gradient-text">50K+</div>
-                                    <div class="stat-label">Tests Taken</div>
+                                    <div class="stat-number gradient-text"><i class="fas fa-brain"></i></div>
+                                    <div class="stat-label">AI-Generated Questions</div>
                                 </div>
                                 <div class="stat-item">
-                                    <div class="stat-number gradient-text">98%</div>
-                                    <div class="stat-label">Accuracy Rate</div>
+                                    <div class="stat-number gradient-text"><i class="fas fa-file-alt"></i></div>
+                                    <div class="stat-label">Upload Your Notes</div>
                                 </div>
                                 <div class="stat-item">
-                                    <div class="stat-number gradient-text">200+</div>
-                                    <div class="stat-label">Categories</div>
+                                    <div class="stat-number gradient-text"><i class="fas fa-chart-bar"></i></div>
+                                    <div class="stat-label">Instant Scoring</div>
                                 </div>
                                 <div class="stat-item">
-                                    <div class="stat-number gradient-text">4.9<span class="text-lg">/5</span></div>
-                                    <div class="stat-label">User Rating</div>
+                                    <div class="stat-number gradient-text"><i class="fas fa-graduation-cap"></i></div>
+                                    <div class="stat-label">6 Subjects</div>
                                 </div>
                             </div>
                         </div>
@@ -408,31 +404,24 @@ app.get('/', async (c) => {
                     <div class="footer-grid">
                         <div class="footer-col">
                             <h4>Product</h4>
-                            <a href="#">Features</a>
-                            <a href="#">Pricing</a>
-                            <a href="#">API</a>
+                            <a href="#howItWorks">How It Works</a>
+                            <a href="#featuresSection">Features</a>
                         </div>
                         <div class="footer-col">
-                            <h4>Resources</h4>
-                            <a href="#">Documentation</a>
-                            <a href="#">Blog</a>
-                            <a href="#">Tutorials</a>
+                            <h4>Subjects</h4>
+                            <a href="#">Mathematics</a>
+                            <a href="#">Science</a>
+                            <a href="#">Programming</a>
+                            <a href="#">History</a>
                         </div>
                         <div class="footer-col">
                             <h4>Company</h4>
                             <a href="#">About</a>
-                            <a href="#">Careers</a>
                             <a href="#">Contact</a>
-                        </div>
-                        <div class="footer-col">
-                            <h4>Legal</h4>
-                            <a href="#">Privacy</a>
-                            <a href="#">Terms</a>
-                            <a href="#">Security</a>
                         </div>
                     </div>
                     <div class="footer-bottom">
-                        <p>&copy; 2026 TestAI. Built with <i class="fas fa-heart text-rose-500 text-xs"></i> and AI.</p>
+                        <p>&copy; 2026 TestAI. AI-powered practice tests from your own study material.</p>
                     </div>
                 </footer>
 
@@ -458,9 +447,9 @@ app.get('/', async (c) => {
                                 <div class="stat-card-content">
                                     <div class="stat-card-info">
                                         <p class="stat-card-label text-slate-500">Tests Taken</p>
-                                        <p class="stat-card-value text-slate-900" id="testsTaken">24</p>
-                                        <p class="stat-card-change positive">
-                                            <i class="fas fa-arrow-trend-up mr-1"></i>Momentum is building
+                                        <p class="stat-card-value text-slate-900" id="testsTaken">0</p>
+                                        <p class="stat-card-change neutral">
+                                            <i class="fas fa-rocket mr-1"></i>Take your first test
                                         </p>
                                     </div>
                                     <div class="stat-card-icon primary">
@@ -473,9 +462,9 @@ app.get('/', async (c) => {
                                 <div class="stat-card-content">
                                     <div class="stat-card-info">
                                         <p class="stat-card-label text-slate-500">Average Score</p>
-                                        <p class="stat-card-value text-slate-900" id="averageScore">78%</p>
-                                        <p class="stat-card-change positive">
-                                            <i class="fas fa-arrow-trend-up mr-1"></i>Consistent improvement
+                                        <p class="stat-card-value text-slate-900" id="averageScore">--</p>
+                                        <p class="stat-card-change neutral">
+                                            <i class="fas fa-minus mr-1"></i>Complete a test to see
                                         </p>
                                     </div>
                                     <div class="stat-card-icon success">
@@ -488,9 +477,9 @@ app.get('/', async (c) => {
                                 <div class="stat-card-content">
                                     <div class="stat-card-info">
                                         <p class="stat-card-label text-slate-500">Test Categories</p>
-                                        <p class="stat-card-value text-slate-900" id="testCategories">5</p>
-                                        <p class="stat-card-change positive">
-                                            <i class="fas fa-plus mr-1"></i>Broader subject coverage
+                                        <p class="stat-card-value text-slate-900" id="testCategories">0</p>
+                                        <p class="stat-card-change neutral">
+                                            <i class="fas fa-plus mr-1"></i>Try different subjects
                                         </p>
                                     </div>
                                     <div class="stat-card-icon purple">
@@ -503,9 +492,9 @@ app.get('/', async (c) => {
                                 <div class="stat-card-content">
                                     <div class="stat-card-info">
                                         <p class="stat-card-label text-slate-500">Time Spent</p>
-                                        <p class="stat-card-value text-slate-900" id="timeSpent">12h 30m</p>
-                                        <p class="stat-card-change positive">
-                                            <i class="fas fa-book-open mr-1"></i>Focused practice hours
+                                        <p class="stat-card-value text-slate-900" id="timeSpent">0m</p>
+                                        <p class="stat-card-change neutral">
+                                            <i class="fas fa-clock mr-1"></i>Start studying
                                         </p>
                                     </div>
                                     <div class="stat-card-icon warning">
@@ -631,6 +620,10 @@ app.get('/', async (c) => {
                                                     <input type="checkbox" value="TrueFalse" class="w-4 h-4 accent-primary rounded">
                                                     <span class="text-sm text-slate-600">T/F</span>
                                                 </label>
+                                                <label class="flex items-center gap-1.5 cursor-pointer">
+                                                    <input type="checkbox" value="ShortAnswer" class="w-4 h-4 accent-primary rounded">
+                                                    <span class="text-sm text-slate-600">Short Answer</span>
+                                                </label>
                                             </div>
                                         </div>
                                         <div>
@@ -740,6 +733,23 @@ app.get('/', async (c) => {
                                             <option value="45">45 minutes</option>
                                             <option value="60">1 hour</option>
                                         </select>
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Question Types</label>
+                                        <div class="flex flex-wrap gap-3">
+                                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                                <input type="checkbox" value="MCQ" checked class="w-4 h-4 accent-primary rounded">
+                                                <span class="text-sm text-slate-600">MCQ</span>
+                                            </label>
+                                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                                <input type="checkbox" value="TrueFalse" class="w-4 h-4 accent-primary rounded">
+                                                <span class="text-sm text-slate-600">True/False</span>
+                                            </label>
+                                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                                <input type="checkbox" value="ShortAnswer" class="w-4 h-4 accent-primary rounded">
+                                                <span class="text-sm text-slate-600">Short Answer</span>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                                 <button id="createTestBtn" class="mt-6 btn-primary">

@@ -1,11 +1,23 @@
 // Authentication utilities for AI Test Application
-import { createHash, randomUUID, createHmac, timingSafeEqual } from 'node:crypto'
+import { randomUUID, createHmac, timingSafeEqual } from 'node:crypto'
+import bcrypt from 'bcryptjs'
 
 export interface JWTPayload {
   user_id: string;
   email: string;
   exp: number;
   iat: number;
+}
+
+// Centralized env helper
+export function getEnv(c: any, key: 'DATABASE_URL' | 'OPENAI_API_KEY' | 'JWT_SECRET'): string | undefined {
+  return c?.env?.[key] || process.env[key]
+}
+
+export function requireEnv(c: any, key: 'DATABASE_URL' | 'OPENAI_API_KEY' | 'JWT_SECRET'): string {
+  const value = getEnv(c, key)
+  if (!value) throw new Error(`${key} environment variable is required`)
+  return value
 }
 
 function base64Url(input: Buffer | string): string {
@@ -19,16 +31,20 @@ function decodeBase64Url(input: string): string {
   return Buffer.from(normalized + '='.repeat(padding), 'base64').toString('utf8')
 }
 
+const BCRYPT_ROUNDS = 10
+
 export async function hashPassword(password: string): Promise<string> {
-  return createHash('sha256').update(password + 'ai-test-salt-2024').digest('hex')
+  return bcrypt.hash(password, BCRYPT_ROUNDS)
 }
 
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-  const hashedInput = await hashPassword(password)
-  const left = Buffer.from(hashedInput)
-  const right = Buffer.from(hashedPassword)
-  if (left.length !== right.length) return false
-  return timingSafeEqual(left, right)
+  // Support legacy SHA-256 hashes for migration
+  if (hashedPassword.length === 64 && /^[a-f0-9]+$/i.test(hashedPassword)) {
+    const { createHash } = await import('node:crypto')
+    const legacyHash = createHash('sha256').update(password + 'ai-test-salt-2024').digest('hex')
+    return legacyHash === hashedPassword
+  }
+  return bcrypt.compare(password, hashedPassword)
 }
 
 export async function generateJWT(user_id: string, email: string, secret: string): Promise<string> {
