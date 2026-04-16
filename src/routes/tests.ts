@@ -266,6 +266,36 @@ tests.post('/materials/import', authMiddleware, async (c) => {
   }
 })
 
+tests.delete('/materials/:material_id', authMiddleware, async (c) => {
+  try {
+    const auth = getAuthUser(c)
+    if (!auth) {
+      return c.json({ success: false, message: 'Authentication required' }, 401)
+    }
+
+    const materialId = c.req.param('material_id')
+    if (!materialId) {
+      return c.json({ success: false, message: 'Material ID is required' }, 400)
+    }
+
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
+    const material = await db.getStudyMaterialById(materialId)
+    if (!material) {
+      return c.json({ success: false, message: 'Study material not found' }, 404)
+    }
+    if (material.user_id !== auth.user_id) {
+      return c.json({ success: false, message: 'Access denied' }, 403)
+    }
+
+    await db.deleteStudyMaterial(materialId)
+
+    return c.json({ success: true, message: 'Material deleted successfully' })
+  } catch (error) {
+    console.error('Error deleting study material:', error)
+    return c.json({ success: false, message: 'Failed to delete study material' }, 500)
+  }
+})
+
 tests.post('/materials/generate-test', authMiddleware, async (c) => {
   try {
     const auth = getAuthUser(c)

@@ -325,6 +325,12 @@ export class DatabaseService {
     )
   }
 
+  async deleteStudyMaterial(materialId: string): Promise<void> {
+    await this.db.query('DELETE FROM study_material_chunks WHERE material_id = $1', [materialId])
+    await this.db.query('DELETE FROM material_test_links WHERE material_id = $1', [materialId])
+    await this.db.query('DELETE FROM study_materials WHERE id = $1', [materialId])
+  }
+
   async getStudyMaterialChunks(material_id: string): Promise<StudyMaterialChunk[]> {
     const result = await this.db.query(
       'SELECT * FROM study_material_chunks WHERE material_id = $1 ORDER BY chunk_index ASC',

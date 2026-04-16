@@ -1300,6 +1300,25 @@ class TestApp {
         }
     }
 
+    async handleDeleteMaterial(materialId, materialTitle) {
+        if (!confirm(`Delete "${materialTitle}"? This cannot be undone.`)) return;
+        try {
+            const response = await axios.delete(`/api/tests/materials/${materialId}`);
+            if (response.data?.success) {
+                this.showSuccess('Material deleted.');
+                this.studyMaterials = this.studyMaterials.filter(m => m.id !== materialId);
+                this.renderStudyMaterials();
+                this.populateStudyMaterialSelects();
+                this.setupMaterialsSection();
+            } else {
+                this.showError(response.data?.message || 'Failed to delete material.');
+            }
+        } catch (error) {
+            console.error('Delete material failed:', error);
+            this.showError(error.response?.data?.message || 'Failed to delete material.');
+        }
+    }
+
     async handleImportMaterial() {
         const fileInput = document.getElementById('materialFile');
         const titleInput = document.getElementById('materialTitle');
@@ -1418,7 +1437,12 @@ class TestApp {
                         <div class="font-semibold text-slate-900">${material.title}</div>
                         <div class="text-xs text-slate-400 mt-1">${material.file_name} • ${material.file_type.toUpperCase()}</div>
                     </div>
-                    <div class="text-xs text-slate-400">${this.formatRelativeDate(material.created_at)}</div>
+                    <div class="flex items-center gap-2">
+                        <div class="text-xs text-slate-400">${this.formatRelativeDate(material.created_at)}</div>
+                        <button type="button" class="text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50" onclick="testApp.handleDeleteMaterial('${material.id}', '${material.title.replace(/'/g, "\\'")}')" title="Delete material">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="flex flex-wrap gap-2 mt-3">
                     <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${qualityClass}">Extraction: ${quality}</span>
