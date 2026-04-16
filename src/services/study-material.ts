@@ -114,9 +114,15 @@ export class StudyMaterialService {
       const { default: PDFParser } = await import('pdf2json')
       const parser = new (PDFParser as any)()
       const text: string = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('PDF parsing timed out')), 30000);
         (parser as any).on('pdfParser_dataReady', (pdfData: any) => {
+          clearTimeout(timeout)
           try {
             const pages = pdfData?.Pages || []
+            if (pages.length === 0) {
+              reject(new Error('PDF contains no readable pages. It may be a scanned image or protected document.'))
+              return
+            }
             const text = pages
               .map((page: any) =>
                 (page.Texts || [])
@@ -133,9 +139,19 @@ export class StudyMaterialService {
             reject(err)
           }
         })
-        ;(parser as any).on('pdfParser_dataError', (err: any) => reject(err?.parserError || err))
+        ;(parser as any).on('pdfParser_dataError', (err: any) => {
+          clearTimeout(timeout)
+          reject(err?.parserError || err)
+        })
         ;(parser as any).parseBuffer(buffer)
       })
+      const cleaned = this.normalizeText(text)
+      if (!cleaned || cleaned.length < 40) {
+        throw new Error('PDF produced almost no readable text. Try exporting as text or a cleaner PDF format.')
+      }
+      if (this.looksLikeExtractionGarbage(cleaned)) {
+        throw new Error('PDF extraction returned corrupted content. This PDF may use unsupported encoding. Try re-saving or exporting as a text-based format.')
+      }
       return text || ''
     }
 
@@ -173,6 +189,29 @@ export class StudyMaterialService {
     if (text.length < 300 || warnings.length >= 2) return 'low'
     if (text.length < 1200 || warnings.length === 1) return 'medium'
     return 'high'
+  }
+
+  private looksLikeExtractionGarbage(text: string): boolean {
+    const sample = text.slice(0, 2000)
+    // Stack trace patterns
+    if (/Traceback \(most recent call last\)/.test(sample)) return true
+    if (/File ".*\.py", line \d+/.test(sample)) return true
+    // Terminal/console output patterns
+    if (/Microsoft Windows \[Version/.test(sample)) return true
+    if (/C:\\Users\\/.test(sample) && /\\AppData\\/.test(sample)) return true
+    // Excessive file paths (extraction artifact)
+    const pathMatches = sample.match(/[A-Z]:\\[^\s]+|[\/](?:usr|home|var|opt)\/[^\s]+/g) || []
+    if (pathMatches.length > 5) return true
+    // Binary/encoding garbage: high ratio of non-printable or symbol-heavy content
+    const printableRatio = (sample.match(/[\w\s.,;:!?'"()\-]/g) || []).length / Math.max(sample.length, 1)
+    if (printableRatio < 0.5) return true
+    // Repetitive garbage: same short token repeated excessively
+    const words = sample.toLowerCase().split(/\s+/).filter(w => w.length > 2)
+    if (words.length > 20) {
+      const unique = new Set(words)
+      if (unique.size / words.length < 0.15) return true
+    }
+    return false
   }
 
   private normalizeText(text: string): string {
