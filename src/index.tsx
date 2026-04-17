@@ -70,17 +70,15 @@ app.get('/api/health', async (c) => {
   }
 })
 
-// Main application route
-app.get('/', async (c) => {
-  // Preload categories for immediate rendering (SSR -> client bootstrap)
+// Shared HTML shell — inject defaultScreen to control landing vs app
+async function renderApp(c: any, defaultScreen: string) {
   let ssrCategories: Array<{ id: string; name: string; description: string }> = []
   try {
     const db = getDb(c)
     const all = await db.getAllTestCategories()
-    ssrCategories = all.map(cat => ({ id: cat.id, name: cat.name, description: cat.description }))
-  } catch (e) {
-    // ignore; frontend will fallback/fetch
-  }
+    ssrCategories = all.map((cat: any) => ({ id: cat.id, name: cat.name, description: cat.description }))
+  } catch (e) { /* ignore */ }
+
   return c.html(`
     <!DOCTYPE html>
     <html lang="en">
@@ -96,6 +94,7 @@ app.get('/', async (c) => {
 
       <script>
         window.__SSR_CATEGORIES = ${JSON.stringify(ssrCategories)};
+        window.__DEFAULT_SCREEN = ${JSON.stringify(defaultScreen)};
       </script>
       <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
       <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
@@ -104,6 +103,12 @@ app.get('/', async (c) => {
     </body>
     </html>
   `)
-})
+}
+
+// Landing page (marketing) — default for /
+app.get('/', async (c) => renderApp(c, 'landing'))
+
+// App dashboard — logged-in experience
+app.get('/app', async (c) => renderApp(c, 'dashboard'))
 
 export default app

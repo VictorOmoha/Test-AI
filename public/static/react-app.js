@@ -1518,7 +1518,13 @@ function App() {
       return saved ? {...TWEAK_DEFAULTS, ...JSON.parse(saved)} : TWEAK_DEFAULTS;
     } catch { return TWEAK_DEFAULTS; }
   });
-  const [screen, setScreen] = React.useState(() => localStorage.getItem('testai.screen') || 'dashboard');
+  const [screen, setScreen] = React.useState(() => {
+    // URL-based routing: /app → dashboard, / → landing
+    const path = window.location.pathname;
+    if (path === '/app') return 'dashboard';
+    if (path === '/') return 'landing';
+    return localStorage.getItem('testai.screen') || window.__DEFAULT_SCREEN || 'dashboard';
+  });
   const [tweaksOn, setTweaksOn] = React.useState(false);
 
   React.useEffect(() => { localStorage.setItem('testai.screen', screen); }, [screen]);
