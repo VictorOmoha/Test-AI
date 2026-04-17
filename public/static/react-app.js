@@ -326,7 +326,20 @@ const Greeting = () => (
 );
 
 // Variant A — Upload is literally the hero
-const HeroA = () => (
+const HeroA = ({ navigate }) => {
+  const fileRef = React.useRef(null);
+  const [dragOver, setDragOver] = React.useState(false);
+  const [uploaded, setUploaded] = React.useState(null);
+
+  const handleFiles = (files) => {
+    if (files && files.length > 0) {
+      setUploaded(files[0].name);
+      // Auto-navigate to test setup after brief delay
+      setTimeout(() => navigate('tests'), 600);
+    }
+  };
+
+  return (
   <div className="card" style={{padding:0, overflow:'hidden', marginBottom:32, borderColor:'var(--accent)'}}>
     <div style={{
       padding:'40px 36px 36px',
@@ -343,21 +356,29 @@ const HeroA = () => (
         </div>
         <div style={{display:'flex', gap:8}}>
           <button className="btn btn-ghost btn-sm">Paste text</button>
-          <button className="btn btn-ghost btn-sm">From library</button>
+          <button onClick={() => navigate('materials')} className="btn btn-ghost btn-sm">From library</button>
         </div>
       </div>
 
-      <div style={{
+      <input ref={fileRef} type="file" accept=".pdf,.docx,.md,.txt" style={{display:'none'}}
+             onChange={e => handleFiles(e.target.files)}/>
+
+      <div onClick={() => fileRef.current?.click()}
+           onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+           onDragLeave={() => setDragOver(false)}
+           onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+           style={{
         marginTop:24,
-        border:'1.5px dashed oklch(80% 0.008 80)',
+        border:'1.5px dashed ' + (dragOver ? 'var(--accent)' : 'oklch(80% 0.008 80)'),
         borderRadius:10,
         padding:'36px 24px',
         textAlign:'center',
-        background:'var(--bg-elev)'
+        background: dragOver ? 'var(--accent-soft)' : 'var(--bg-elev)',
+        cursor:'pointer', transition:'all 0.15s'
       }}>
         <Icon.upload size={26}/>
         <div style={{marginTop:12, fontSize:16, fontWeight:500}}>
-          Drop any PDF, DOCX, or notes file here
+          {uploaded ? uploaded : 'Drop any PDF, DOCX, or notes file here'}
         </div>
         <div style={{marginTop:4, fontSize:13, color:'var(--ink-3)'}}>
           or <span style={{color:'var(--accent-ink)', fontWeight:500, borderBottom:'1px solid var(--accent-ink)'}}>browse files</span> — up to 200 pages
@@ -367,14 +388,18 @@ const HeroA = () => (
 
     <div style={{padding:'14px 20px', display:'flex', alignItems:'center', gap:14, fontSize:12.5, color:'var(--ink-3)'}}>
       <span className="mono">Recent:</span>
-      <span style={{color:'var(--ink-2)', cursor:'pointer'}}>lecture_7_thermo.pdf</span>
+      <span onClick={() => { setUploaded('lecture_7_thermo.pdf'); setTimeout(() => navigate('tests'), 600); }}
+            style={{color:'var(--ink-2)', cursor:'pointer'}}>lecture_7_thermo.pdf</span>
       <span>·</span>
-      <span style={{color:'var(--ink-2)', cursor:'pointer'}}>ch04_cell_bio.pdf</span>
+      <span onClick={() => { setUploaded('ch04_cell_bio.pdf'); setTimeout(() => navigate('tests'), 600); }}
+            style={{color:'var(--ink-2)', cursor:'pointer'}}>ch04_cell_bio.pdf</span>
       <span>·</span>
-      <span style={{color:'var(--ink-2)', cursor:'pointer'}}>statmech_wk3.md</span>
+      <span onClick={() => { setUploaded('statmech_wk3.md'); setTimeout(() => navigate('tests'), 600); }}
+            style={{color:'var(--ink-2)', cursor:'pointer'}}>statmech_wk3.md</span>
     </div>
   </div>
-);
+  );
+};
 
 // Variant B — Pick from library
 const HeroB = ({ navigate }) => {
@@ -540,7 +565,7 @@ const WeakSpots = ({ navigate }) => (
 );
 
 const Dashboard = ({ heroVariant, navigate }) => {
-  const Hero = heroVariant === 'a' ? HeroA : heroVariant === 'b' ? () => <HeroB navigate={navigate}/> : () => <HeroC navigate={navigate}/>;
+  const Hero = heroVariant === 'a' ? () => <HeroA navigate={navigate}/> : heroVariant === 'b' ? () => <HeroB navigate={navigate}/> : () => <HeroC navigate={navigate}/>;
   return (
     <div className="content">
       <Greeting/>
@@ -556,7 +581,8 @@ const Dashboard = ({ heroVariant, navigate }) => {
 window.Dashboard = Dashboard;
 // Materials library + upload
 
-const Materials = () => {
+const Materials = ({ navigate }) => {
+  const fileRef = React.useRef(null);
   const files = [
     {name:'Lecture 7 — Thermodynamics', type:'PDF', pages:34, added:'Apr 15', tests:4, subject:'Physics', subj:'physics', covered:82},
     {name:'Chapter 4 — Cell biology', type:'PDF', pages:52, added:'Apr 14', tests:2, subject:'Biology', subj:'biology', covered:41},
@@ -577,7 +603,9 @@ const Materials = () => {
         </div>
         <div style={{marginLeft:'auto', display:'flex', gap:8}}>
           <button className="btn btn-ghost"><Icon.plus size={12}/> New folder</button>
-          <button className="btn btn-primary"><Icon.upload size={12}/> Upload</button>
+          <input ref={fileRef} type="file" accept=".pdf,.docx,.md,.txt" style={{display:'none'}}
+               onChange={e => { if(e.target.files?.length) navigate('tests'); }} />
+        <button onClick={() => fileRef.current?.click()} className="btn btn-primary"><Icon.upload size={12}/> Upload</button>
         </div>
       </div>
 
