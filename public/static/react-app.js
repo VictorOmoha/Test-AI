@@ -107,7 +107,7 @@ const Topbar = ({ crumbs, right }) => (
 window.Sidebar = Sidebar;
 window.Topbar = Topbar;
 // Landing page — focused, confident, not SaaS.
-const Landing = () => (
+const Landing = ({ navigate }) => (
   <div style={{minHeight:'100vh', background:'var(--bg)'}}>
     {/* Colored announcement bar */}
     <div style={{
@@ -117,7 +117,7 @@ const Landing = () => (
     }}>
       <span className="mono" style={{opacity:0.75, textTransform:'uppercase', letterSpacing:'0.14em', fontSize:10.5}}>New</span>
       <span style={{margin:'0 12px'}}>Ask questions about your material in plain English — with page citations.</span>
-      <span style={{textDecoration:'underline', opacity:0.9}}>Try it →</span>
+      <button onClick={() => navigate('ask')} style={{textDecoration:'underline', opacity:0.9, background:'none', border:'none', color:'inherit', cursor:'pointer', fontFamily:'inherit', fontSize:'inherit'}}>Try it →</button>
     </div>
     <div style={{
       maxWidth: 1180, margin: '0 auto',
@@ -135,8 +135,8 @@ const Landing = () => (
         <span>Changelog</span>
       </nav>
       <div style={{marginLeft:'auto', display:'flex', gap:10, alignItems:'center'}}>
-        <span style={{fontSize:13.5, color:'var(--ink-2)'}}>Sign in</span>
-        <button className="btn btn-primary btn-sm">Start studying</button>
+        <button onClick={() => navigate('auth')} style={{fontSize:13.5, color:'var(--ink-2)', background:'none', border:'none', cursor:'pointer', fontFamily:'inherit'}}>Sign in</button>
+        <button onClick={() => navigate('dashboard')} className="btn btn-primary btn-sm">Start studying</button>
       </div>
     </div>
 
@@ -156,10 +156,10 @@ const Landing = () => (
             actually in the document — not trivia it made up.
           </p>
           <div style={{display:'flex', gap:12, marginTop:36, alignItems:'center'}}>
-            <button className="btn btn-accent btn-lg">
+            <button onClick={() => navigate('materials')} className="btn btn-accent btn-lg">
               <Icon.upload/> Try it with a file
             </button>
-            <button className="btn btn-ghost btn-lg">See a sample test</button>
+            <button onClick={() => navigate('tests')} className="btn btn-ghost btn-lg">See a sample test</button>
           </div>
           <div style={{marginTop:48, display:'flex', gap:40, alignItems:'baseline', color:'var(--ink-3)', fontSize:13}}>
             <div>
@@ -377,7 +377,7 @@ const HeroA = () => (
 );
 
 // Variant B — Pick from library
-const HeroB = () => {
+const HeroB = ({ navigate }) => {
   const items = [
     {t:'Thermodynamics', s:'Lecture 7 · 34 pages', progress:68, subj:'physics'},
     {t:'Cell Biology', s:'Chapter 4 · 52 pages', progress:42, subj:'biology'},
@@ -410,7 +410,7 @@ const HeroB = () => {
               <span style={{width: it.progress + '%', background:`var(--${it.subj})`}}/>
             </div>
             <div style={{marginTop:14, fontSize:13, color:`var(--${it.subj}-ink)`, fontWeight:500, display:'flex', alignItems:'center', gap:6}}>
-              Start a test <Icon.arrow size={12}/>
+              <span onClick={() => navigate('tests')} style={{cursor:'pointer'}}>Start a test <Icon.arrow size={12}/></span>
             </div>
           </div>
         ))}
@@ -420,7 +420,7 @@ const HeroB = () => {
 };
 
 // Variant C — single command prompt
-const HeroC = () => (
+const HeroC = ({ navigate }) => (
   <div style={{marginBottom:32}}>
     <div className="card" style={{padding:'32px 30px'}}>
       <div className="eyebrow" style={{marginBottom:14}}>What do you want to study?</div>
@@ -452,7 +452,7 @@ const HeroC = () => (
   </div>
 );
 
-const ContinueBar = () => (
+const ContinueBar = ({ navigate }) => (
   <div className="card" style={{padding:'14px 18px', marginBottom:32,
        display:'flex', alignItems:'center', gap:16,
        background:'var(--physics-soft)',
@@ -465,11 +465,11 @@ const ContinueBar = () => (
       </div>
     </div>
     <span className="mono" style={{fontSize:11, color:'var(--ink-3)'}}>2h ago</span>
-    <button className="btn btn-primary btn-sm">Resume <Icon.arrow size={12}/></button>
+    <button onClick={() => navigate('taking')} className="btn btn-primary btn-sm">Resume <Icon.arrow size={12}/></button>
   </div>
 );
 
-const RecentTests = () => {
+const RecentTests = ({ navigate }) => {
   const rows = [
     {name:'Thermodynamics · Quick 10', when:'Yesterday', score:80, q:10, took:'11:02', subj:'physics'},
     {name:'Cell biology · Ch. 4 hard', when:'2d ago', score:64, q:20, took:'24:18', subj:'biology'},
@@ -482,7 +482,7 @@ const RecentTests = () => {
         <span>Recent tests</span>
         <span className="count">4 this week</span>
         <span className="rule"/>
-        <span style={{fontSize:12, color:'var(--ink-3)', cursor:'pointer'}}>See all →</span>
+        <span onClick={() => navigate('history')} style={{fontSize:12, color:'var(--ink-3)', cursor:'pointer'}}>See all →</span>
       </div>
       <div style={{border:'1px solid var(--rule)', borderRadius:8, overflow:'hidden', background:'var(--bg-elev)'}}>
         {rows.map((r, i) => (
@@ -512,7 +512,7 @@ const RecentTests = () => {
   );
 };
 
-const WeakSpots = () => (
+const WeakSpots = ({ navigate }) => (
   <div>
     <div className="section-title">
       <span>Worth another look</span>
@@ -531,7 +531,7 @@ const WeakSpots = () => (
           </div>
           <div style={{fontSize:12.5, color:'var(--ink-2)', marginTop:6}}>{w.s} · {w.m}</div>
           <div style={{marginTop:12, fontSize:12.5, color:w.fg, fontWeight:600}}>
-            5-question drill →
+            <span onClick={() => navigate('tests')} style={{cursor:'pointer'}}>5-question drill →</span>
           </div>
         </div>
       ))}
@@ -539,16 +539,16 @@ const WeakSpots = () => (
   </div>
 );
 
-const Dashboard = ({ heroVariant }) => {
-  const Hero = heroVariant === 'a' ? HeroA : heroVariant === 'b' ? HeroB : HeroC;
+const Dashboard = ({ heroVariant, navigate }) => {
+  const Hero = heroVariant === 'a' ? HeroA : heroVariant === 'b' ? () => <HeroB navigate={navigate}/> : () => <HeroC navigate={navigate}/>;
   return (
     <div className="content">
       <Greeting/>
       <Hero/>
-      <ContinueBar/>
-      <RecentTests/>
+      <ContinueBar navigate={navigate}/>
+      <RecentTests navigate={navigate}/>
       <div style={{height:40}}/>
-      <WeakSpots/>
+      <WeakSpots navigate={navigate}/>
     </div>
   );
 };
@@ -677,8 +677,16 @@ const Materials = () => {
 window.Materials = Materials;
 // Test setup — NOT a stack of dropdowns. Opinionated, minimal.
 
-const TestSetup = () => {
+const TestSetup = ({ navigate }) => {
   const [count, setCount] = React.useState(15);
+  // Keyboard shortcut: Cmd/Ctrl+Enter to start
+  React.useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') navigate('taking');
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
   const [difficulty, setDifficulty] = React.useState('mixed');
   const [types, setTypes] = React.useState({mcq:true, tf:true, short:false});
   const [timed, setTimed] = React.useState(true);
@@ -837,7 +845,7 @@ const TestSetup = () => {
         </div>
 
         <div style={{display:'flex', gap:12, alignItems:'center'}}>
-          <button className="btn btn-accent btn-lg" style={{flex:1, justifyContent:'center'}}>
+          <button onClick={() => navigate('taking')} className="btn btn-accent btn-lg" style={{flex:1, justifyContent:'center'}}>
             Start test <Icon.arrow size={14}/>
           </button>
           <button className="btn btn-ghost btn-lg">Save as template</button>
@@ -853,9 +861,37 @@ const TestSetup = () => {
 window.TestSetup = TestSetup;
 // Test-taking — distraction-free writing-app vibe
 
-const TestTaking = () => {
-  const [selected, setSelected] = React.useState(null);
-  const [flagged, setFlagged] = React.useState(false);
+const TestTaking = ({ navigate }) => {
+  const questions = [
+    {k:'A', t:'W = nRT ln(2)'},
+    {k:'B', t:'W = nRT (2 − 1) = nRT'},
+    {k:'C', t:'W = nC_v(T₂ − T₁)'},
+    {k:'D', t:'W = 0, since temperature is constant'},
+  ];
+  const questionText = 'A gas undergoes an isothermal expansion from volume V₁ to 2V₁ at temperature T. Which expression gives the work done by the gas?';
+  const totalQ = 15;
+  const [currentQ, setCurrentQ] = React.useState(0);
+  const [answers, setAnswers] = React.useState({});
+  const [flagged, setFlagged] = React.useState({});
+
+  const selected = answers[currentQ] || null;
+  const isFlagged = flagged[currentQ] || false;
+
+  const selectAnswer = (k) => setAnswers({...answers, [currentQ]: k});
+  const toggleFlag = () => setFlagged({...flagged, [currentQ]: !isFlagged});
+  const goNext = () => { if (currentQ < totalQ - 1) setCurrentQ(currentQ + 1); else navigate('results'); };
+  const goPrev = () => { if (currentQ > 0) setCurrentQ(currentQ - 1); };
+
+  // Keyboard shortcuts
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'Enter') goNext();
+      if (e.key === 'ArrowLeft') goPrev();
+      if (['a','b','c','d'].includes(e.key.toLowerCase())) selectAnswer(e.key.toUpperCase());
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [currentQ, answers, flagged]);
 
   return (
     <div style={{
@@ -872,7 +908,7 @@ const TestTaking = () => {
         <div style={{display:'flex', alignItems:'center', gap:10}}>
           <span style={{width:8, height:8, background:'white', borderRadius:'50%'}}/>
           <span style={{fontSize:13, fontWeight:500}}>Thermodynamics</span>
-          <span className="mono" style={{fontSize:11.5, opacity:0.75}}>Q 7 of 15</span>
+          <span className="mono" style={{fontSize:11.5, opacity:0.75}}>Q {currentQ + 1} of {totalQ}</span>
         </div>
 
         <div style={{margin:'0 auto', display:'flex', alignItems:'center', gap:10}}>
@@ -884,7 +920,7 @@ const TestTaking = () => {
         </div>
 
         <div style={{display:'flex', alignItems:'center', gap:10, fontSize:12.5, opacity:0.85}}>
-          <button className="btn-bare" style={{fontSize:12.5, color:'white'}}>Exit</button>
+          <button onClick={() => navigate('dashboard')} className="btn-bare" style={{fontSize:12.5, color:'white'}}>Exit</button>
           <span>·</span>
           <button className="btn-bare" style={{fontSize:12.5, color:'white'}}>Pause</button>
         </div>
@@ -895,11 +931,11 @@ const TestTaking = () => {
         padding:'12px 40px', background:'var(--bg-elev)', borderBottom:'1px solid var(--rule)',
         display:'flex', gap:4, justifyContent:'center'
       }}>
-        {Array.from({length:15}).map((_,i) => (
-          <div key={i} style={{
-            width: i === 6 ? 20 : 6, height:6, borderRadius:3,
-            background: i < 6 ? 'var(--physics)' : i === 6 ? 'var(--chem)' : 'var(--rule)',
-            transition:'all 0.15s'
+        {Array.from({length:totalQ}).map((_,i) => (
+          <div key={i} onClick={() => setCurrentQ(i)} style={{
+            width: i === currentQ ? 20 : 6, height:6, borderRadius:3,
+            background: answers[i] ? 'var(--accent)' : i === currentQ ? 'var(--chem)' : 'var(--rule)',
+            cursor:'pointer', transition:'all 0.15s'
           }}/>
         ))}
       </div>
@@ -912,26 +948,19 @@ const TestTaking = () => {
       }}>
         <div style={{maxWidth:680, width:'100%'}}>
           <div className="eyebrow" style={{marginBottom:18, color:'var(--ink-3)'}}>
-            Question 07 — Multiple choice
+            Question {(currentQ + 1).toString().padStart(2, '0')} — Multiple choice
           </div>
 
           <div className="display" style={{
             fontSize:26, lineHeight:1.35, letterSpacing:'-0.015em', fontWeight:400,
             marginBottom:40
           }}>
-            A gas undergoes an isothermal expansion from volume V₁ to 2V₁ at
-            temperature T. Which expression gives the work done
-            <span style={{fontStyle:'italic', fontFamily:'var(--font-serif)'}}> by</span> the gas?
+            {questionText}
           </div>
 
-          {[
-            {k:'A', t:<>W = nRT ln(2)</>},
-            {k:'B', t:<>W = nRT (2 − 1) = nRT</>},
-            {k:'C', t:<>W = nC<sub>v</sub>(T₂ − T₁)</>},
-            {k:'D', t:<>W = 0, since temperature is constant</>},
-          ].map(opt => (
+          {questions.map(opt => (
             <button key={opt.k}
-              onClick={() => setSelected(opt.k)}
+              onClick={() => selectAnswer(opt.k)}
               style={{
                 display:'flex', gap:18, alignItems:'flex-start',
                 width:'100%', textAlign:'left',
@@ -962,18 +991,18 @@ const TestTaking = () => {
         padding:'14px 40px',
         display:'flex', alignItems:'center', gap:16
       }}>
-        <button className="btn btn-ghost btn-sm">← Previous</button>
-        <button onClick={() => setFlagged(!flagged)}
+        <button onClick={goPrev} disabled={currentQ === 0} className="btn btn-ghost btn-sm" style={{opacity: currentQ === 0 ? 0.4 : 1}}>← Previous</button>
+        <button onClick={toggleFlag}
                 className="btn btn-bare"
-                style={{fontSize:12.5, color: flagged ? 'var(--warn)' : 'var(--ink-3)'}}>
-          <Icon.flag size={12}/> {flagged ? 'Flagged' : 'Flag for review'}
+                style={{fontSize:12.5, color: isFlagged ? 'var(--warn)' : 'var(--ink-3)'}}>
+          <Icon.flag size={12}/> {isFlagged ? 'Flagged' : 'Flag for review'}
         </button>
         <div style={{marginLeft:'auto', fontSize:11.5, color:'var(--ink-4)', display:'flex', gap:10}}>
           <span><span className="kbd-key">A–D</span> to answer</span>
           <span><span className="kbd-key">→</span> next</span>
         </div>
-        <button className="btn btn-primary btn-sm">
-          Next question <Icon.arrow size={12}/>
+        <button onClick={goNext} className="btn btn-primary btn-sm">
+          {currentQ === totalQ - 1 ? 'Finish test' : 'Next question'} <Icon.arrow size={12}/>
         </button>
       </div>
     </div>
@@ -983,7 +1012,7 @@ const TestTaking = () => {
 window.TestTaking = TestTaking;
 // Results — debrief, not KPI dashboard. Narrative + per-question review with citations.
 
-const Results = () => {
+const Results = ({ navigate }) => {
   const questions = [
     {n:1, correct:true,  topic:'First law', q:'Which quantity is conserved in an isolated system?', your:'A', right:'A', page:12},
     {n:2, correct:true,  topic:'Heat capacity', q:'C_p is always greater than C_v because…', your:'C', right:'C', page:15},
@@ -1126,7 +1155,7 @@ const Results = () => {
         <div style={{fontSize:14, color:'var(--ink-3)', marginBottom:16}}>
           Next session suggested for <span className="mono" style={{color:'var(--ink)'}}>Saturday morning</span> — spaced repetition works.
         </div>
-        <button className="btn btn-primary">Schedule a follow-up · Sat 9am</button>
+        <button onClick={() => navigate('dashboard')} className="btn btn-primary">Schedule a follow-up · Sat 9am</button>
       </div>
     </div>
   );
@@ -1273,7 +1302,7 @@ const Analytics = () => {
 window.Analytics = Analytics;
 // Auth + Ask + History screens
 
-const Auth = () => (
+const Auth = ({ navigate }) => (
   <div style={{minHeight:'100vh', display:'grid', gridTemplateColumns:'1fr 1fr', background:'var(--bg)'}}>
     {/* Left — form */}
     <div style={{padding:'48px', display:'flex', flexDirection:'column'}}>
@@ -1319,7 +1348,7 @@ const Auth = () => (
         ))}
 
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:20}}>
-          <button className="btn btn-accent" style={{flex:1, justifyContent:'center'}}>
+          <button onClick={() => navigate('dashboard')} className="btn btn-accent" style={{flex:1, justifyContent:'center'}}>
             Sign in <Icon.arrow size={12}/>
           </button>
         </div>
@@ -1556,19 +1585,24 @@ function App() {
   // Full-viewport screens (no app chrome)
   const fullScreen = ['landing', 'auth', 'taking'].includes(screen);
 
+  const navigate = (s) => {
+    setScreen(s);
+    window.history.pushState({}, '', s === 'landing' ? '/' : s === 'dashboard' ? '/app' : '/app#' + s);
+  };
+
   const Body = () => {
     switch (screen) {
-      case 'landing':   return <Landing/>;
-      case 'auth':      return <Auth/>;
-      case 'taking':    return <TestTaking/>;
-      case 'dashboard': return <Dashboard heroVariant={tweaks.heroVariant}/>;
-      case 'tests':     return <TestSetup/>;
-      case 'materials': return <Materials/>;
-      case 'history':   return <History/>;
-      case 'analytics': return <Analytics/>;
-      case 'results':   return <Results/>;
-      case 'ask':       return <Ask/>;
-      default:          return <Dashboard heroVariant={tweaks.heroVariant}/>;
+      case 'landing':   return <Landing navigate={navigate}/>;
+      case 'auth':      return <Auth navigate={navigate}/>;
+      case 'taking':    return <TestTaking navigate={navigate}/>;
+      case 'dashboard': return <Dashboard heroVariant={tweaks.heroVariant} navigate={navigate}/>;
+      case 'tests':     return <TestSetup navigate={navigate}/>;
+      case 'materials': return <Materials navigate={navigate}/>;
+      case 'history':   return <History navigate={navigate}/>;
+      case 'analytics': return <Analytics navigate={navigate}/>;
+      case 'results':   return <Results navigate={navigate}/>;
+      case 'ask':       return <Ask navigate={navigate}/>;
+      default:          return <Dashboard heroVariant={tweaks.heroVariant} navigate={navigate}/>;
     }
   };
 
