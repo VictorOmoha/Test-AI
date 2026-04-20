@@ -124,7 +124,7 @@ Minimum health check expectation:
 
 ### If the UI loads but styling is broken
 - rerun `npm run build`
-- confirm `public/static/tailwind.css` exists in the deployed project
+- confirm `public/static/styles.css` is served (referenced from the HTML shell in `src/index.tsx`)
 
 ### If tests pass locally but Vercel fails
 - verify Vercel is using repo root
