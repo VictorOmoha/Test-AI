@@ -144,12 +144,22 @@ const Sidebar = ({ screen, setScreen }) => {
       {app?.user && (
         <>
           <div className="nav-section">You</div>
-          <div style={{padding:'10px 14px', fontSize:12.5, color:'var(--ink-3)', lineHeight:1.4}}>
-            <div style={{fontSize:13, color:'var(--ink)', fontWeight:500, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
+          <div className={`nav-item ${screen === 'profile' ? 'active' : ''}`}
+               onClick={() => setScreen('profile')}>
+            <Icon.user/>
+            <span>Profile</span>
+          </div>
+          <div className={`nav-item ${screen === 'settings' ? 'active' : ''}`}
+               onClick={() => setScreen('settings')}>
+            <Icon.gear/>
+            <span>Settings</span>
+          </div>
+          <div style={{padding:'8px 14px 4px', fontSize:12, color:'var(--ink-3)', lineHeight:1.4, borderTop:'1px solid var(--rule-2)', marginTop:8}}>
+            <div style={{fontSize:12.5, color:'var(--ink)', fontWeight:500, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
               {app.user.name || app.user.email}
             </div>
             {app.user.name && (
-              <div className="mono" style={{fontSize:11, color:'var(--ink-4)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
+              <div className="mono" style={{fontSize:10.5, color:'var(--ink-4)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
                 {app.user.email}
               </div>
             )}
@@ -1088,42 +1098,83 @@ const TestSetup = ({ navigate }) => {
   const [timed, setTimed] = React.useState(true);
   const [minutes, setMinutes] = React.useState(20);
   const [generating, setGenerating] = React.useState(false);
+  const [mode, setMode] = React.useState('material'); // 'material' | 'category'
+  const [categories, setCategories] = React.useState([]);
+  const [categoryName, setCategoryName] = React.useState(null);
 
   const selected = app.selectedMaterial;
   const availableMaterials = (app.materials || []).filter(m => m.processing_status === 'ready');
 
-  // Load materials on mount in case the user navigated here directly
-  React.useEffect(() => { app.refreshMaterials(); }, []);
+  // Load materials + categories on mount
+  React.useEffect(() => {
+    app.refreshMaterials();
+    (async () => {
+      try {
+        const data = await api.get('/api/tests/categories');
+        setCategories(data.categories || []);
+      } catch {}
+    })();
+  }, []);
+
+  // If user lands here with a selected material, ensure material mode
+  React.useEffect(() => { if (selected) setMode('material'); }, [selected?.id]);
 
   const startTest = async () => {
-    if (!selected || !selected.id) {
-      app.flashToast('error', 'Pick a material first.');
-      return;
-    }
     setGenerating(true);
     try {
-      const data = await api.post('/api/tests/materials/generate-test', {
-        material_id: selected.id,
-        difficulty: mapDifficulty(difficulty),
-        num_questions: Math.max(10, Math.min(50, count)),
-        question_types: mapTypes(types),
-        topic_focus: selected.title
-      });
-      if (!data.attempt_id || !data.questions || data.questions.length === 0) {
-        throw new Error('No questions were generated.');
+      if (mode === 'material') {
+        if (!selected || !selected.id) {
+          app.flashToast('error', 'Pick a material first.');
+          return;
+        }
+        const data = await api.post('/api/tests/materials/generate-test', {
+          material_id: selected.id,
+          difficulty: mapDifficulty(difficulty),
+          num_questions: Math.max(10, Math.min(50, count)),
+          question_types: mapTypes(types),
+          topic_focus: selected.title
+        });
+        if (!data.attempt_id || !data.questions || data.questions.length === 0) {
+          throw new Error('No questions were generated.');
+        }
+        app.setSession({
+          attemptId: data.attempt_id,
+          config: data.config,
+          material: data.material || selected,
+          questions: data.questions,
+          answers: {}, flagged: {},
+          questionShownAt: { 0: Date.now() },
+          startedAt: Date.now(),
+          timed, durationMinutes: minutes,
+        });
+      } else {
+        if (!categoryName) {
+          app.flashToast('error', 'Pick a category first.');
+          return;
+        }
+        const clamped = Math.max(10, Math.min(50, count));
+        const cfg = await api.post('/api/tests/config', {
+          test_type: categoryName,
+          difficulty: mapDifficulty(difficulty),
+          num_questions: clamped,
+          duration_minutes: Math.max(5, Math.min(180, timed ? minutes : 45)),
+          question_types: mapTypes(types)
+        });
+        const start = await api.post('/api/tests/start', { config_id: cfg.config_id });
+        if (!start.attempt_id || !start.questions?.length) {
+          throw new Error('No questions were generated.');
+        }
+        app.setSession({
+          attemptId: start.attempt_id,
+          config: start.config,
+          material: null,
+          questions: start.questions,
+          answers: {}, flagged: {},
+          questionShownAt: { 0: Date.now() },
+          startedAt: Date.now(),
+          timed, durationMinutes: minutes,
+        });
       }
-      app.setSession({
-        attemptId: data.attempt_id,
-        config: data.config,
-        material: data.material || selected,
-        questions: data.questions,
-        answers: {},
-        flagged: {},
-        questionShownAt: { 0: Date.now() },
-        startedAt: Date.now(),
-        timed,
-        durationMinutes: minutes,
-      });
       app.setResults(null);
       navigate('taking');
     } catch (err) {
@@ -1162,37 +1213,65 @@ const TestSetup = ({ navigate }) => {
     </div>
   );
 
+  const titleText = mode === 'material'
+    ? (selected
+        ? <>Testing on <em style={{fontFamily:'var(--font-serif)', fontStyle:'italic', fontWeight:400}}>{selected.title || selected.file_name}</em>.</>
+        : 'Pick something to study.')
+    : (categoryName
+        ? <>A <em style={{fontFamily:'var(--font-serif)', fontStyle:'italic', fontWeight:400}}>{categoryName}</em> practice test.</>
+        : 'Pick a category.');
+  const subText = mode === 'material'
+    ? (selected ? 'Tweak below, or just hit start.' : 'Choose a material you\'ve uploaded — questions are pulled from its contents.')
+    : (categoryName ? 'Tweak below, or just hit start.' : 'Generic questions, generated by AI — no material needed.');
+
   return (
     <div className="content narrow">
-      <div style={{marginBottom:40}}>
+      <div style={{marginBottom:30}}>
         <div className="eyebrow" style={{marginBottom:10}}>New test</div>
-        <h1 className="page-title">
-          {selected
-            ? <>Testing on <em style={{fontFamily:'var(--font-serif)', fontStyle:'italic', fontWeight:400}}>{selected.title || selected.file_name}</em>.</>
-            : 'Pick something to study.'}
-        </h1>
-        <p className="page-sub">
-          {selected
-            ? 'Tweak below, or just hit start.'
-            : 'Choose a material you\'ve uploaded — questions are generated from its contents.'}
-        </p>
+        <h1 className="page-title">{titleText}</h1>
+        <p className="page-sub">{subText}</p>
       </div>
 
-      {/* Material picker — shown when no selection, or as a compact swap */}
-      {!selected && availableMaterials.length === 0 && (
+      {/* Source mode toggle */}
+      <div style={{marginBottom:24, display:'flex', gap:6, padding:3,
+                   background:'var(--bg-sunken)', borderRadius:8, border:'1px solid var(--rule)', width:'fit-content'}}>
+        {[
+          { k:'material', l:'From a material' },
+          { k:'category', l:'From a category' },
+        ].map(o => (
+          <button key={o.k} onClick={() => setMode(o.k)}
+                  style={{
+                    padding:'6px 14px', fontSize:13, borderRadius:5,
+                    background: mode === o.k ? 'var(--bg-elev)' : 'transparent',
+                    color: mode === o.k ? 'var(--ink)' : 'var(--ink-3)',
+                    boxShadow: mode === o.k ? 'var(--shadow-sm)' : 'none',
+                    fontWeight: mode === o.k ? 500 : 400, cursor:'pointer'
+                  }}>
+            {o.l}
+          </button>
+        ))}
+      </div>
+
+      {/* Material picker */}
+      {mode === 'material' && !selected && availableMaterials.length === 0 && (
         <div className="card" style={{padding:24, marginBottom:24, background:'var(--bg-sunken)'}}>
           <div style={{fontSize:14.5, fontWeight:500}}>No ready materials yet.</div>
           <p style={{fontSize:13, color:'var(--ink-3)', marginTop:6, lineHeight:1.5}}>
-            Upload a PDF, DOCX, Markdown, or TXT file and we'll build a test from it.
+            Upload a PDF, DOCX, Markdown, or TXT file, or switch to "From a category" above for a generic test.
           </p>
-          <button onClick={() => navigate('materials')} className="btn btn-primary btn-sm" style={{marginTop:14}}>
-            <Icon.upload size={12}/> Go to Materials
-          </button>
+          <div style={{marginTop:14, display:'flex', gap:8}}>
+            <button onClick={() => navigate('materials')} className="btn btn-primary btn-sm">
+              <Icon.upload size={12}/> Go to Materials
+            </button>
+            <button onClick={() => setMode('category')} className="btn btn-ghost btn-sm">
+              Use a category instead
+            </button>
+          </div>
         </div>
       )}
-      {!selected && availableMaterials.length > 0 && (
+      {mode === 'material' && !selected && availableMaterials.length > 0 && (
         <div style={{marginBottom:28}}>
-          <div style={{fontSize:13, color:'var(--ink-3)', marginBottom:10, fontFamily:'var(--font-mono)', textTransform:'uppercase', letterSpacing:'0.1em', fontSize:10.5}}>
+          <div style={{fontSize:10.5, color:'var(--ink-3)', marginBottom:10, fontFamily:'var(--font-mono)', textTransform:'uppercase', letterSpacing:'0.1em'}}>
             Choose a material
           </div>
           <div style={{display:'flex', flexDirection:'column', gap:6}}>
@@ -1215,12 +1294,46 @@ const TestSetup = ({ navigate }) => {
           </div>
         </div>
       )}
-      {selected && (
+      {mode === 'material' && selected && (
         <div style={{marginBottom:24, fontSize:12.5, color:'var(--ink-3)'}}>
           <button onClick={() => app.setSelectedMaterial(null)}
                   style={{background:'none', border:'none', color:'var(--ink-2)', cursor:'pointer', fontSize:12.5, padding:0, borderBottom:'1px solid var(--rule)'}}>
             Change material
           </button>
+        </div>
+      )}
+
+      {/* Category picker */}
+      {mode === 'category' && (
+        <div style={{marginBottom:28}}>
+          <div style={{fontSize:10.5, color:'var(--ink-3)', marginBottom:10, fontFamily:'var(--font-mono)', textTransform:'uppercase', letterSpacing:'0.1em'}}>
+            Choose a category
+          </div>
+          {categories.length === 0 ? (
+            <div style={{padding:16, fontSize:13, color:'var(--ink-3)', border:'1px dashed var(--rule)', borderRadius:6}}>
+              Loading categories… (requires a configured database and an OpenAI API key to generate questions)
+            </div>
+          ) : (
+            <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:8}}>
+              {categories.map(cat => (
+                <button key={cat.id} onClick={() => setCategoryName(cat.name)}
+                        style={{
+                          display:'flex', alignItems:'flex-start', gap:12,
+                          padding:'14px 16px', textAlign:'left',
+                          border:'1px solid ' + (categoryName === cat.name ? 'var(--ink)' : 'var(--rule)'),
+                          borderRadius:8,
+                          background: categoryName === cat.name ? 'var(--bg-elev)' : 'var(--bg-sunken)',
+                          cursor:'pointer'
+                        }}>
+                  <div style={{flex:1, minWidth:0}}>
+                    <div style={{fontSize:14, fontWeight:500}}>{cat.name}</div>
+                    <div style={{fontSize:12, color:'var(--ink-3)', marginTop:4, lineHeight:1.45}}>{cat.description}</div>
+                  </div>
+                  {categoryName === cat.name && <Icon.check size={14}/>}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -1343,7 +1456,8 @@ const TestSetup = ({ navigate }) => {
           </div>
           <div style={{fontSize:15.5}}>
             <b>{Math.max(10, Math.min(50, count))} {difficulty === 'mixed' ? 'mixed' : difficulty} questions</b>
-            {selected && <> from <b>{selected.title || selected.file_name}</b></>}
+            {mode === 'material' && selected && <> from <b>{selected.title || selected.file_name}</b></>}
+            {mode === 'category' && categoryName && <> in <b>{categoryName}</b></>}
             {Object.values(types).filter(Boolean).length < 3 && <> · {Object.entries(types).filter(([,v])=>v).map(([k])=>({mcq:'MCQ',tf:'T/F',short:'short answer'}[k])).join(', ')}</>}
             {timed ? <> · timed {minutes} min</> : <> · untimed</>}
           </div>
@@ -1354,13 +1468,20 @@ const TestSetup = ({ navigate }) => {
           )}
         </div>
 
-        <div style={{display:'flex', gap:12, alignItems:'center'}}>
-          <button onClick={startTest} disabled={!selected || generating}
-                  className="btn btn-accent btn-lg"
-                  style={{flex:1, justifyContent:'center', opacity: (!selected || generating) ? 0.6 : 1}}>
-            {generating ? <>Generating…</> : <>Start test <Icon.arrow size={14}/></>}
-          </button>
-        </div>
+        {(() => {
+          const disabled = generating
+            || (mode === 'material' && !selected)
+            || (mode === 'category' && !categoryName);
+          return (
+            <div style={{display:'flex', gap:12, alignItems:'center'}}>
+              <button onClick={startTest} disabled={disabled}
+                      className="btn btn-accent btn-lg"
+                      style={{flex:1, justifyContent:'center', opacity: disabled ? 0.6 : 1}}>
+                {generating ? <>Generating…</> : <>Start test <Icon.arrow size={14}/></>}
+              </button>
+            </div>
+          );
+        })()}
         <div style={{fontSize:12, color:'var(--ink-4)', textAlign:'center'}}>
           <span className="kbd-key">⌘</span> <span className="kbd-key">⏎</span> to start
         </div>
@@ -2109,15 +2230,13 @@ const Ask = ({ navigate }) => {
     ? app.materials.find(m => m.id === app.selectedMaterial.id) || app.selectedMaterial
     : readyMaterials[0];
 
-  const ask = async () => {
-    const q = question.trim();
-    if (!q) return;
+  const sendQuestion = async (q) => {
+    if (!q || !q.trim()) return;
     if (!selectedMat?.id) {
       app.flashToast('error', 'Pick a material first.');
       return;
     }
     setMessages(ms => [...ms, { role:'user', text:q, ts:Date.now() }]);
-    setQuestion('');
     setAsking(true);
     try {
       const data = await api.post('/api/tests/materials/ask', {
@@ -2128,12 +2247,56 @@ const Ask = ({ navigate }) => {
         role:'assistant',
         text: data.answer || '(no answer)',
         ts: Date.now(),
-        source: data.source
+        source: data.source,
+        parentQuestion: q
       }]);
     } catch (err) {
       setMessages(ms => [...ms, { role:'assistant', text: 'Sorry — ' + (err.message || 'failed to answer.'), ts: Date.now(), error: true }]);
     } finally {
       setAsking(false);
+    }
+  };
+
+  const ask = () => {
+    const q = question.trim();
+    if (!q) return;
+    setQuestion('');
+    sendQuestion(q);
+  };
+
+  const explainSimpler = (m) => {
+    if (asking) return;
+    const prev = m.parentQuestion || 'the previous topic';
+    sendQuestion(`Explain that last answer in simpler terms. Original question: "${prev}". Use short sentences and avoid jargon.`);
+  };
+
+  const makeTestFromThis = async (m) => {
+    if (!selectedMat?.id) return;
+    const topic = (m.parentQuestion || m.text || '').slice(0, 160);
+    try {
+      app.flashToast('ok', 'Generating a short test on this topic…');
+      const data = await api.post('/api/tests/materials/generate-test', {
+        material_id: selectedMat.id,
+        difficulty: 'Medium',
+        num_questions: 10,
+        question_types: ['MCQ'],
+        topic_focus: topic
+      });
+      if (!data.attempt_id || !data.questions?.length) throw new Error('No questions were generated.');
+      app.setSession({
+        attemptId: data.attempt_id,
+        config: data.config,
+        material: data.material || selectedMat,
+        questions: data.questions,
+        answers: {}, flagged: {},
+        questionShownAt: { 0: Date.now() },
+        startedAt: Date.now(),
+        timed: true, durationMinutes: 15,
+      });
+      app.setResults(null);
+      navigate('taking');
+    } catch (err) {
+      app.flashToast('error', err.message || 'Failed to generate test.');
     }
   };
 
@@ -2195,6 +2358,19 @@ const Ask = ({ navigate }) => {
             {m.source && m.source.chunk_count > 0 && (
               <div style={{marginTop:14, fontSize:11.5, color:'var(--ink-3)', fontFamily:'var(--font-mono)'}}>
                 Drawn from {m.source.chunk_count} passage{m.source.chunk_count === 1 ? '' : 's'} in <b>{m.source.title}</b>.
+              </div>
+            )}
+            {!m.error && (
+              <div style={{marginTop:14, display:'flex', gap:12, fontSize:12.5, color:'var(--ink-3)', flexWrap:'wrap'}}>
+                <button onClick={() => explainSimpler(m)} disabled={asking}
+                        className="btn-bare" style={{fontSize:12.5, cursor:'pointer', opacity: asking ? 0.5 : 1}}>
+                  Explain simpler
+                </button>
+                <span>·</span>
+                <button onClick={() => makeTestFromThis(m)}
+                        className="btn-bare" style={{fontSize:12.5, cursor:'pointer'}}>
+                  Make a test on this
+                </button>
               </div>
             )}
           </div>
@@ -2283,6 +2459,243 @@ window.Auth = Auth;
 window.Ask = Ask;
 window.History = History;
 
+// ============ Profile — user + social stats + achievements ============
+
+const Profile = ({ navigate }) => {
+  const app = useApp();
+  const [social, setSocial] = React.useState(null); // { user_stats, global_stats, rank, subject_performance }
+  const [achievements, setAchievements] = React.useState(null);
+  const [leaderboard, setLeaderboard] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+
+  React.useEffect(() => {
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [socialData, achData, lbData] = await Promise.allSettled([
+          api.get('/api/social/statistics'),
+          api.get('/api/social/achievements'),
+          api.get('/api/social/leaderboard?period=all'),
+        ]);
+        if (socialData.status === 'fulfilled') setSocial(socialData.value);
+        if (achData.status === 'fulfilled') setAchievements(achData.value);
+        if (lbData.status === 'fulfilled') setLeaderboard(lbData.value.leaderboard || []);
+        const firstErr = [socialData, achData, lbData].find(r => r.status === 'rejected');
+        if (firstErr && socialData.status !== 'fulfilled' && achData.status !== 'fulfilled') {
+          setError(firstErr.reason?.message || 'Failed to load profile');
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const u = app.user || {};
+  const s = social?.user_stats || app.stats || {};
+  const rank = social?.rank;
+  const totalUnlocked = achievements?.total_unlocked || 0;
+
+  const groups = achievements?.achievements || {};
+  const groupOrder = ['score', 'consistency', 'mastery', 'special'];
+  const groupLabel = { score: 'Score', consistency: 'Consistency', mastery: 'Mastery', special: 'Special' };
+
+  const topLeaders = (leaderboard || []).slice(0, 8);
+  const meId = u.id;
+
+  return (
+    <div className="content">
+      <div style={{marginBottom:28}}>
+        <div className="eyebrow" style={{marginBottom:10}}>Your account</div>
+        <h1 className="page-title">Profile</h1>
+      </div>
+
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:32}}>
+        <div className="card" style={{padding:22}}>
+          <div className="eyebrow" style={{marginBottom:8}}>Account</div>
+          <div style={{fontSize:18, fontWeight:500}}>{u.name || '—'}</div>
+          <div className="mono" style={{fontSize:12, color:'var(--ink-3)', marginTop:4}}>{u.email || ''}</div>
+          {u.created_at && (
+            <div style={{fontSize:12, color:'var(--ink-3)', marginTop:10}}>
+              Joined {new Date(u.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+            </div>
+          )}
+          <div style={{marginTop:18, display:'flex', gap:8, flexWrap:'wrap'}}>
+            <button onClick={() => navigate('settings')} className="btn btn-ghost btn-sm">Settings</button>
+            <button onClick={() => { if (window.confirm('Sign out?')) app.signOut(); }} className="btn btn-ghost btn-sm">Sign out</button>
+          </div>
+        </div>
+        <div className="card" style={{padding:22}}>
+          <div className="eyebrow" style={{marginBottom:8}}>At a glance</div>
+          <div style={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12}}>
+            <div>
+              <div className="mono" style={{fontSize:22, fontWeight:500}}>{s.total_tests || 0}</div>
+              <div style={{fontSize:11.5, color:'var(--ink-3)'}}>Tests completed</div>
+            </div>
+            <div>
+              <div className="mono" style={{fontSize:22, fontWeight:500}}>{Math.round(s.avg_score || 0)}%</div>
+              <div style={{fontSize:11.5, color:'var(--ink-3)'}}>Average score</div>
+            </div>
+            <div>
+              <div className="mono" style={{fontSize:22, fontWeight:500}}>{Math.round(s.best_score || 0)}%</div>
+              <div style={{fontSize:11.5, color:'var(--ink-3)'}}>Best score</div>
+            </div>
+            <div>
+              <div className="mono" style={{fontSize:22, fontWeight:500}}>{rank ? `#${rank}` : '—'}</div>
+              <div style={{fontSize:11.5, color:'var(--ink-3)'}}>Global rank</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {loading && <div style={{padding:20, textAlign:'center', color:'var(--ink-3)'}}>Loading profile…</div>}
+      {error && !loading && <div style={{padding:20, color:'var(--danger)', fontSize:13.5}}>Couldn't load profile data: {error}</div>}
+
+      {/* Subject performance */}
+      {social?.subject_performance?.length > 0 && (
+        <div style={{marginBottom:32}}>
+          <div className="section-title">
+            <span>Performance by test type</span>
+            <span className="rule"/>
+          </div>
+          <div className="card" style={{padding:22}}>
+            {social.subject_performance.map((row, i) => {
+              const score = Math.round(Number(row.avg_score || 0));
+              return (
+                <div key={i} style={{display:'flex', alignItems:'center', gap:12, padding:'8px 0', borderBottom: i < social.subject_performance.length - 1 ? '1px solid var(--rule-2)' : 'none'}}>
+                  <span style={{fontSize:13.5, flex:1, color:'var(--ink-2)'}}>{row.test_type}</span>
+                  <span className="mono" style={{fontSize:11.5, color:'var(--ink-3)'}}>{row.test_count} {Number(row.test_count) === 1 ? 'test' : 'tests'}</span>
+                  <div style={{flex:'0 0 140px', height:4, background:'var(--rule-2)', borderRadius:999}}>
+                    <div style={{width: `${Math.min(100,score)}%`, height:'100%',
+                         background: score >= 80 ? 'var(--accent)' : score >= 65 ? 'var(--ink-2)' : 'var(--warn)',
+                         borderRadius:999}}/>
+                  </div>
+                  <span className="mono" style={{fontSize:12, minWidth:30, textAlign:'right'}}>{score}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Achievements */}
+      {achievements && (
+        <div style={{marginBottom:32}}>
+          <div className="section-title">
+            <span>Achievements</span>
+            <span className="count">{totalUnlocked} unlocked</span>
+            <span className="rule"/>
+          </div>
+          <div style={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:14}}>
+            {groupOrder.map(gk => (
+              <div key={gk} className="card" style={{padding:18}}>
+                <div className="eyebrow" style={{marginBottom:10}}>{groupLabel[gk]}</div>
+                <div style={{display:'flex', flexDirection:'column', gap:10}}>
+                  {(groups[gk] || []).map((a, i) => (
+                    <div key={i} style={{display:'flex', alignItems:'center', gap:12, opacity: a.unlocked ? 1 : 0.55}}>
+                      <span style={{fontSize:20, width:26, textAlign:'center'}}>{a.icon}</span>
+                      <div style={{flex:1, minWidth:0}}>
+                        <div style={{fontSize:13.5, fontWeight:500}}>
+                          {a.name}
+                          {a.unlocked && <span style={{marginLeft:8, fontSize:11, color:'var(--accent-ink)', fontFamily:'var(--font-mono)'}}>unlocked</span>}
+                        </div>
+                        <div style={{fontSize:11.5, color:'var(--ink-3)'}}>{a.description}</div>
+                      </div>
+                      <div style={{flex:'0 0 60px', height:3, background:'var(--rule-2)', borderRadius:999}}>
+                        <div style={{width: `${Math.min(100, Number(a.progress || 0))}%`, height:'100%', background: a.unlocked ? 'var(--accent)' : 'var(--ink-3)', borderRadius:999}}/>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Leaderboard */}
+      {topLeaders.length > 0 && (
+        <div>
+          <div className="section-title">
+            <span>Leaderboard</span>
+            <span className="count">{topLeaders.length} shown</span>
+            <span className="rule"/>
+          </div>
+          <div style={{border:'1px solid var(--rule)', borderRadius:8, overflow:'hidden', background:'var(--bg-elev)'}}>
+            {topLeaders.map((r, i) => {
+              const isMe = meId && r.id === meId;
+              return (
+                <div key={r.id || i} style={{
+                  padding:'12px 18px', display:'grid',
+                  gridTemplateColumns:'40px 1fr 70px 70px 80px',
+                  gap:16, alignItems:'center',
+                  background: isMe ? 'var(--accent-soft)' : 'transparent',
+                  borderBottom: i < topLeaders.length - 1 ? '1px solid var(--rule-2)' : 'none'
+                }}>
+                  <span className="mono" style={{fontSize:14, color:'var(--ink-3)'}}>#{r.rank}</span>
+                  <span style={{fontSize:14, fontWeight: isMe ? 600 : 500}}>
+                    {r.badge ? `${r.badge} ` : ''}{r.name}{isMe ? ' · you' : ''}
+                  </span>
+                  <span className="mono" style={{fontSize:12, color:'var(--ink-3)', textAlign:'right'}}>{r.test_count} tests</span>
+                  <span className="mono" style={{fontSize:12, color:'var(--ink-3)', textAlign:'right'}}>avg {Math.round(Number(r.avg_score || 0))}</span>
+                  <span className="mono" style={{fontSize:14, fontWeight:500, textAlign:'right'}}>{Math.round(Number(r.best_score || 0))}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+window.Profile = Profile;
+
+// ============ Settings ============
+
+const Settings = ({ navigate }) => {
+  const app = useApp();
+  const u = app.user || {};
+  return (
+    <div className="content narrow">
+      <div style={{marginBottom:28}}>
+        <div className="eyebrow" style={{marginBottom:10}}>Account</div>
+        <h1 className="page-title">Settings</h1>
+        <p className="page-sub">Only a few knobs for now. More coming.</p>
+      </div>
+
+      <div style={{display:'flex', flexDirection:'column', gap:22}}>
+        <div className="card" style={{padding:22}}>
+          <div className="eyebrow" style={{marginBottom:8}}>Signed in as</div>
+          <div style={{fontSize:16, fontWeight:500}}>{u.name || '—'}</div>
+          <div className="mono" style={{fontSize:12, color:'var(--ink-3)', marginTop:4}}>{u.email || ''}</div>
+        </div>
+
+        <div className="card" style={{padding:22}}>
+          <div className="eyebrow" style={{marginBottom:8}}>Appearance</div>
+          <p style={{fontSize:13, color:'var(--ink-3)', lineHeight:1.5, marginBottom:10}}>
+            Open the Tweaks panel (bottom-left) to change accent color, typography, and dashboard hero layout. Changes persist on reload.
+          </p>
+        </div>
+
+        <div className="card" style={{padding:22}}>
+          <div className="eyebrow" style={{marginBottom:8}}>Danger zone</div>
+          <p style={{fontSize:13, color:'var(--ink-3)', lineHeight:1.5, marginBottom:14}}>
+            Signing out clears your session on this device. Your materials and history stay intact on the server.
+          </p>
+          <button onClick={() => { if (window.confirm('Sign out?')) app.signOut(); }}
+                  className="btn btn-ghost btn-sm">
+            Sign out
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+window.Settings = Settings;
+
 
 // ============ App Entry ============
 
@@ -2304,6 +2717,8 @@ const SCREENS = [
   {id:'history',    label:'History',         crumb:['History']},
   {id:'analytics',  label:'Analytics',       crumb:['Analytics']},
   {id:'ask',        label:'Ask',             crumb:['Ask']},
+  {id:'profile',    label:'Profile',         crumb:['You', 'Profile']},
+  {id:'settings',   label:'Settings',        crumb:['You', 'Settings']},
 ];
 
 function App() {
@@ -2468,6 +2883,8 @@ function App() {
       case 'analytics': return <Analytics navigate={navigate}/>;
       case 'results':   return <Results navigate={navigate}/>;
       case 'ask':       return <Ask navigate={navigate}/>;
+      case 'profile':   return <Profile navigate={navigate}/>;
+      case 'settings':  return <Settings navigate={navigate}/>;
       default:          return <Dashboard heroVariant={tweaks.heroVariant} navigate={navigate}/>;
     }
   };
