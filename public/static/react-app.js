@@ -832,7 +832,7 @@ const StatsStrip = () => {
 const ContinueBar = ({ navigate }) => {
   const app = useApp();
   const [resuming, setResuming] = React.useState(false);
-  const inProgress = (app.history || []).filter(r => (r.status || '').toLowerCase() === 'in progress');
+  const inProgress = (app.history || []).filter(r => r.status === 'InProgress');
   if (inProgress.length === 0) return null;
   const latest = inProgress[0];
 
@@ -1580,13 +1580,18 @@ const TestTaking = ({ navigate }) => {
   const selected = answers[currentQ] || null;
   const isFlagged = !!flagged[currentQ];
 
+  // Ref holds the latest finishTest so the timer interval doesn't fire a
+  // stale closure (which would submit the wrong question's answer on auto-
+  // finish after the user has navigated).
+  const finishTestRef = React.useRef(null);
+
   // Timer
   React.useEffect(() => {
     if (!session || !session.timed) return;
     const iv = setInterval(() => {
       setRemaining(r => {
         if (r === null) return r;
-        if (r <= 1) { clearInterval(iv); finishTest(true); return 0; }
+        if (r <= 1) { clearInterval(iv); finishTestRef.current?.(true); return 0; }
         return r - 1;
       });
     }, 1000);
@@ -1667,7 +1672,6 @@ const TestTaking = ({ navigate }) => {
       const data = await api.post(`/api/tests/complete/${session.attemptId}`);
       app.setResults(data.results);
       app.refreshStats();
-      app.refreshHistory();
       app.setSession(null);
       if (fromTimeout) app.flashToast('ok', 'Time\'s up — scoring your test.');
       navigate('results');
@@ -1677,6 +1681,10 @@ const TestTaking = ({ navigate }) => {
       setSubmitting(false);
     }
   };
+
+  // Keep the timer's callback pointing at the latest finishTest so it
+  // submits the currently-visible question's answer, not a stale one.
+  finishTestRef.current = finishTest;
 
   // Keyboard shortcuts
   React.useEffect(() => {
