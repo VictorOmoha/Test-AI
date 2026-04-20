@@ -988,7 +988,7 @@ tests.get('/stats', authMiddleware, async (c) => {
 
     const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
     const stats = await db.getTestStatistics(auth.user_id)
-    
+
     return c.json({
       success: true,
       statistics: stats
@@ -997,6 +997,64 @@ tests.get('/stats', authMiddleware, async (c) => {
   } catch (error) {
     console.error('Error fetching statistics:', error)
     return c.json({ success: false, message: 'Failed to fetch statistics' }, 500)
+  }
+})
+
+// Get a single attempt's questions (for resuming an in-progress test).
+// Ownership-checked; omits correct_answer / ai_explanation on in-progress
+// attempts but includes them on completed ones so the Results screen
+// can re-hydrate a past test from the backend.
+tests.get('/attempts/:attempt_id', authMiddleware, async (c) => {
+  try {
+    const auth = getAuthUser(c)
+    if (!auth) {
+      return c.json({ success: false, message: 'Authentication required' }, 401)
+    }
+
+    const attempt_id = c.req.param('attempt_id')
+    if (!attempt_id) {
+      return c.json({ success: false, message: 'Attempt ID is required' }, 400)
+    }
+
+    const db = DatabaseService.fromDatabaseUrl(getEnv(c, 'DATABASE_URL'))
+    const attempt = await db.getTestAttempt(attempt_id)
+    if (!attempt) {
+      return c.json({ success: false, message: 'Test attempt not found' }, 404)
+    }
+    if (attempt.user_id !== auth.user_id) {
+      return c.json({ success: false, message: 'Access denied' }, 403)
+    }
+
+    const questions = await db.getTestQuestions(attempt_id)
+    const config = await db.getTestConfiguration(attempt.config_id)
+    const material = await db.getMaterialByAttemptId(attempt_id).catch(() => null)
+    const isCompleted = attempt.status === 'Completed'
+
+    return c.json({
+      success: true,
+      attempt,
+      config: config ? {
+        ...config,
+        question_types: JSON.parse(config.question_types)
+      } : null,
+      material,
+      questions: questions.map(q => ({
+        id: q.id,
+        question_number: q.question_number,
+        question_type: q.question_type,
+        question_text: q.question_text,
+        options: q.options ? JSON.parse(q.options) : undefined,
+        user_answer: q.user_answer,
+        time_spent_seconds: q.time_spent_seconds,
+        // Only reveal answers on completed attempts
+        correct_answer: isCompleted ? q.correct_answer : undefined,
+        is_correct: isCompleted ? q.is_correct : undefined,
+        ai_explanation: isCompleted ? q.ai_explanation : undefined,
+      }))
+    })
+  } catch (error) {
+    console.error('Error fetching attempt:', error)
+    return c.json({ success: false, message: 'Failed to fetch attempt' }, 500)
   }
 })
 

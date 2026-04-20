@@ -686,22 +686,6 @@ const HeroC = ({ navigate }) => {
   );
 };
 
-const ContinueBar = ({ navigate }) => (
-  <div className="card" style={{padding:'14px 18px', marginBottom:32,
-       display:'flex', alignItems:'center', gap:16,
-       background:'var(--physics-soft)',
-       borderColor:'var(--physics)',
-       borderLeft:'3px solid var(--physics)', borderRadius:'0 8px 8px 0'}}>
-    <div style={{flex:1}}>
-      <div style={{fontSize:14, fontWeight:500}}>Pick up where you stopped</div>
-      <div style={{fontSize:12.5, color:'var(--ink-3)', marginTop:2}}>
-        Thermodynamics — 8 of 15 questions done, 12 min left on the clock
-      </div>
-    </div>
-    <span className="mono" style={{fontSize:11, color:'var(--ink-3)'}}>2h ago</span>
-    <button onClick={() => navigate('taking')} className="btn btn-primary btn-sm">Resume <Icon.arrow size={12}/></button>
-  </div>
-);
 
 const RecentTests = ({ navigate }) => {
   const app = useApp();
@@ -845,6 +829,84 @@ const StatsStrip = () => {
   );
 };
 
+const ContinueBar = ({ navigate }) => {
+  const app = useApp();
+  const [resuming, setResuming] = React.useState(false);
+  const inProgress = (app.history || []).filter(r => (r.status || '').toLowerCase() === 'in progress');
+  if (inProgress.length === 0) return null;
+  const latest = inProgress[0];
+
+  const resume = async () => {
+    setResuming(true);
+    try {
+      const data = await api.get(`/api/tests/attempts/${latest.id}`);
+      if (!data.questions?.length) throw new Error('This attempt has no questions.');
+      const attempt = data.attempt;
+      const config = data.config || {};
+      const startedMs = attempt.start_time ? new Date(attempt.start_time).getTime() : Date.now();
+      const totalSec = Number(config.duration_minutes || 20) * 60;
+      const elapsed = Math.floor((Date.now() - startedMs) / 1000);
+      const remaining = Math.max(0, totalSec - elapsed);
+      const answers = {};
+      data.questions.forEach((q, i) => { if (q.user_answer != null && q.user_answer !== '') answers[i] = q.user_answer; });
+
+      app.setSession({
+        attemptId: attempt.id,
+        config,
+        material: data.material || null,
+        questions: data.questions.map(q => ({
+          id: q.id,
+          question_number: q.question_number,
+          question_type: q.question_type,
+          question_text: q.question_text,
+          options: q.options,
+        })),
+        answers,
+        flagged: {},
+        questionShownAt: { 0: Date.now() },
+        startedAt: startedMs,
+        timed: remaining > 0,
+        durationMinutes: Math.ceil(remaining / 60) || 1,
+      });
+      app.setResults(null);
+      navigate('taking');
+    } catch (err) {
+      app.flashToast('error', err.message || 'Couldn\'t resume that test.');
+    } finally {
+      setResuming(false);
+    }
+  };
+
+  const startedAgo = (() => {
+    const ts = latest.start_time || latest.created_at;
+    if (!ts) return '';
+    const min = Math.max(1, Math.round((Date.now() - new Date(ts).getTime()) / 60000));
+    if (min < 60) return `${min} min ago`;
+    const hr = Math.round(min / 60);
+    if (hr < 24) return `${hr}h ago`;
+    return `${Math.round(hr / 24)}d ago`;
+  })();
+
+  return (
+    <div className="card" style={{padding:'14px 18px', marginBottom:32,
+         display:'flex', alignItems:'center', gap:16,
+         background:'var(--physics-soft)', borderColor:'var(--physics)',
+         borderLeft:'3px solid var(--physics)', borderRadius:'0 8px 8px 0'}}>
+      <div style={{flex:1}}>
+        <div style={{fontSize:14, fontWeight:500}}>Pick up where you stopped</div>
+        <div style={{fontSize:12.5, color:'var(--ink-3)', marginTop:2}}>
+          {latest.test_type || 'Test'} · {latest.total_questions || 0} questions · started {startedAgo}
+        </div>
+      </div>
+      <button onClick={resume} disabled={resuming}
+              className="btn btn-primary btn-sm"
+              style={{opacity: resuming ? 0.6 : 1}}>
+        {resuming ? 'Loading…' : <>Resume <Icon.arrow size={12}/></>}
+      </button>
+    </div>
+  );
+};
+
 const Dashboard = ({ heroVariant, navigate }) => {
   const app = useApp();
   React.useEffect(() => {
@@ -857,6 +919,7 @@ const Dashboard = ({ heroVariant, navigate }) => {
     <div className="content">
       <Greeting/>
       <Hero/>
+      <ContinueBar navigate={navigate}/>
       <StatsStrip/>
       <RecentTests navigate={navigate}/>
     </div>
@@ -1795,17 +1858,42 @@ const Results = ({ navigate }) => {
   const app = useApp();
   const results = app.results;
   const [retrying, setRetrying] = React.useState(false);
+  const [recs, setRecs] = React.useState(null); // { recommendations: string[], source: 'ai'|'generic' }
+  const [recsLoading, setRecsLoading] = React.useState(false);
 
   React.useEffect(() => {
     if (!results) navigate('dashboard');
   }, [results]);
 
-  if (!results) return null;
+  const attempt = results?.attempt || {};
+  const questions = results?.questions || [];
+  const material = results?.material || null;
+  const config = results?.config || {};
 
-  const attempt = results.attempt || {};
-  const questions = results.questions || [];
-  const material = results.material || null;
-  const config = results.config || {};
+  React.useEffect(() => {
+    if (!results) return;
+    const wrong = questions.filter(q => !q.is_correct);
+    if (wrong.length === 0) { setRecs(null); return; }
+    const weakAreas = wrong.slice(0, 5).map(q => String(q.question_text || '').slice(0, 120));
+    setRecsLoading(true);
+    (async () => {
+      try {
+        const data = await api.post('/api/social/recommendations', {
+          attempt_id: attempt.id,
+          weak_areas: weakAreas,
+          test_type: config.test_type || (material?.title) || 'General',
+          score: Math.round(Number(attempt.score || 0))
+        });
+        setRecs({ recommendations: data.recommendations || [], source: data.source || 'generic' });
+      } catch {
+        setRecs(null);
+      } finally {
+        setRecsLoading(false);
+      }
+    })();
+  }, [results?.attempt?.id]);
+
+  if (!results) return null;
 
   const correctCount = questions.filter(q => q.is_correct).length;
   const wrongCount = questions.length - correctCount;
@@ -1931,6 +2019,28 @@ const Results = ({ navigate }) => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* AI recommendations (or fallback) */}
+      {(recsLoading || (recs && recs.recommendations?.length > 0)) && (
+        <div style={{marginBottom:40}}>
+          <div className="section-title">
+            <span>Study suggestions</span>
+            {recs?.source === 'ai' && <span className="count">from your questions</span>}
+            <span className="rule"/>
+          </div>
+          {recsLoading ? (
+            <div style={{padding:16, fontSize:13, color:'var(--ink-3)'}}>Generating suggestions…</div>
+          ) : (
+            <div className="card" style={{padding:22}}>
+              <ul style={{margin:0, paddingLeft:20, display:'flex', flexDirection:'column', gap:10}}>
+                {recs.recommendations.map((r, i) => (
+                  <li key={i} style={{fontSize:14, lineHeight:1.55, color:'var(--ink-2)'}}>{r}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 
@@ -2222,8 +2332,29 @@ const Ask = ({ navigate }) => {
   const [question, setQuestion] = React.useState('');
   const [messages, setMessages] = React.useState([]); // {role:'user'|'assistant', text, ts, source?}
   const [asking, setAsking] = React.useState(false);
+  const [uploading, setUploading] = React.useState(null);
+  const fileRef = React.useRef(null);
 
   React.useEffect(() => { app.refreshMaterials(); }, []);
+
+  const uploadMaterial = async (file) => {
+    setUploading(file.name);
+    try {
+      const base64 = await fileToBase64(file);
+      const data = await api.post('/api/tests/materials/import', {
+        file_name: file.name, mime_type: file.type || '', file_content_base64: base64
+      });
+      await app.refreshMaterials();
+      if (data.material?.id) {
+        app.setSelectedMaterial({ id: data.material.id, title: data.material.title, file_name: data.material.file_name });
+      }
+      app.flashToast('ok', `"${file.name}" imported.`);
+    } catch (err) {
+      app.flashToast('error', err.message || 'Upload failed.');
+    } finally {
+      setUploading(null);
+    }
+  };
 
   const readyMaterials = (app.materials || []).filter(m => m.processing_status === 'ready');
   const selectedMat = app.selectedMaterial?.id
@@ -2313,19 +2444,28 @@ const Ask = ({ navigate }) => {
       {/* Scope selector */}
       <div style={{display:'flex', gap:8, marginBottom:20, alignItems:'center', flexWrap:'wrap'}}>
         <span className="mono" style={{fontSize:11, color:'var(--ink-3)', textTransform:'uppercase', letterSpacing:'0.12em'}}>In:</span>
+        <input ref={fileRef} type="file" accept=".pdf,.docx,.md,.txt" style={{display:'none'}}
+               onChange={e => { const f = e.target.files?.[0]; if (f) uploadMaterial(f); if (e.target) e.target.value=''; }} />
         {readyMaterials.length === 0 ? (
-          <button onClick={() => navigate('materials')} className="chip outline" style={{padding:'3px 10px', cursor:'pointer'}}>
-            + Upload a material first
+          <button onClick={() => fileRef.current?.click()} disabled={!!uploading}
+                  className="chip outline" style={{padding:'3px 10px', cursor:'pointer'}}>
+            {uploading ? `Importing ${uploading}…` : '+ Upload a material first'}
           </button>
         ) : (
-          readyMaterials.map(m => (
-            <button key={m.id}
-                    onClick={() => app.setSelectedMaterial({ id: m.id, title: m.title, file_name: m.file_name })}
-                    className={`chip ${selectedMat?.id === m.id ? 'ink' : 'outline'}`}
-                    style={{padding: selectedMat?.id === m.id ? '3px 10px' : '3px 10px', cursor:'pointer'}}>
-              {m.title || m.file_name}
+          <>
+            {readyMaterials.map(m => (
+              <button key={m.id}
+                      onClick={() => app.setSelectedMaterial({ id: m.id, title: m.title, file_name: m.file_name })}
+                      className={`chip ${selectedMat?.id === m.id ? 'ink' : 'outline'}`}
+                      style={{padding:'3px 10px', cursor:'pointer'}}>
+                {m.title || m.file_name}
+              </button>
+            ))}
+            <button onClick={() => fileRef.current?.click()} disabled={!!uploading}
+                    className="chip outline" style={{padding:'3px 10px', cursor:'pointer', borderStyle:'dashed'}}>
+              <Icon.plus size={10}/> {uploading ? `Importing ${uploading}…` : 'add material'}
             </button>
-          ))
+          </>
         )}
       </div>
 
